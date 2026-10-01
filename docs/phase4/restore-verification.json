@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "temporary_database": "phase4_restore_bise_db",
+      "database": "bise_db",
+      "runtime_rls_verified": true,
+      "cleanup": "removed",
+      "encrypted_backup": "D:\\AI-Automation\\backups\\phase4-restore-20260923-203837\\bise_db.sql.dpapi",
+      "tables_compared": 5,
+      "status": "PASS"
+    },
+    {
+      "temporary_database": "phase4_restore_hospital_db",
+      "database": "hospital_db",
+      "runtime_rls_verified": true,
+      "cleanup": "removed",
+      "encrypted_backup": "D:\\AI-Automation\\backups\\phase4-restore-20260923-203837\\hospital_db.sql.dpapi",
+      "tables_compared": 5,
+      "status": "PASS"
+    },
+    {
+      "runtime_rls_verified": true,
+      "temporary_database": "phase4_restore_control_db",
+      "encrypted_backup": "D:\\AI-Automation\\backups\\phase4-restore-20260923-204913\\control_db.sql.dpapi",
+      "tables_compared": 5,
+      "cleanup": "removed",
+      "status": "PASS",
+      "database": "control_db"
+    },
+    {
+      "runtime_rls_verified": true,
+      "temporary_database": "phase4_restore_pos_db",
+      "encrypted_backup": "D:\\AI-Automation\\backups\\phase4-restore-20260923-204913\\pos_db.sql.dpapi",
+      "tables_compared": 5,
+      "cleanup": "removed",
+      "status": "PASS",
+      "database": "pos_db"
+    }
+  ],
+  "started_at": "2026-09-23T15:49:13.0736700Z",
+  "passed": 4,
+  "scope": "Four individual synthetic dev database logical restore drills on the same server with existing cluster roles. Not off-machine/full-server recovery, coordinated live four-DB PITR, pgvector/BM25 rebuild or external-effect reconciliation.",
+  "failed": 0,
+  "duration_seconds": 42.7311557
+}

@@ -1,0 +1,44 @@
+{
+  "at": "2026-10-01T12:36:44.451Z",
+  "name": "/evolution-go",
+  "state": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 3042,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-10-01T12:33:29.205458188Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "globalWebhookDisabled": true,
+  "ports": {
+    "4000/tcp": [
+      {
+        "HostIp": "0.0.0.0",
+        "HostPort": "4000"
+      },
+      {
+        "HostIp": "::",
+        "HostPort": "4000"
+      }
+    ]
+  },
+  "logs": [
+    "2026-10-01T12:36:09.506110415Z \u001b[0m\u001b[31;1m[672.427ms] \u001b[33m[rows:1]\u001b[35m SELECT * FROM \"instances\" WHERE connected = true AND client_name = 'evolution'\u001b[0m",
+    "2026-10-01T12:36:19.227877895Z \u001b[0m\u001b[31;1m[734.778ms] \u001b[33m[rows:1]\u001b[35m UPDATE \"instances\" SET \"connected\"=true WHERE id = '[UUID_REDACTED]'\u001b[0m",
+    "2026-10-01T12:36:19.858906322Z \u001b[0m\u001b[31;1m[601.407ms] \u001b[33m[rows:1]\u001b[35m UPDATE \"instances\" SET \"disconnect_reason\"='' WHERE id = '[UUID_REDACTED]'\u001b[0m",
+    "2026-10-01T12:36:08.734462656Z 2026/10/01 09:36:08 \u001b[44m[INFO]\u001b[0m Connecting all instances on startup",
+    "2026-10-01T12:36:09.506124046Z 2026/10/01 09:36:09 \u001b[44m[INFO]\u001b[0m [evolution] Found 1 connected instances",
+    "2026-10-01T12:36:09.530233270Z 2026/10/01 09:36:09 \u001b[44m[INFO]\u001b[0m [evolution] Starting client for user '[UUID_REDACTED]'",
+    "2026-10-01T12:36:09.716481594Z 2026/10/01 09:36:09 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Starting client",
+    "2026-10-01T12:36:09.717022888Z 2026/10/01 09:36:09 \u001b[44m[INFO]\u001b[0m Starting websocket connection to Whatsapp for user '[UUID_REDACTED]'",
+    "2026-10-01T12:36:13.239756078Z 2026/10/01 09:36:13 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Already logged in with JID: [NUMBER_REDACTED]:47@s.whatsapp.net",
+    "2026-10-01T12:36:18.530470363Z 2026/10/01 09:36:18 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] events.Connected to Whatsapp for user 'AI & ML Engineer'",
+    "2026-10-01T12:36:20.252149981Z 2026/10/01 09:36:20 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Connected, Queue: [UUID_REDACTED].connected, DataSize: 254 bytes",
+    "2026-10-01T12:36:20.252157704Z 2026/10/01 09:36:20 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Connected"
+  ]
+}

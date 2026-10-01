@@ -1,0 +1,100 @@
+{
+  "at": "2026-10-01T09:58:13.569Z",
+  "status": 200,
+  "globalWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+  "instances": [
+    {
+      "id": "36caf15a-8939-483d-baa6-2b3c84b7e5e3",
+      "name": "point-of-sale",
+      "webhook": "http://n8n:5678/webhook/evolution-whatsapp-agent",
+      "rabbitmqEnable": "",
+      "websocketEnable": "",
+      "natsEnable": "",
+      "jid": "923098414407@s.whatsapp.net",
+      "connected": false,
+      "expiration": 0,
+      "disconnect_reason": "Reconnecting",
+      "events": "MESSAGE",
+      "os_name": "",
+      "proxy": "",
+      "client_name": "evolution",
+      "createdAt": "2026-09-29T13:44:30.754908-03:00",
+      "alwaysOnline": false,
+      "rejectCall": false,
+      "msgRejectCall": "",
+      "readMessages": false,
+      "ignoreGroups": false,
+      "ignoreStatus": false,
+      "liveStatus": {
+        "data": {
+          "Connected": false,
+          "LoggedIn": false,
+          "Name": ""
+        },
+        "message": "success"
+      }
+    },
+    {
+      "id": "00179367-7588-4d05-9fcf-c66aeab65815",
+      "name": "student-assistant",
+      "webhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+      "rabbitmqEnable": "",
+      "websocketEnable": "",
+      "natsEnable": "",
+      "jid": "923127118485:47@s.whatsapp.net",
+      "connected": true,
+      "expiration": 0,
+      "disconnect_reason": "",
+      "events": "MESSAGE",
+      "os_name": "",
+      "proxy": "",
+      "client_name": "evolution",
+      "createdAt": "2026-09-29T13:44:30.754908-03:00",
+      "alwaysOnline": false,
+      "rejectCall": false,
+      "msgRejectCall": "",
+      "readMessages": false,
+      "ignoreGroups": false,
+      "ignoreStatus": false,
+      "liveStatus": {
+        "data": {
+          "Connected": true,
+          "LoggedIn": true,
+          "Name": "AI & ML Engineer"
+        },
+        "message": "success"
+      }
+    },
+    {
+      "id": "3ce073e7-6f47-4dda-84a5-0d074b47421f",
+      "name": "hospital-assistant",
+      "webhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+      "rabbitmqEnable": "",
+      "websocketEnable": "",
+      "natsEnable": "",
+      "jid": "923201711081@s.whatsapp.net",
+      "connected": false,
+      "expiration": 0,
+      "disconnect_reason": "Reconnecting",
+      "events": "MESSAGE",
+      "os_name": "",
+      "proxy": "",
+      "client_name": "evolution",
+      "createdAt": "2026-09-29T13:44:30.754908-03:00",
+      "alwaysOnline": false,
+      "rejectCall": false,
+      "msgRejectCall": "",
+      "readMessages": false,
+      "ignoreGroups": false,
+      "ignoreStatus": false,
+      "liveStatus": {
+        "data": {
+          "Connected": false,
+          "LoggedIn": false,
+          "Name": ""
+        },
+        "message": "success"
+      }
+    }
+  ]
+}

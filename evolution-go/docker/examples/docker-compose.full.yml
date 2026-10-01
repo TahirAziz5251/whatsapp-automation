@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   evolution-go:
     image: evoapicloud/evolution-go:latest
@@ -8,19 +6,18 @@ services:
     ports:
       - "4000:4000"
     environment:
-      # Servidor
+      # Server
       SERVER_PORT: 4000
       CLIENT_NAME: "evolution"
 
-      # Segurança
-      GLOBAL_API_KEY: "sua-chave-api-segura-aqui"
+      GLOBAL_API_KEY: "429683C4C977415CAAFCCE10F7D57E11"
 
-      # Banco de Dados PostgreSQL
+      # Databases
       POSTGRES_AUTH_DB: "postgresql://postgres:postgres@postgres:5432/evogo_auth?sslmode=disable"
       POSTGRES_USERS_DB: "postgresql://postgres:postgres@postgres:5432/evogo_users?sslmode=disable"
       DATABASE_SAVE_MESSAGES: "true"
 
-      # Logs e Debug
+      # Logs
       WADEBUG: "DEBUG"
       LOGTYPE: "console"
       LOG_DIRECTORY: "/app/logs"
@@ -29,45 +26,25 @@ services:
       LOG_MAX_AGE: "30"
       LOG_COMPRESS: "true"
 
-      # Conexão
+      # Connection
       CONNECT_ON_STARTUP: "false"
       WEBHOOK_FILES: "true"
-
-      # Sistema
       OS_NAME: "Linux"
 
-      # Webhook
-      WEBHOOK_URL: "https://seu-webhook.com/endpoint"
+      # Webhook (Direct internal container endpoint to n8n)
+      WEBHOOK_URL: "http://n8n:5678/webhook/evolution-whatsapp-agent"
 
-      # RabbitMQ
-      AMQP_URL: "amqp://admin:admin@rabbitmq:5672/default"
-      AMQP_GLOBAL_ENABLED: "true"
-      AMQP_GLOBAL_EVENTS: "messages.upsert,messages.update,connection.update"
-      AMQP_SPECIFIC_EVENTS: ""
-
-      # NATS
-      NATS_URL: "nats://nats:4222"
+      # Disabled unused brokers
+      AMQP_URL: ""
+      AMQP_GLOBAL_ENABLED: "false"
+      NATS_URL: ""
       NATS_GLOBAL_ENABLED: "false"
-      NATS_GLOBAL_EVENTS: ""
+      MINIO_ENABLED: "false"
 
-      # MinIO
-      MINIO_ENABLED: "true"
-      MINIO_ENDPOINT: "minio:9000"
-      MINIO_ACCESS_KEY: "minioadmin"
-      MINIO_SECRET_KEY: "minioadmin"
-      MINIO_BUCKET: "evolution-media"
-      MINIO_USE_SSL: "false"
-      MINIO_REGION: "us-east-1"
-
-      # Eventos
+      # Events
       EVENT_IGNORE_GROUP: "false"
       EVENT_IGNORE_STATUS: "true"
-
-      # QR Code
       QRCODE_MAX_COUNT: "5"
-
-      # Verificação de Usuário
-      CHECK_USER_EXISTS: "true"
 
     volumes:
       - evolution_data:/app/dbdata
@@ -76,8 +53,6 @@ services:
       - evolution_network
     depends_on:
       - postgres
-      - rabbitmq
-      - minio
 
   postgres:
     image: postgres:15-alpine
@@ -95,35 +70,21 @@ services:
     networks:
       - evolution_network
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: evolution-rabbitmq
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n-automation
     restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-      RABBITMQ_DEFAULT_VHOST: default
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - evolution_network
-
-  minio:
-    image: minio/minio:latest
-    container_name: evolution-minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
+      - "5678:5678"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Karachi
     volumes:
-      - minio_data:/data
+      - n8n_data:/home/node/.n8n
     networks:
       - evolution_network
 
@@ -134,9 +95,7 @@ volumes:
     driver: local
   postgres_data:
     driver: local
-  rabbitmq_data:
-    driver: local
-  minio_data:
+  n8n_data:
     driver: local
 
 networks:

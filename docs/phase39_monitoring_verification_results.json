@@ -1,0 +1,398 @@
+{
+  "results": {
+    "suite": "Phase 39: Monitoring + Observability",
+    "timestamp": "2026-09-29T15:00:47.142Z",
+    "tests": [
+      {
+        "description": "Platform metrics collected successfully",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Container running: evolution-postgres",
+        "status": "FAIL",
+        "details": ""
+      },
+      {
+        "description": "Container running: evolution-redis",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Container running: evolution-go",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Container running: n8n",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Container running: n8n-automation-db-1",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Database healthy: platform_db",
+        "status": "FAIL",
+        "details": "Latency: 4557ms"
+      },
+      {
+        "description": "Database latency acceptable (<3000ms): platform_db",
+        "status": "FAIL",
+        "details": ""
+      },
+      {
+        "description": "Database healthy: pos_db",
+        "status": "FAIL",
+        "details": "Latency: 2437ms"
+      },
+      {
+        "description": "Database latency acceptable (<3000ms): pos_db",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Database healthy: bise_db",
+        "status": "FAIL",
+        "details": "Latency: 2690ms"
+      },
+      {
+        "description": "Database latency acceptable (<3000ms): bise_db",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Database healthy: hospital_db",
+        "status": "FAIL",
+        "details": "Latency: 1294ms"
+      },
+      {
+        "description": "Database latency acceptable (<3000ms): hospital_db",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Redis server responsive (PONG)",
+        "status": "PASS",
+        "details": "Memory: 1.38M"
+      },
+      {
+        "description": "n8n Web UI endpoint healthy (port 5678)",
+        "status": "FAIL",
+        "details": "Status: undefined"
+      },
+      {
+        "description": "Disaster Recovery backup freshness within SLA (<24h)",
+        "status": "PASS",
+        "details": "Age: 0.03 hours"
+      },
+      {
+        "description": "Container failure generates actionable remediation alert",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Database outage alert provides diagnostic command (pg_isready)",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Stale backup alert triggers automated backup remediation command",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Approval queue backlog alert targets supervisor action",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "evolution_whatsapp_ai_agent_bot.json exists",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Workflow contains exactly 5 AI Agent tool nodes",
+        "status": "PASS",
+        "details": "Found: 5"
+      },
+      {
+        "description": "Tool node exists: Tool: Search Knowledge Base",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Search Knowledge Base uses valid n8n 2.x type '@n8n/n8n-nodes-langchain.toolCode' (NO ? icon)",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Search Knowledge Base specifies input schema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Search Knowledge Base has populated inputSchema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Search Knowledge Base has populated execution jsCode",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Search Knowledge Base is connected to AI Agent (Shared Engine) ai_tool port",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool node exists: Tool: Business Data Gateway",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Business Data Gateway uses valid n8n 2.x type '@n8n/n8n-nodes-langchain.toolCode' (NO ? icon)",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Business Data Gateway specifies input schema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Business Data Gateway has populated inputSchema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Business Data Gateway has populated execution jsCode",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Business Data Gateway is connected to AI Agent (Shared Engine) ai_tool port",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool node exists: Tool: Action Gateway",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Action Gateway uses valid n8n 2.x type '@n8n/n8n-nodes-langchain.toolCode' (NO ? icon)",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Action Gateway specifies input schema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Action Gateway has populated inputSchema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Action Gateway has populated execution jsCode",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Action Gateway is connected to AI Agent (Shared Engine) ai_tool port",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool node exists: Tool: Manage Calendar",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Manage Calendar uses valid n8n 2.x type '@n8n/n8n-nodes-langchain.toolCode' (NO ? icon)",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Manage Calendar specifies input schema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Manage Calendar has populated inputSchema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Manage Calendar has populated execution jsCode",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Manage Calendar is connected to AI Agent (Shared Engine) ai_tool port",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool node exists: Tool: Sync CRM",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Sync CRM uses valid n8n 2.x type '@n8n/n8n-nodes-langchain.toolCode' (NO ? icon)",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Sync CRM specifies input schema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Sync CRM has populated inputSchema",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Sync CRM has populated execution jsCode",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Tool: Sync CRM is connected to AI Agent (Shared Engine) ai_tool port",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Business telemetry probe completed",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Audit error count tracked in telemetry",
+        "status": "PASS",
+        "details": ""
+      },
+      {
+        "description": "Supervisor approval backlog tracked in telemetry",
+        "status": "PASS",
+        "details": ""
+      }
+    ],
+    "passed": 49,
+    "failed": 7
+  },
+  "metrics": {
+    "timestamp": "2026-09-29T15:00:47.145Z",
+    "overall_status": "CRITICAL",
+    "containers": {
+      "evolution-postgres": {
+        "state": "STOPPED"
+      },
+      "evolution-redis": {
+        "state": "RUNNING",
+        "status": "Up 2 hours",
+        "running_for": "4 days ago"
+      },
+      "evolution-go": {
+        "state": "RUNNING",
+        "status": "Up 2 hours",
+        "running_for": "34 hours ago"
+      },
+      "n8n": {
+        "state": "RUNNING",
+        "status": "Up 2 hours",
+        "running_for": "34 hours ago"
+      },
+      "n8n-automation-db-1": {
+        "state": "RUNNING",
+        "status": "Up 2 hours",
+        "running_for": "4 months ago"
+      }
+    },
+    "databases": {
+      "platform_db": {
+        "status": "DOWN",
+        "latency_ms": 4557
+      },
+      "pos_db": {
+        "status": "DOWN",
+        "latency_ms": 2437
+      },
+      "bise_db": {
+        "status": "DOWN",
+        "latency_ms": 2690
+      },
+      "hospital_db": {
+        "status": "DOWN",
+        "latency_ms": 1294
+      }
+    },
+    "redis": {
+      "status": "HEALTHY",
+      "ping": "PONG",
+      "used_memory": "1.38M"
+    },
+    "services": {
+      "n8n_web": {
+        "status": "TIMEOUT",
+        "latencyMs": 2500
+      },
+      "evolution_api": {
+        "status": "TIMEOUT",
+        "latencyMs": 2500
+      }
+    },
+    "business_telemetry": {
+      "audit_error_events": 0,
+      "pending_supervisor_approvals": 0
+    },
+    "backup_status": {
+      "latest_backup": "dr-backup-20260929_200044",
+      "age_hours": 0.03,
+      "status": "FRESH"
+    },
+    "alerts": [
+      {
+        "severity": "CRITICAL",
+        "component": "Container:evolution-postgres",
+        "metric": "Container Not Running",
+        "message": "Container evolution-postgres is stopped or missing from docker daemon.",
+        "actionable_remediation": "Execute 'docker-compose up -d evolution-postgres' or inspect logs with 'docker logs evolution-postgres'."
+      },
+      {
+        "severity": "CRITICAL",
+        "component": "Database:platform_db",
+        "metric": "PostgreSQL Connectivity Failure",
+        "message": "Database platform_db is unreachable on evolution-postgres.",
+        "actionable_remediation": "Verify PostgreSQL container health: 'docker exec evolution-postgres pg_isready'. Check logs: 'docker logs evolution-postgres'."
+      },
+      {
+        "severity": "CRITICAL",
+        "component": "Database:pos_db",
+        "metric": "PostgreSQL Connectivity Failure",
+        "message": "Database pos_db is unreachable on evolution-postgres.",
+        "actionable_remediation": "Verify PostgreSQL container health: 'docker exec evolution-postgres pg_isready'. Check logs: 'docker logs evolution-postgres'."
+      },
+      {
+        "severity": "CRITICAL",
+        "component": "Database:bise_db",
+        "metric": "PostgreSQL Connectivity Failure",
+        "message": "Database bise_db is unreachable on evolution-postgres.",
+        "actionable_remediation": "Verify PostgreSQL container health: 'docker exec evolution-postgres pg_isready'. Check logs: 'docker logs evolution-postgres'."
+      },
+      {
+        "severity": "CRITICAL",
+        "component": "Database:hospital_db",
+        "metric": "PostgreSQL Connectivity Failure",
+        "message": "Database hospital_db is unreachable on evolution-postgres.",
+        "actionable_remediation": "Verify PostgreSQL container health: 'docker exec evolution-postgres pg_isready'. Check logs: 'docker logs evolution-postgres'."
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+-- Reserved synthetic identities: not routable WhatsApp addresses.
+SET LOCAL app.actor_ref='phase5_fixture_loader';
+SET LOCAL app.business_id='40000000-0000-4000-8000-000000003101';
+INSERT INTO platform.contacts(business_id,id,display_name,status) VALUES('40000000-0000-4000-8000-000000003101','50000000-0000-4000-8000-000000030001','Synthetic hospital A Ayesha','active');
+INSERT INTO platform.channel_identities(business_id,instance_id,contact_id,jid,address_kind) VALUES('40000000-0000-4000-8000-000000003101','40000000-0000-4000-8000-000000003102','50000000-0000-4000-8000-000000030001','synthetic-person-1@example.invalid','synthetic');
+INSERT INTO platform.audit_events(business_id,actor_ref,event_type,resource_ref,outcome,details) VALUES('40000000-0000-4000-8000-000000003101','phase5_fixture_loader','contact.fixture_created','50000000-0000-4000-8000-000000030001','success','{}');
+INSERT INTO platform.contacts(business_id,id,display_name,status) VALUES('40000000-0000-4000-8000-000000003101','50000000-0000-4000-8000-000000030002','Synthetic hospital A Bilal','active');
+INSERT INTO platform.channel_identities(business_id,instance_id,contact_id,jid,address_kind) VALUES('40000000-0000-4000-8000-000000003101','40000000-0000-4000-8000-000000003102','50000000-0000-4000-8000-000000030002','synthetic-person-2@example.invalid','synthetic');
+INSERT INTO platform.audit_events(business_id,actor_ref,event_type,resource_ref,outcome,details) VALUES('40000000-0000-4000-8000-000000003101','phase5_fixture_loader','contact.fixture_created','50000000-0000-4000-8000-000000030002','success','{}');
+INSERT INTO platform.contacts(business_id,id,display_name,status) VALUES('40000000-0000-4000-8000-000000003101','50000000-0000-4000-8000-000000030003','Synthetic hospital A Inactive Contact','blocked');
+INSERT INTO platform.channel_identities(business_id,instance_id,contact_id,jid,address_kind) VALUES('40000000-0000-4000-8000-000000003101','40000000-0000-4000-8000-000000003102','50000000-0000-4000-8000-000000030003','synthetic-person-3@example.invalid','synthetic');
+INSERT INTO platform.audit_events(business_id,actor_ref,event_type,resource_ref,outcome,details) VALUES('40000000-0000-4000-8000-000000003101','phase5_fixture_loader','contact.fixture_created','50000000-0000-4000-8000-000000030003','success','{}');
+SET LOCAL app.business_id='40000000-0000-4000-8000-000000003201';
+INSERT INTO platform.contacts(business_id,id,display_name,status) VALUES('40000000-0000-4000-8000-000000003201','50000000-0000-4000-8000-000000030101','Synthetic hospital B Ayesha','active');
+INSERT INTO platform.channel_identities(business_id,instance_id,contact_id,jid,address_kind) VALUES('40000000-0000-4000-8000-000000003201','40000000-0000-4000-8000-000000003202','50000000-0000-4000-8000-000000030101','synthetic-person-1@example.invalid','synthetic');
+INSERT INTO platform.audit_events(business_id,actor_ref,event_type,resource_ref,outcome,details) VALUES('40000000-0000-4000-8000-000000003201','phase5_fixture_loader','contact.fixture_created','50000000-0000-4000-8000-000000030101','success','{}');
+INSERT INTO platform.contacts(business_id,id,display_name,status) VALUES('40000000-0000-4000-8000-000000003201','50000000-0000-4000-8000-000000030102','Synthetic hospital B Bilal','active');
+INSERT INTO platform.channel_identities(business_id,instance_id,contact_id,jid,address_kind) VALUES('40000000-0000-4000-8000-000000003201','40000000-0000-4000-8000-000000003202','50000000-0000-4000-8000-000000030102','synthetic-person-2@example.invalid','synthetic');
+INSERT INTO platform.audit_events(business_id,actor_ref,event_type,resource_ref,outcome,details) VALUES('40000000-0000-4000-8000-000000003201','phase5_fixture_loader','contact.fixture_created','50000000-0000-4000-8000-000000030102','success','{}');
+INSERT INTO platform.contacts(business_id,id,display_name,status) VALUES('40000000-0000-4000-8000-000000003201','50000000-0000-4000-8000-000000030103','Synthetic hospital B Inactive Contact','blocked');
+INSERT INTO platform.channel_identities(business_id,instance_id,contact_id,jid,address_kind) VALUES('40000000-0000-4000-8000-000000003201','40000000-0000-4000-8000-000000003202','50000000-0000-4000-8000-000000030103','synthetic-person-3@example.invalid','synthetic');
+INSERT INTO platform.audit_events(business_id,actor_ref,event_type,resource_ref,outcome,details) VALUES('40000000-0000-4000-8000-000000003201','phase5_fixture_loader','contact.fixture_created','50000000-0000-4000-8000-000000030103','success','{}');

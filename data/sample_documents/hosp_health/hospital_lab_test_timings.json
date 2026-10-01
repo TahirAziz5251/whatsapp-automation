@@ -1,0 +1,10 @@
+{
+  "business_code": "HOSP_HEALTH",
+  "namespace": "hosp_collection",
+  "source": "clinical_directory",
+  "title": "Hospital Diagnostic Pathology Laboratory & Imaging Schedule",
+  "doc_type": "DIRECTORY",
+  "version": "v1.0",
+  "status": "ACTIVE",
+  "content": "City Healthcare Diagnostic Pathology Laboratory provides comprehensive clinical biochemistry, hematology, microbiology, and histopathology testing. Sample collection for routine and emergency lab tests operates 24 hours a day, 7 days a week on the Lower Ground Floor. Complete blood count (CBC) and troponin I cardiac enzyme results are available within 45 to 60 minutes for emergency patients. Fasting blood sugar (FBS) and lipid profiles require 10 to 12 hours of overnight fasting prior to morning sample collection between 7:00 AM and 11:00 AM. Diagnostic radiology services including digital X-ray, 128-slice CT scan, and 1.5 Tesla MRI are available around the clock. All patient test reports can be accessed and downloaded in PDF format via the hospital online patient portal or sent via WhatsApp using the patient medical record number (MRN)."
+}

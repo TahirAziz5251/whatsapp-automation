@@ -1,0 +1,13 @@
+const cp=require('child_process'),fs=require('fs'),assert=require('assert/strict');
+const run=args=>cp.execFileSync('docker',args,{encoding:'utf8',windowsHide:true,timeout:120000});
+const current=JSON.parse(run(['inspect','n8n']))[0];
+const config=JSON.parse(run(['compose','-f','docker-compose.yml','config','--format','json']));
+const next=config.services.n8n;const env=Object.fromEntries(current.Config.Env.map(x=>{const p=x.indexOf('=');return[x.slice(0,p),x.slice(p+1)]}));
+assert.equal(String(next.environment.N8N_ENCRYPTION_KEY),env.N8N_ENCRYPTION_KEY,'Encryption key must remain unchanged');
+const image=JSON.parse(run(['image','inspect',next.image]))[0];assert.equal(image.Id,current.Image,'Container recreation must use the same image');
+const oldVolume=current.Mounts.find(m=>m.Destination==='/home/node/.n8n');const newVolume=next.volumes.find(v=>v.target==='/home/node/.n8n');
+assert.equal(config.volumes[newVolume.source].name,oldVolume.Name,'Persistent n8n volume must remain unchanged');
+assert.equal(next.environment.NODE_FUNCTION_ALLOW_EXTERNAL,'pg,ioredis');
+const changedKeys=Object.keys(next.environment).filter(k=>String(next.environment[k])!==env[k]);
+for(const k of changedKeys)assert(k==='NODE_FUNCTION_ALLOW_EXTERNAL'||(k==='WEBHOOK_URL'&&String(next.environment[k]).replace(/\/$/,'')===String(env[k]).replace(/\/$/,'')),'Unexpected runtime environment change: '+k);
+const report={at:new Date().toISOString(),sameEncryptionKey:true,sameImage:true,sameDataVolume:true,changedEnvironmentKeys:changedKeys,pass:true};fs.writeFileSync('docs/current-system-audit/deployment-preflight.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

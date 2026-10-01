@@ -1,0 +1,556 @@
+{
+  "results": [
+    {
+      "name": "control_db password-authenticated runtime connection",
+      "status": "PASS"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 28P01|password authentication failed rejection; got code 0, ",
+      "name": "control_db rejects wrong password"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"pos_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "control_runtime cannot connect to pos_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"bise_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "control_runtime cannot connect to bise_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"hospital_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "control_runtime cannot connect to hospital_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"agent_dev\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "control_runtime cannot connect to agent_dev"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"postgres\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "control_runtime cannot connect to postgres"
+    },
+    {
+      "name": "control_db four platform tables plus separate migration ledger",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db all foundational tables FORCE RLS owned by nonruntime",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db runtime has no privileged flags or role memberships",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db missing tenant context returns no rows",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db tenant A sees only A and not B",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db transaction-local scope does not leak after COMMIT",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db same-tenant audit insert succeeds and is rolled back",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db cross-tenant audit INSERT denied by WITH CHECK",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db missing tenant INSERT denied",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db malformed tenant context fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db runtime cannot edit routing",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: UPDATE platform.audit_events SET outcome='failure'",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: DELETE FROM platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: TRUNCATE platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: CREATE TABLE platform.attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: CREATE TEMP TABLE attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: SET ROLE control_owner",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: SELECT * FROM app_meta.schema_migrations",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db rejects runtime operation: SET row_security=off; SELECT * FROM platform.businesses",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db audit detail allowlist rejects sensitive key",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db orphan tenant FK rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db duplicate authoritative instance mapping rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db failed transactional migration leaves no partial table",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db checksum ledger contains core and fixture migration",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db password-authenticated runtime connection",
+      "status": "PASS"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 28P01|password authentication failed rejection; got code 0, ",
+      "name": "pos_db rejects wrong password"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"control_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "pos_runtime cannot connect to control_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"bise_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "pos_runtime cannot connect to bise_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"hospital_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "pos_runtime cannot connect to hospital_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"agent_dev\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "pos_runtime cannot connect to agent_dev"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"postgres\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "pos_runtime cannot connect to postgres"
+    },
+    {
+      "name": "pos_db four platform tables plus separate migration ledger",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db all foundational tables FORCE RLS owned by nonruntime",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db runtime has no privileged flags or role memberships",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db missing tenant context returns no rows",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db tenant A sees only A and not B",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db transaction-local scope does not leak after COMMIT",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db same-tenant audit insert succeeds and is rolled back",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db cross-tenant audit INSERT denied by WITH CHECK",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db missing tenant INSERT denied",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db malformed tenant context fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db runtime cannot edit routing",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: UPDATE platform.audit_events SET outcome='failure'",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: DELETE FROM platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: TRUNCATE platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: CREATE TABLE platform.attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: CREATE TEMP TABLE attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: SET ROLE pos_owner",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: SELECT * FROM app_meta.schema_migrations",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db rejects runtime operation: SET row_security=off; SELECT * FROM platform.businesses",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db audit detail allowlist rejects sensitive key",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db orphan tenant FK rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db duplicate authoritative instance mapping rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db failed transactional migration leaves no partial table",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db checksum ledger contains core and fixture migration",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db excludes gateway credential reference",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db local config event receipt matches fixture hash",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db password-authenticated runtime connection",
+      "status": "PASS"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 28P01|password authentication failed rejection; got code 0, ",
+      "name": "bise_db rejects wrong password"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"control_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "bise_runtime cannot connect to control_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"pos_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "bise_runtime cannot connect to pos_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"hospital_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "bise_runtime cannot connect to hospital_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"agent_dev\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "bise_runtime cannot connect to agent_dev"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"postgres\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "bise_runtime cannot connect to postgres"
+    },
+    {
+      "name": "bise_db four platform tables plus separate migration ledger",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db all foundational tables FORCE RLS owned by nonruntime",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db runtime has no privileged flags or role memberships",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db missing tenant context returns no rows",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db tenant A sees only A and not B",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db transaction-local scope does not leak after COMMIT",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db same-tenant audit insert succeeds and is rolled back",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db cross-tenant audit INSERT denied by WITH CHECK",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db missing tenant INSERT denied",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db malformed tenant context fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db runtime cannot edit routing",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: UPDATE platform.audit_events SET outcome='failure'",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: DELETE FROM platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: TRUNCATE platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: CREATE TABLE platform.attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: CREATE TEMP TABLE attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: SET ROLE bise_owner",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: SELECT * FROM app_meta.schema_migrations",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db rejects runtime operation: SET row_security=off; SELECT * FROM platform.businesses",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db audit detail allowlist rejects sensitive key",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db orphan tenant FK rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db duplicate authoritative instance mapping rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db failed transactional migration leaves no partial table",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db checksum ledger contains core and fixture migration",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db excludes gateway credential reference",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db local config event receipt matches fixture hash",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db password-authenticated runtime connection",
+      "status": "PASS"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 28P01|password authentication failed rejection; got code 0, ",
+      "name": "hospital_db rejects wrong password"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"control_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "hospital_runtime cannot connect to control_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"pos_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "hospital_runtime cannot connect to pos_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"bise_db\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "hospital_runtime cannot connect to bise_db"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"agent_dev\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "hospital_runtime cannot connect to agent_dev"
+    },
+    {
+      "status": "FAIL",
+      "error": "Expected SQLSTATE 42501 rejection; got code 2, psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  permission denied for database \"postgres\"\nDETAIL:  User does not have CONNECT privilege.\n",
+      "name": "hospital_runtime cannot connect to postgres"
+    },
+    {
+      "name": "hospital_db four platform tables plus separate migration ledger",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db all foundational tables FORCE RLS owned by nonruntime",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db runtime has no privileged flags or role memberships",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db missing tenant context returns no rows",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db tenant A sees only A and not B",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db transaction-local scope does not leak after COMMIT",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db same-tenant audit insert succeeds and is rolled back",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db cross-tenant audit INSERT denied by WITH CHECK",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db missing tenant INSERT denied",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db malformed tenant context fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db runtime cannot edit routing",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: UPDATE platform.audit_events SET outcome='failure'",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: DELETE FROM platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: TRUNCATE platform.audit_events",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: CREATE TABLE platform.attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: CREATE TEMP TABLE attack(id int)",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: SET ROLE hospital_owner",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: SELECT * FROM app_meta.schema_migrations",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db rejects runtime operation: SET row_security=off; SELECT * FROM platform.businesses",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db audit detail allowlist rejects sensitive key",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db orphan tenant FK rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db duplicate authoritative instance mapping rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db failed transactional migration leaves no partial table",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db checksum ledger contains core and fixture migration",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db excludes gateway credential reference",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db local config event receipt matches fixture hash",
+      "status": "PASS"
+    },
+    {
+      "name": "No runtime role receives CREATE or TEMP on any app DB",
+      "status": "PASS"
+    }
+  ],
+  "scope": "Live isolated PostgreSQL tests using password-authenticated restricted roles; synthetic fixtures only. Does not certify workflow authorization, Board verification, full server restore, vector retrieval or business E2E.",
+  "captured_at": "2026-09-23T15:22:32.2037241Z",
+  "passed": 107,
+  "failed": 24
+}

@@ -1,0 +1,36 @@
+{
+  "scope": "Metadata verification only; not business/E2E/authorization testing",
+  "checks": [
+    {
+      "name": "All four scoped databases collected",
+      "status": "PASS"
+    },
+    {
+      "name": "Every PostgreSQL inspection used read-only transaction",
+      "status": "PASS"
+    },
+    {
+      "name": "Published workflow version resolved",
+      "status": "PASS"
+    },
+    {
+      "name": "Requested workflow active",
+      "status": "PASS"
+    },
+    {
+      "name": "CRM table primary keys recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "Dev database has no business tables",
+      "status": "PASS"
+    }
+  ],
+  "comparison": {
+    "localDefinitionHash": "757f0058922bb4b8ffebba30e6ce2cbe9137a109c072858cd353bbd562cb5d38",
+    "localNodeCount": 10,
+    "publishedNodeCount": 12,
+    "localMatchesPublished": false,
+    "storedDraftMatchesPublished": false
+  }
+}

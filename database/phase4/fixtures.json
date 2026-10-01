@@ -1,0 +1,80 @@
+[
+  {
+    "business": "40000000-0000-4000-8000-000000001101",
+    "instance": "40000000-0000-4000-8000-000000001102",
+    "event": "40000000-0000-4000-8000-000000001103",
+    "audit": "40000000-0000-4000-8000-000000001104",
+    "inbox": "40000000-0000-4000-8000-000000001105",
+    "domain": "sales",
+    "db": "pos_db",
+    "code": "dummy_sales_1",
+    "external": "phase4_dummy_sales_1",
+    "payload": "{\"schema_version\":1,\"business_id\":\"40000000-0000-4000-8000-000000001101\",\"domain\":\"sales\",\"revision\":1,\"instance_id\":\"40000000-0000-4000-8000-000000001102\",\"external_instance_id\":\"phase4_dummy_sales_1\",\"status\":\"active\"}",
+    "hash": "92e29a6806d4fd9721bda62a02ee2c6f757ba66705a3e2e15fac674cb257b70b"
+  },
+  {
+    "business": "40000000-0000-4000-8000-000000001201",
+    "instance": "40000000-0000-4000-8000-000000001202",
+    "event": "40000000-0000-4000-8000-000000001203",
+    "audit": "40000000-0000-4000-8000-000000001204",
+    "inbox": "40000000-0000-4000-8000-000000001205",
+    "domain": "sales",
+    "db": "pos_db",
+    "code": "dummy_sales_2",
+    "external": "phase4_dummy_sales_2",
+    "payload": "{\"schema_version\":1,\"business_id\":\"40000000-0000-4000-8000-000000001201\",\"domain\":\"sales\",\"revision\":1,\"instance_id\":\"40000000-0000-4000-8000-000000001202\",\"external_instance_id\":\"phase4_dummy_sales_2\",\"status\":\"active\"}",
+    "hash": "701d1265ecd84687343793aafed14837a98e0e8c781f2dd00f98a280a4b5f0dc"
+  },
+  {
+    "business": "40000000-0000-4000-8000-000000002101",
+    "instance": "40000000-0000-4000-8000-000000002102",
+    "event": "40000000-0000-4000-8000-000000002103",
+    "audit": "40000000-0000-4000-8000-000000002104",
+    "inbox": "40000000-0000-4000-8000-000000002105",
+    "domain": "bise",
+    "db": "bise_db",
+    "code": "dummy_bise_1",
+    "external": "phase4_dummy_bise_1",
+    "payload": "{\"schema_version\":1,\"business_id\":\"40000000-0000-4000-8000-000000002101\",\"domain\":\"bise\",\"revision\":1,\"instance_id\":\"40000000-0000-4000-8000-000000002102\",\"external_instance_id\":\"phase4_dummy_bise_1\",\"status\":\"active\"}",
+    "hash": "288da207619a46f1669d855357449bdc86581e2573f500055d649a7327ed88d7"
+  },
+  {
+    "business": "40000000-0000-4000-8000-000000002201",
+    "instance": "40000000-0000-4000-8000-000000002202",
+    "event": "40000000-0000-4000-8000-000000002203",
+    "audit": "40000000-0000-4000-8000-000000002204",
+    "inbox": "40000000-0000-4000-8000-000000002205",
+    "domain": "bise",
+    "db": "bise_db",
+    "code": "dummy_bise_2",
+    "external": "phase4_dummy_bise_2",
+    "payload": "{\"schema_version\":1,\"business_id\":\"40000000-0000-4000-8000-000000002201\",\"domain\":\"bise\",\"revision\":1,\"instance_id\":\"40000000-0000-4000-8000-000000002202\",\"external_instance_id\":\"phase4_dummy_bise_2\",\"status\":\"active\"}",
+    "hash": "582987a0a745415a96cab3611bdee4ed33632f82f41e85c52ffe3df8f5aedb1d"
+  },
+  {
+    "business": "40000000-0000-4000-8000-000000003101",
+    "instance": "40000000-0000-4000-8000-000000003102",
+    "event": "40000000-0000-4000-8000-000000003103",
+    "audit": "40000000-0000-4000-8000-000000003104",
+    "inbox": "40000000-0000-4000-8000-000000003105",
+    "domain": "hospital",
+    "db": "hospital_db",
+    "code": "dummy_hospital_1",
+    "external": "phase4_dummy_hospital_1",
+    "payload": "{\"schema_version\":1,\"business_id\":\"40000000-0000-4000-8000-000000003101\",\"domain\":\"hospital\",\"revision\":1,\"instance_id\":\"40000000-0000-4000-8000-000000003102\",\"external_instance_id\":\"phase4_dummy_hospital_1\",\"status\":\"active\"}",
+    "hash": "b09984c2d904efefea9289d1ac69f87d9157e9180f3c78fef45586363890c5a8"
+  },
+  {
+    "business": "40000000-0000-4000-8000-000000003201",
+    "instance": "40000000-0000-4000-8000-000000003202",
+    "event": "40000000-0000-4000-8000-000000003203",
+    "audit": "40000000-0000-4000-8000-000000003204",
+    "inbox": "40000000-0000-4000-8000-000000003205",
+    "domain": "hospital",
+    "db": "hospital_db",
+    "code": "dummy_hospital_2",
+    "external": "phase4_dummy_hospital_2",
+    "payload": "{\"schema_version\":1,\"business_id\":\"40000000-0000-4000-8000-000000003201\",\"domain\":\"hospital\",\"revision\":1,\"instance_id\":\"40000000-0000-4000-8000-000000003202\",\"external_instance_id\":\"phase4_dummy_hospital_2\",\"status\":\"active\"}",
+    "hash": "8f5d3435a4a77aef17117a0a15c6c33beba47e5ad6d780872c1821de71381ab6"
+  }
+]

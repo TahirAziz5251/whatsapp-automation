@@ -1,0 +1,2717 @@
+{
+  "at": "2026-10-01T10:01:24.994Z",
+  "databases": {
+    "platform_db": {
+      "metadata": [
+        {
+          "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+          "database": "platform_db",
+          "user": "gateway_readonly"
+        },
+        [
+          {
+            "extname": "plpgsql",
+            "extversion": "1.0"
+          },
+          {
+            "extname": "vector",
+            "extversion": "0.8.6"
+          }
+        ],
+        [
+          {
+            "data_type": "bigint",
+            "table_name": "conversation_messages",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_messages",
+            "column_name": "conversation_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_messages",
+            "column_name": "message_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_messages",
+            "column_name": "sender_type"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_messages",
+            "column_name": "sender_phone"
+          },
+          {
+            "data_type": "text",
+            "table_name": "conversation_messages",
+            "column_name": "message_text"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "conversation_messages",
+            "column_name": "metadata"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "conversation_messages",
+            "column_name": "is_anonymized"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "conversation_messages",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "conversation_summary",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_summary",
+            "column_name": "conversation_id"
+          },
+          {
+            "data_type": "text",
+            "table_name": "conversation_summary",
+            "column_name": "summary_text"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "conversation_summary",
+            "column_name": "key_intents"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "conversation_summary",
+            "column_name": "action_items"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_summary",
+            "column_name": "sentiment"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversation_summary",
+            "column_name": "last_message_id"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "conversation_summary",
+            "column_name": "updated_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "conversation_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "session_key"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "instance_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "user_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "push_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "conversations",
+            "column_name": "status"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "conversations",
+            "column_name": "message_count"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "conversations",
+            "column_name": "started_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "conversations",
+            "column_name": "last_active_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "conversations",
+            "column_name": "closed_at"
+          },
+          {
+            "data_type": "bigint",
+            "table_name": "knowledge_chunks",
+            "column_name": "id"
+          },
+          {
+            "data_type": "bigint",
+            "table_name": "knowledge_chunks",
+            "column_name": "document_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_chunks",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "knowledge_chunks",
+            "column_name": "chunk_index"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_chunks",
+            "column_name": "chunk_title"
+          },
+          {
+            "data_type": "text",
+            "table_name": "knowledge_chunks",
+            "column_name": "chunk_text"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "knowledge_chunks",
+            "column_name": "token_count"
+          },
+          {
+            "data_type": "USER-DEFINED",
+            "table_name": "knowledge_chunks",
+            "column_name": "embedding"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "knowledge_chunks",
+            "column_name": "metadata"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "knowledge_chunks",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "bigint",
+            "table_name": "knowledge_documents",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "namespace"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "source"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "title"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "doc_type"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "version"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "knowledge_documents",
+            "column_name": "status"
+          },
+          {
+            "data_type": "text",
+            "table_name": "knowledge_documents",
+            "column_name": "content"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "knowledge_documents",
+            "column_name": "metadata"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "knowledge_documents",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "knowledge_documents",
+            "column_name": "updated_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_action_approvals",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "approval_token"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "action"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "requester_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "requester_name"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "platform_action_approvals",
+            "column_name": "action_payload"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "status"
+          },
+          {
+            "data_type": "text",
+            "table_name": "platform_action_approvals",
+            "column_name": "reason"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_action_approvals",
+            "column_name": "approver_id"
+          },
+          {
+            "data_type": "text",
+            "table_name": "platform_action_approvals",
+            "column_name": "approver_notes"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_action_approvals",
+            "column_name": "approved_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_action_approvals",
+            "column_name": "executed_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_action_approvals",
+            "column_name": "expires_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_action_approvals",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_agent_configs",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_agent_configs",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_agent_configs",
+            "column_name": "model_provider"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_agent_configs",
+            "column_name": "model_name"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "platform_agent_configs",
+            "column_name": "temperature"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_agent_configs",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_audit_metadata",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_audit_metadata",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_audit_metadata",
+            "column_name": "instance_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_audit_metadata",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "platform_audit_metadata",
+            "column_name": "inbound_payload"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "platform_audit_metadata",
+            "column_name": "outbound_payload"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_audit_metadata",
+            "column_name": "processing_time_ms"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_audit_metadata",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_business_profiles",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_business_profiles",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_business_profiles",
+            "column_name": "prompt_version"
+          },
+          {
+            "data_type": "text",
+            "table_name": "platform_business_profiles",
+            "column_name": "role_description"
+          },
+          {
+            "data_type": "text",
+            "table_name": "platform_business_profiles",
+            "column_name": "allowed_scope"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_business_profiles",
+            "column_name": "response_style"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "platform_business_profiles",
+            "column_name": "behavior_rules"
+          },
+          {
+            "data_type": "text",
+            "table_name": "platform_business_profiles",
+            "column_name": "system_prompt"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_business_profiles",
+            "column_name": "default_language"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_business_profiles",
+            "column_name": "timezone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_business_profiles",
+            "column_name": "currency"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "platform_business_profiles",
+            "column_name": "is_active"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_business_profiles",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_business_profiles",
+            "column_name": "updated_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_businesses",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_businesses",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_businesses",
+            "column_name": "name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_businesses",
+            "column_name": "industry_type"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_businesses",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_businesses",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_businesses",
+            "column_name": "updated_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_database_mappings",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_database_mappings",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_database_mappings",
+            "column_name": "target_db_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_database_mappings",
+            "column_name": "target_schema"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_database_mappings",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_knowledge_mappings",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_knowledge_mappings",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_knowledge_mappings",
+            "column_name": "faiss_index_namespace"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "platform_knowledge_mappings",
+            "column_name": "similarity_threshold"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_knowledge_mappings",
+            "column_name": "top_k"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_knowledge_mappings",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_session_metadata",
+            "column_name": "session_key"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_session_metadata",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_session_metadata",
+            "column_name": "user_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_session_metadata",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_session_metadata",
+            "column_name": "current_intent"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "platform_session_metadata",
+            "column_name": "context_state"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_session_metadata",
+            "column_name": "retention_days"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_session_metadata",
+            "column_name": "last_sync_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_session_metadata",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_tool_permissions",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_tool_permissions",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_tool_permissions",
+            "column_name": "tool_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_tool_permissions",
+            "column_name": "action_type"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_tool_permissions",
+            "column_name": "min_identity_level"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "platform_tool_permissions",
+            "column_name": "requires_approval"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "platform_tool_permissions",
+            "column_name": "is_allowed"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_tool_permissions",
+            "column_name": "access_level"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_tool_permissions",
+            "column_name": "resource_target"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_tool_permissions",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "instance_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "instance_token"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "phone_number"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_whatsapp_instances",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "platform_workflow_versions",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_workflow_versions",
+            "column_name": "version_tag"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "platform_workflow_versions",
+            "column_name": "n8n_workflow_id"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "platform_workflow_versions",
+            "column_name": "deployed_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "version"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "description"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "checksum"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "applied_by"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "schema_migrations",
+            "column_name": "applied_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schema_migrations",
+            "column_name": "execution_time_ms"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "status"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "session_metadata",
+            "column_name": "session_key"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "session_metadata",
+            "column_name": "business_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "session_metadata",
+            "column_name": "user_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "session_metadata",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "session_metadata",
+            "column_name": "current_intent"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "session_metadata",
+            "column_name": "context_state"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "session_metadata",
+            "column_name": "retention_days"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "session_metadata",
+            "column_name": "last_sync_at"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "session_metadata",
+            "column_name": "created_at"
+          }
+        ],
+        [
+          {
+            "relname": "conversation_messages",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "conversation_summary",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "conversations",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "knowledge_chunks",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "knowledge_documents",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_action_approvals",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_agent_configs",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_audit_metadata",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_business_profiles",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_businesses",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_database_mappings",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_knowledge_mappings",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_tool_permissions",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_whatsapp_instances",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "platform_workflow_versions",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "schema_migrations",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "session_metadata",
+            "n_live_tup": 0
+          }
+        ]
+      ],
+      "exactCounts": [
+        {
+          "count": 0,
+          "table": "conversation_messages"
+        },
+        {
+          "count": 0,
+          "table": "conversation_summary"
+        },
+        {
+          "count": 0,
+          "table": "conversations"
+        },
+        {
+          "count": 0,
+          "table": "knowledge_chunks"
+        },
+        {
+          "count": 0,
+          "table": "knowledge_documents"
+        },
+        {
+          "count": 0,
+          "table": "platform_action_approvals"
+        },
+        {
+          "count": 3,
+          "table": "platform_agent_configs"
+        },
+        {
+          "count": 63,
+          "table": "platform_audit_metadata"
+        },
+        {
+          "count": 3,
+          "table": "platform_business_profiles"
+        },
+        {
+          "count": 3,
+          "table": "platform_businesses"
+        },
+        {
+          "count": 3,
+          "table": "platform_database_mappings"
+        },
+        {
+          "count": 3,
+          "table": "platform_knowledge_mappings"
+        },
+        {
+          "count": 0,
+          "table": "platform_session_metadata"
+        },
+        {
+          "count": 56,
+          "table": "platform_tool_permissions"
+        },
+        {
+          "count": 6,
+          "table": "platform_whatsapp_instances"
+        },
+        {
+          "count": 0,
+          "table": "platform_workflow_versions"
+        },
+        {
+          "count": 1,
+          "table": "schema_migrations"
+        },
+        {
+          "count": 0,
+          "table": "session_metadata"
+        }
+      ]
+    },
+    "bise_db": {
+      "metadata": [
+        {
+          "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+          "database": "bise_db",
+          "user": "gateway_readonly"
+        },
+        [
+          {
+            "extname": "plpgsql",
+            "extversion": "1.0"
+          }
+        ],
+        [
+          {
+            "data_type": "integer",
+            "table_name": "applications",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "applications",
+            "column_name": "application_number"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "applications",
+            "column_name": "student_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "applications",
+            "column_name": "application_type"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "applications",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "applications",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "chat_history",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "session_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "sender"
+          },
+          {
+            "data_type": "text",
+            "table_name": "chat_history",
+            "column_name": "message_text"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "chat_history",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "exams",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "exams",
+            "column_name": "exam_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "exams",
+            "column_name": "title"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "exams",
+            "column_name": "exam_year"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "exams",
+            "column_name": "exam_session"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "exams",
+            "column_name": "is_declared"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "exams",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "fees",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "fees",
+            "column_name": "fee_type"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "fees",
+            "column_name": "amount_pkr"
+          },
+          {
+            "data_type": "text",
+            "table_name": "fees",
+            "column_name": "description"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "push_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "lead_stage"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "leads",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "result_subject_marks",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "result_subject_marks",
+            "column_name": "result_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "result_subject_marks",
+            "column_name": "subject_name"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "result_subject_marks",
+            "column_name": "obtained_marks"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "result_subject_marks",
+            "column_name": "total_marks"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "result_subject_marks",
+            "column_name": "grade"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "result_subject_marks",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "result_subject_marks",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "results",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "results",
+            "column_name": "student_id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "results",
+            "column_name": "exam_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "results",
+            "column_name": "roll_number"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "results",
+            "column_name": "marks_obtained"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "results",
+            "column_name": "total_marks"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "results",
+            "column_name": "grade"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "results",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "results",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "results",
+            "column_name": "center_code"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "version"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "description"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "checksum"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "applied_by"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "schema_migrations",
+            "column_name": "applied_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schema_migrations",
+            "column_name": "execution_time_ms"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "status"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "students",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "students",
+            "column_name": "registration_number"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "students",
+            "column_name": "student_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "students",
+            "column_name": "father_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "students",
+            "column_name": "b_form_cnic"
+          },
+          {
+            "data_type": "date",
+            "table_name": "students",
+            "column_name": "date_of_birth"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "students",
+            "column_name": "student_phone"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "students",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "verification_requests",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "verification_requests",
+            "column_name": "request_ref"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "verification_requests",
+            "column_name": "roll_number"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "verification_requests",
+            "column_name": "applicant_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "verification_requests",
+            "column_name": "organization"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "verification_requests",
+            "column_name": "verification_status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "verification_requests",
+            "column_name": "created_at"
+          }
+        ],
+        [
+          {
+            "relname": "applications",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "chat_history",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "exams",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "fees",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "leads",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "result_subject_marks",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "results",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "schema_migrations",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "students",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "verification_requests",
+            "n_live_tup": 0
+          }
+        ]
+      ],
+      "exactCounts": [
+        {
+          "count": 2,
+          "table": "applications"
+        },
+        {
+          "count": 0,
+          "table": "chat_history"
+        },
+        {
+          "count": 3,
+          "table": "exams"
+        },
+        {
+          "count": 4,
+          "table": "fees"
+        },
+        {
+          "count": 0,
+          "table": "leads"
+        },
+        {
+          "count": 8,
+          "table": "result_subject_marks"
+        },
+        {
+          "count": 4,
+          "table": "results"
+        },
+        {
+          "count": 2,
+          "table": "schema_migrations"
+        },
+        {
+          "count": 4,
+          "table": "students"
+        },
+        {
+          "count": 0,
+          "table": "verification_requests"
+        }
+      ]
+    },
+    "pos_db": {
+      "metadata": [
+        {
+          "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+          "database": "pos_db",
+          "user": "gateway_readonly"
+        },
+        [
+          {
+            "extname": "plpgsql",
+            "extversion": "1.0"
+          }
+        ],
+        [
+          {
+            "data_type": "integer",
+            "table_name": "categories",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "categories",
+            "column_name": "category_name"
+          },
+          {
+            "data_type": "text",
+            "table_name": "categories",
+            "column_name": "description"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "categories",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "chat_history",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "session_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "sender"
+          },
+          {
+            "data_type": "text",
+            "table_name": "chat_history",
+            "column_name": "message_text"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "chat_history",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "customers",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "customers",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "customers",
+            "column_name": "full_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "customers",
+            "column_name": "city"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "customers",
+            "column_name": "loyalty_points"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "customers",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "inventory",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "inventory",
+            "column_name": "product_id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "inventory",
+            "column_name": "stock_quantity"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "inventory",
+            "column_name": "reorder_level"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "inventory",
+            "column_name": "updated_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "push_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "city"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "lead_stage"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "leads",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "order_items",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "order_items",
+            "column_name": "order_id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "order_items",
+            "column_name": "product_id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "order_items",
+            "column_name": "variant_id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "order_items",
+            "column_name": "quantity"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "order_items",
+            "column_name": "unit_price_pkr"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "order_items",
+            "column_name": "subtotal_pkr"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "orders",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "orders",
+            "column_name": "order_number"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "orders",
+            "column_name": "idempotency_key"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "orders",
+            "column_name": "customer_id"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "orders",
+            "column_name": "total_amount_pkr"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "orders",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "orders",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "text",
+            "table_name": "orders",
+            "column_name": "delivery_notes"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "payments",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "payments",
+            "column_name": "order_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "payments",
+            "column_name": "provider"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "payments",
+            "column_name": "payment_method"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "payments",
+            "column_name": "transaction_ref"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "payments",
+            "column_name": "idempotency_key"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "payments",
+            "column_name": "amount_pkr"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "payments",
+            "column_name": "payment_status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "payments",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "prices",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "prices",
+            "column_name": "product_id"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "prices",
+            "column_name": "price_pkr"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "prices",
+            "column_name": "currency"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "prices",
+            "column_name": "effective_date"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "product_variants",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "product_variants",
+            "column_name": "product_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "product_variants",
+            "column_name": "variant_sku"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "product_variants",
+            "column_name": "variant_name"
+          },
+          {
+            "data_type": "jsonb",
+            "table_name": "product_variants",
+            "column_name": "attributes"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "product_variants",
+            "column_name": "additional_price_pkr"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "product_variants",
+            "column_name": "is_active"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "product_variants",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "products",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "products",
+            "column_name": "sku"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "products",
+            "column_name": "category_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "products",
+            "column_name": "name"
+          },
+          {
+            "data_type": "text",
+            "table_name": "products",
+            "column_name": "description"
+          },
+          {
+            "data_type": "boolean",
+            "table_name": "products",
+            "column_name": "is_active"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "products",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "version"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "description"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "checksum"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "applied_by"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "schema_migrations",
+            "column_name": "applied_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schema_migrations",
+            "column_name": "execution_time_ms"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "status"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "transactions",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "transactions",
+            "column_name": "order_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "transactions",
+            "column_name": "type"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "transactions",
+            "column_name": "amount_pkr"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "transactions",
+            "column_name": "created_at"
+          }
+        ],
+        [
+          {
+            "relname": "categories",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "chat_history",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "customers",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "inventory",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "leads",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "order_items",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "orders",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "payments",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "prices",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "product_variants",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "products",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "schema_migrations",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "transactions",
+            "n_live_tup": 0
+          }
+        ]
+      ],
+      "exactCounts": [
+        {
+          "count": 4,
+          "table": "categories"
+        },
+        {
+          "count": 0,
+          "table": "chat_history"
+        },
+        {
+          "count": 5,
+          "table": "customers"
+        },
+        {
+          "count": 7,
+          "table": "inventory"
+        },
+        {
+          "count": 0,
+          "table": "leads"
+        },
+        {
+          "count": 15,
+          "table": "order_items"
+        },
+        {
+          "count": 4,
+          "table": "orders"
+        },
+        {
+          "count": 4,
+          "table": "payments"
+        },
+        {
+          "count": 7,
+          "table": "prices"
+        },
+        {
+          "count": 6,
+          "table": "product_variants"
+        },
+        {
+          "count": 7,
+          "table": "products"
+        },
+        {
+          "count": 2,
+          "table": "schema_migrations"
+        },
+        {
+          "count": 0,
+          "table": "transactions"
+        }
+      ]
+    },
+    "hospital_db": {
+      "metadata": [
+        {
+          "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+          "database": "hospital_db",
+          "user": "gateway_readonly"
+        },
+        [
+          {
+            "extname": "plpgsql",
+            "extversion": "1.0"
+          }
+        ],
+        [
+          {
+            "data_type": "integer",
+            "table_name": "appointment_history",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "appointment_history",
+            "column_name": "appointment_id"
+          },
+          {
+            "data_type": "text",
+            "table_name": "appointment_history",
+            "column_name": "doctor_notes"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "appointment_history",
+            "column_name": "diagnosis"
+          },
+          {
+            "data_type": "date",
+            "table_name": "appointment_history",
+            "column_name": "follow_up_date"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "appointment_history",
+            "column_name": "logged_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "appointments",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "appointments",
+            "column_name": "appointment_number"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "appointments",
+            "column_name": "patient_id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "appointments",
+            "column_name": "doctor_id"
+          },
+          {
+            "data_type": "date",
+            "table_name": "appointments",
+            "column_name": "appointment_date"
+          },
+          {
+            "data_type": "time without time zone",
+            "table_name": "appointments",
+            "column_name": "appointment_time"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "appointments",
+            "column_name": "status"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "appointments",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "appointments",
+            "column_name": "teleconsult_link"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "chat_history",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "session_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "chat_history",
+            "column_name": "sender"
+          },
+          {
+            "data_type": "text",
+            "table_name": "chat_history",
+            "column_name": "message_text"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "chat_history",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "departments",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "departments",
+            "column_name": "department_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "departments",
+            "column_name": "location_floor"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "departments",
+            "column_name": "head_doctor"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "departments",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "doctors",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "doctors",
+            "column_name": "department_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "doctors",
+            "column_name": "doctor_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "doctors",
+            "column_name": "specialty"
+          },
+          {
+            "data_type": "numeric",
+            "table_name": "doctors",
+            "column_name": "opd_fee_pkr"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "doctors",
+            "column_name": "qualification"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "doctors",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "customer_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "push_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "leads",
+            "column_name": "lead_stage"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "leads",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "patients",
+            "column_name": "id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "patients",
+            "column_name": "patient_mrn"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "patients",
+            "column_name": "patient_name"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "patients",
+            "column_name": "patient_phone"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "patients",
+            "column_name": "gender"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "patients",
+            "column_name": "age"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "patients",
+            "column_name": "created_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schedules",
+            "column_name": "id"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schedules",
+            "column_name": "doctor_id"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schedules",
+            "column_name": "available_days"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schedules",
+            "column_name": "opd_timings"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schedules",
+            "column_name": "max_daily_patients"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "version"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "description"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "checksum"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "applied_by"
+          },
+          {
+            "data_type": "timestamp with time zone",
+            "table_name": "schema_migrations",
+            "column_name": "applied_at"
+          },
+          {
+            "data_type": "integer",
+            "table_name": "schema_migrations",
+            "column_name": "execution_time_ms"
+          },
+          {
+            "data_type": "character varying",
+            "table_name": "schema_migrations",
+            "column_name": "status"
+          }
+        ],
+        [
+          {
+            "relname": "appointment_history",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "appointments",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "chat_history",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "departments",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "doctors",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "leads",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "patients",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "schedules",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "schema_migrations",
+            "n_live_tup": 0
+          }
+        ]
+      ],
+      "exactCounts": [
+        {
+          "count": 0,
+          "table": "appointment_history"
+        },
+        {
+          "count": 2,
+          "table": "appointments"
+        },
+        {
+          "count": 0,
+          "table": "chat_history"
+        },
+        {
+          "count": 4,
+          "table": "departments"
+        },
+        {
+          "count": 8,
+          "table": "doctors"
+        },
+        {
+          "count": 0,
+          "table": "leads"
+        },
+        {
+          "count": 3,
+          "table": "patients"
+        },
+        {
+          "count": 8,
+          "table": "schedules"
+        },
+        {
+          "count": 2,
+          "table": "schema_migrations"
+        }
+      ]
+    },
+    "evogo_users": {
+      "metadata": [
+        {
+          "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+          "database": "evogo_users",
+          "user": "gateway_readonly"
+        },
+        [
+          {
+            "extname": "plpgsql",
+            "extversion": "1.0"
+          },
+          {
+            "extname": "uuid-ossp",
+            "extversion": "1.1"
+          }
+        ],
+        "\r",
+        [
+          {
+            "relname": "instances",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "labels",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "messages",
+            "n_live_tup": 0
+          },
+          {
+            "relname": "runtime_configs",
+            "n_live_tup": 0
+          }
+        ]
+      ]
+    }
+  },
+  "safeguards": [
+    [
+      {
+        "rolname": "platform_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "pos_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "bise_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "hospital_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "gateway_readonly",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=10s"
+        ]
+      },
+      {
+        "rolname": "gateway_action_writer",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=15s"
+        ]
+      }
+    ],
+    [
+      {
+        "datname": "platform_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      },
+      {
+        "datname": "pos_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      },
+      {
+        "datname": "bise_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      },
+      {
+        "datname": "hospital_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      }
+    ]
+  ],
+  "registry": [
+    [
+      {
+        "id": 1,
+        "status": "CONNECTED",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "phone_number": null,
+        "business_code": "POS_RETAIL",
+        "instance_name": "pos-instance"
+      },
+      {
+        "id": 2,
+        "status": "CONNECTED",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "phone_number": null,
+        "business_code": "BISE_EDU",
+        "instance_name": "bise-instance"
+      },
+      {
+        "id": 3,
+        "status": "CONNECTED",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "phone_number": null,
+        "business_code": "HOSP_HEALTH",
+        "instance_name": "hospital-instance"
+      },
+      {
+        "id": 4,
+        "status": "CONNECTED",
+        "created_at": "2026-09-29T21:37:34.693787+05:00",
+        "phone_number": "+923127118485",
+        "business_code": "BISE_EDU",
+        "instance_name": "student-assistant"
+      },
+      {
+        "id": 5,
+        "status": "CONNECTED",
+        "created_at": "2026-09-29T21:37:34.693787+05:00",
+        "phone_number": "+923201711081",
+        "business_code": "HOSP_HEALTH",
+        "instance_name": "hospital-assistant"
+      },
+      {
+        "id": 6,
+        "status": "CONNECTED",
+        "created_at": "2026-09-29T21:37:34.693787+05:00",
+        "phone_number": "+923098414407",
+        "business_code": "POS_RETAIL",
+        "instance_name": "point-of-sale"
+      }
+    ],
+    [
+      {
+        "id": 1,
+        "name": "GlimsTech POS Retail Automation",
+        "status": "ACTIVE",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "updated_at": "2026-09-28T11:56:49.366469+05:00",
+        "business_code": "POS_RETAIL",
+        "industry_type": "RETAIL"
+      },
+      {
+        "id": 2,
+        "name": "BISE Educational Board System",
+        "status": "ACTIVE",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "updated_at": "2026-09-28T11:56:49.366469+05:00",
+        "business_code": "BISE_EDU",
+        "industry_type": "EDUCATION"
+      },
+      {
+        "id": 3,
+        "name": "City Healthcare & Hospital System",
+        "status": "ACTIVE",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "updated_at": "2026-09-28T11:56:49.366469+05:00",
+        "business_code": "HOSP_HEALTH",
+        "industry_type": "HEALTHCARE"
+      }
+    ]
+  ],
+  "biseResults": [
+    [
+      {
+        "grade": "A+",
+        "title": "Matriculation Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "102450",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 945
+      },
+      {
+        "grade": "A",
+        "title": "Matriculation Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "102451",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 880
+      },
+      {
+        "grade": "A+",
+        "title": "Intermediate Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "204501",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 995
+      },
+      {
+        "grade": "B",
+        "title": "Intermediate Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "204502",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 750
+      }
+    ]
+  ],
+  "backups": [
+    {
+      "name": "phase1-20260924-155303",
+      "files": []
+    },
+    {
+      "name": "phase4-20260923-201912",
+      "files": [
+        {
+          "name": "dev-before.sql.dpapi",
+          "bytes": 3734
+        }
+      ]
+    },
+    {
+      "name": "phase4-20260923-203133",
+      "files": []
+    },
+    {
+      "name": "phase4-20260923-203858",
+      "files": [
+        {
+          "name": "dev-before.sql.dpapi",
+          "bytes": 74294
+        }
+      ]
+    },
+    {
+      "name": "phase4-restore-20260923-202755",
+      "files": []
+    },
+    {
+      "name": "phase4-restore-20260923-203837",
+      "files": [
+        {
+          "name": "bise_db.sql.dpapi",
+          "bytes": 14438
+        },
+        {
+          "name": "control_db.sql.dpapi",
+          "bytes": 18406
+        },
+        {
+          "name": "hospital_db.sql.dpapi",
+          "bytes": 14694
+        },
+        {
+          "name": "pos_db.sql.dpapi",
+          "bytes": 14406
+        }
+      ]
+    },
+    {
+      "name": "phase4-restore-20260923-204913",
+      "files": [
+        {
+          "name": "control_db.sql.dpapi",
+          "bytes": 18406
+        },
+        {
+          "name": "pos_db.sql.dpapi",
+          "bytes": 14406
+        }
+      ]
+    },
+    {
+      "name": "phase5-20260923-210853",
+      "files": [
+        {
+          "name": "bise_db.before.sql.dpapi",
+          "bytes": 14438
+        },
+        {
+          "name": "hospital_db.before.sql.dpapi",
+          "bytes": 14694
+        },
+        {
+          "name": "pos_db.before.sql.dpapi",
+          "bytes": 14406
+        }
+      ]
+    },
+    {
+      "name": "phase5-20260923-211234",
+      "files": []
+    },
+    {
+      "name": "pre_bise_eval_verification",
+      "files": [
+        {
+          "name": "agent_evaluator.js.bak",
+          "bytes": 17960
+        },
+        {
+          "name": "bise_student_service.js.bak",
+          "bytes": 10293
+        },
+        {
+          "name": "evaluation_dataset.json.bak",
+          "bytes": 17041
+        },
+        {
+          "name": "init-bise-db.sql.bak",
+          "bytes": 17526
+        }
+      ]
+    },
+    {
+      "name": "pre_e2e_whatsapp_backup_20260930",
+      "files": [
+        {
+          "name": "bise_db.sql",
+          "bytes": 25455
+        },
+        {
+          "name": "crm_store.json",
+          "bytes": 25206
+        },
+        {
+          "name": "docker-compose.prod.yml",
+          "bytes": 7877
+        },
+        {
+          "name": "docker-compose.yml",
+          "bytes": 2848
+        },
+        {
+          "name": "evolution_whatsapp_ai_agent_bot.json",
+          "bytes": 81333
+        },
+        {
+          "name": "hospital_db.sql",
+          "bytes": 18755
+        },
+        {
+          "name": "knowledge_base.json",
+          "bytes": 2613
+        },
+        {
+          "name": "n8n_database.sqlite",
+          "bytes": 491565056
+        },
+        {
+          "name": "platform_db.sql",
+          "bytes": 44966
+        },
+        {
+          "name": "pos_db.sql",
+          "bytes": 26120
+        }
+      ]
+    },
+    {
+      "name": "pre_e2e_whatsapp_testing",
+      "files": [
+        {
+          "name": "apply-backend-safeguards.sql.bak",
+          "bytes": 2650
+        },
+        {
+          "name": "e2e_whatsapp_pipeline.js.bak",
+          "bytes": 12118
+        },
+        {
+          "name": "test_phase36_e2e_whatsapp.js.bak",
+          "bytes": 8362
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-01T10:06:35.823Z",
+  "hostGroq": {
+    "status": 200,
+    "models": [
+      "openai/gpt-oss-safeguard-20b",
+      "openai/gpt-oss-120b",
+      "qwen/qwen3.8-27b",
+      "openai/gpt-oss-20b"
+    ]
+  },
+  "containerDNS": [
+    {
+      "host": "host.docker.internal",
+      "lookup": {
+        "address": "192.168.65.254",
+        "family": 4
+      }
+    },
+    {
+      "host": "api.groq.com",
+      "lookup": {
+        "address": "104.18.38.236",
+        "family": 4
+      }
+    },
+    {
+      "host": "evolution-redis",
+      "lookup": {
+        "address": "172.24.0.2",
+        "family": 4
+      }
+    },
+    {
+      "host": "evolution-postgres",
+      "error": "getaddrinfo EAI_AGAIN evolution-postgres"
+    }
+  ]
+}

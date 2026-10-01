@@ -1,0 +1,345 @@
+[
+  {
+    "name": "/n8n",
+    "image": "docker.n8n.io/n8nio/n8n:latest",
+    "imageId": "sha256:c628aa44f1cc3de51f81b3a2b31ca1fa95de20638379e257330e575388964faf",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 638,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-01T09:12:39.557215268Z",
+      "FinishedAt": "2026-10-01T09:12:31.988858484Z"
+    },
+    "restarts": 0,
+    "networks": {
+      "ai-automation_evolution_network": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": [
+          "n8n",
+          "n8n"
+        ],
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "cb880d74b08e58c9a03378dac50373920ffb19dc305701f8dad7644a9c1bada8",
+        "EndpointID": "46e24d0d0168dcf7928e82f6ff745c6877c9d34ac52ef5ae7d67c2fb3b92d74e",
+        "Gateway": "172.24.0.1",
+        "IPAddress": "172.24.0.3",
+        "MacAddress": "f6:0f:bc:f7:75:e4",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "n8n",
+          "8ae5d24fa8b8"
+        ]
+      }
+    },
+    "ports": {
+      "5678/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "5678"
+        }
+      ]
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "n8n_data",
+        "Source": "n8n_data",
+        "Destination": "/home/node/.n8n",
+        "Driver": "local",
+        "Mode": "rw",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "compose": "D:\\AI-Automation\\docker-compose.yml",
+    "env": [
+      "NODE_FUNCTION_ALLOW_EXTERNAL=pg",
+      "N8N_HOST=0.0.0.0",
+      "N8N_PORT=5678",
+      "N8N_PROTOCOL=http",
+      "NODE_ENV=production",
+      "WEBHOOK_URL=http://localhost:5678/",
+      "N8N_ENCRYPTION_KEY=[REDACTED]",
+      "NODE_VERSION=24.14.1",
+      "NPM_CONFIG_UPDATE_NOTIFIER=false",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH=/opt/nodejs/node-v24.14.1/lib/node_modules",
+      "N8N_RELEASE_TYPE=stable",
+      "SHELL=/bin/sh"
+    ]
+  },
+  {
+    "name": "/evolution-go",
+    "image": "evoapicloud/evolution-go:latest",
+    "imageId": "sha256:6fa601464bd76d3d19ece4c48d8bb5373d025d95d45b939ae4bf0c77b03f5aaa",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 621,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-01T09:12:39.538723283Z",
+      "FinishedAt": "2026-10-01T09:12:31.986307686Z"
+    },
+    "restarts": 0,
+    "networks": {
+      "examples_evolution_network": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": [
+          "evolution-go",
+          "evolution-go"
+        ],
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "ee5f985be9b20aac584099f550d7750a3ad74439c98d5e075be625e36f9029a3",
+        "EndpointID": "4dd54422cb8a1178618ab19f151ab0ac4df48437fc9a679fb0412a96404be9d2",
+        "Gateway": "172.21.0.1",
+        "IPAddress": "172.21.0.2",
+        "MacAddress": "66:fc:02:2a:1a:e4",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "evolution-go",
+          "09187d0591b4"
+        ]
+      }
+    },
+    "ports": {
+      "4000/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "4000"
+        }
+      ]
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "examples_evolution_data",
+        "Source": "/var/lib/docker/volumes/examples_evolution_data/_data",
+        "Destination": "/app/dbdata",
+        "Driver": "local",
+        "Mode": "rw",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "examples_evolution_logs",
+        "Source": "/var/lib/docker/volumes/examples_evolution_logs/_data",
+        "Destination": "/app/logs",
+        "Driver": "local",
+        "Mode": "rw",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "compose": "d:\\AI-Automation\\evolution-go\\docker\\examples\\docker-compose.yml",
+    "env": [
+      "WEBHOOK_URL=http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+      "CLIENT_NAME=evolution",
+      "AMQP_GLOBAL_ENABLED=false",
+      "OS_NAME=Linux",
+      "PROXY_PASSWORD=[REDACTED]",
+      "CONNECT_ON_STARTUP=true",
+      "SERVER_PORT=4000",
+      "EVENT_IGNORE_STATUS=true",
+      "WADEBUG=INFO",
+      "LOG_MAX_BACKUPS=5",
+      "GLOBAL_API_KEY=[REDACTED]",
+      "POSTGRES_AUTH_DB=postgresql://postgres:[REDACTED]@host.docker.internal:5432/evogo_auth?sslmode=disable",
+      "MINIO_ENABLED=false",
+      "PROXY_HOST=",
+      "QRCODE_MAX_COUNT=5",
+      "LOG_MAX_SIZE=100",
+      "LOG_DIRECTORY=/app/logs",
+      "POSTGRES_USERS_DB=postgresql://postgres:[REDACTED]@host.docker.internal:5432/evogo_users?sslmode=disable",
+      "LOG_MAX_AGE=30",
+      "LOG_COMPRESS=true",
+      "LOGTYPE=console",
+      "AMQP_URL=",
+      "NATS_URL=",
+      "NATS_GLOBAL_ENABLED=false",
+      "EVENT_IGNORE_GROUP=false",
+      "PROXY_USERNAME=",
+      "PROXY_PORT=",
+      "WEBHOOK_FILES=true",
+      "DATABASE_SAVE_MESSAGES=false",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "TZ=America/Sao_Paulo"
+    ]
+  },
+  {
+    "name": "/evolution-redis",
+    "image": "redis:alpine",
+    "imageId": "sha256:ba6e394f6acc2a695ef1b6944f161b9ca813711739be68319fa0db3470673f1d",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 622,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-01T09:12:39.545445577Z",
+      "FinishedAt": "2026-10-01T09:12:31.986827486Z"
+    },
+    "restarts": 0,
+    "networks": {
+      "ai-automation_evolution_network": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": [
+          "evolution-redis",
+          "redis"
+        ],
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "cb880d74b08e58c9a03378dac50373920ffb19dc305701f8dad7644a9c1bada8",
+        "EndpointID": "7d67bc935e9b64821df7e3282db8dcb66f3322e6b8ba2a69a244ed107743368c",
+        "Gateway": "172.24.0.1",
+        "IPAddress": "172.24.0.2",
+        "MacAddress": "ce:59:e8:17:9e:b3",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "evolution-redis",
+          "redis",
+          "86b27aa660cf"
+        ]
+      }
+    },
+    "ports": {
+      "6379/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "6379"
+        }
+      ]
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "ai-automation_redis_data",
+        "Source": "/var/lib/docker/volumes/ai-automation_redis_data/_data",
+        "Destination": "/data",
+        "Driver": "local",
+        "Mode": "rw",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "compose": "D:\\AI-Automation\\docker-compose.yml",
+    "env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "REDIS_VERSION=8.10.2"
+    ]
+  },
+  {
+    "name": "/evolution-postgres",
+    "image": "pgvector/pgvector:pg15",
+    "imageId": "sha256:a947c45cdc5906a1bc951f20a8709e321256343ee0f251e4ae00b5e7def4e6da",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 137,
+      "Error": "",
+      "StartedAt": "2026-09-29T13:13:58.412919396Z",
+      "FinishedAt": "2026-09-29T14:56:50.775920064Z"
+    },
+    "restarts": 0,
+    "networks": {
+      "examples_evolution_network": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": [
+          "evolution-postgres",
+          "postgres"
+        ],
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "ee5f985be9b20aac584099f550d7750a3ad74439c98d5e075be625e36f9029a3",
+        "EndpointID": "",
+        "Gateway": "",
+        "IPAddress": "",
+        "MacAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "evolution-postgres",
+          "postgres",
+          "6f98a4a2de05"
+        ]
+      }
+    },
+    "ports": {
+      "5432/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "5433"
+        }
+      ]
+    },
+    "mounts": [
+      {
+        "Type": "bind",
+        "Source": "D:\\AI-Automation\\evolution-go\\docker\\examples\\init-db.sql",
+        "Destination": "/docker-entrypoint-initdb.d/init-db.sql",
+        "Mode": "rw",
+        "RW": true,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "volume",
+        "Name": "examples_postgres_data",
+        "Source": "/var/lib/docker/volumes/examples_postgres_data/_data",
+        "Destination": "/var/lib/postgresql/data",
+        "Driver": "local",
+        "Mode": "rw",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "compose": "D:\\AI-Automation\\evolution-go\\docker\\examples\\docker-compose.yml",
+    "env": [
+      "POSTGRES_USER=postgres",
+      "POSTGRES_PASSWORD=[REDACTED]",
+      "POSTGRES_DB=postgres",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/postgresql/15/bin",
+      "GOSU_VERSION=1.19",
+      "LANG=en_US.utf8",
+      "PG_MAJOR=15",
+      "PG_VERSION=15.19-1.pgdg12+2",
+      "PGDATA=/var/lib/postgresql/data"
+    ]
+  }
+]

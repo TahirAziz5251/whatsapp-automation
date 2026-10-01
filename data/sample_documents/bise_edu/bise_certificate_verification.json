@@ -1,0 +1,10 @@
+{
+  "business_code": "BISE_EDU",
+  "namespace": "bise_collection",
+  "source": "board_regulations",
+  "title": "BISE Academic Certificate & Degree Verification Procedure",
+  "doc_type": "GUIDELINE",
+  "version": "v1.0",
+  "status": "ACTIVE",
+  "content": "Official academic certificate verification procedure for employment, foreign embassy attestation (IBCC), and international university admissions. Applicants must submit original Matric or Intermediate result cards, verified CNIC or B-Form copy, and two passport-sized photographs. Normal verification fee is PKR 2,000 per certificate with a standard turnaround time of 7 business working days. Urgent express verification is processed within 24 to 48 hours upon payment of PKR 4,000 urgent fee. Each verified certificate receives a tamper-proof holographic security seal, embossed board stamp, and a unique 2D cryptographic QR barcode allowing foreign embassies and academic institutions to verify authentic result records directly on the BISE central server."
+}

@@ -1,0 +1,6274 @@
+{
+  "at": "2026-10-01T12:10:49.228Z",
+  "errors": [],
+  "containers": [
+    {
+      "name": "/n8n",
+      "image": "docker.n8n.io/n8nio/n8n:latest",
+      "state": "running",
+      "startedAt": "2026-10-01T10:58:25.338796995Z",
+      "restartCount": 0,
+      "networks": [
+        "ai-automation_evolution_network"
+      ],
+      "ports": {
+        "5678/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "5678"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "5678"
+          }
+        ]
+      },
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "n8n_data",
+          "source": "n8n_data",
+          "destination": "/home/node/.n8n"
+        }
+      ]
+    },
+    {
+      "name": "/evolution-go",
+      "image": "evoapicloud/evolution-go:latest",
+      "state": "running",
+      "startedAt": "2026-10-01T09:12:39.538723283Z",
+      "restartCount": 0,
+      "networks": [
+        "examples_evolution_network"
+      ],
+      "ports": {
+        "4000/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "4000"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "4000"
+          }
+        ]
+      },
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "examples_evolution_data",
+          "source": "/var/lib/docker/volumes/examples_evolution_data/_data",
+          "destination": "/app/dbdata"
+        },
+        {
+          "type": "volume",
+          "name": "examples_evolution_logs",
+          "source": "/var/lib/docker/volumes/examples_evolution_logs/_data",
+          "destination": "/app/logs"
+        }
+      ]
+    },
+    {
+      "name": "/evolution-redis",
+      "image": "redis:alpine",
+      "state": "running",
+      "startedAt": "2026-10-01T09:12:39.545445577Z",
+      "restartCount": 0,
+      "networks": [
+        "ai-automation_evolution_network"
+      ],
+      "ports": {
+        "6379/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "6379"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "6379"
+          }
+        ]
+      },
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "ai-automation_redis_data",
+          "source": "/var/lib/docker/volumes/ai-automation_redis_data/_data",
+          "destination": "/data"
+        }
+      ]
+    }
+  ],
+  "n8n": {
+    "at": "2026-10-01T12:11:01.410Z",
+    "workflows": [
+      {
+        "id": "Iin5wt0nRAhO7UV9",
+        "name": "Evolution API WhatsApp AI Agent Bot",
+        "active": 0,
+        "versionId": "518ecea3-fa95-4ab9-89f8-07d4cfd005d9",
+        "activeVersionId": null,
+        "settings": {
+          "executionOrder": "v1",
+          "binaryMode": "separate",
+          "timeSavedMode": "fixed",
+          "callerPolicy": "workflowsFromSameOwner",
+          "availableInMCP": false,
+          "saveExecutionProgress": true,
+          "saveDataErrorExecution": "all",
+          "timezone": "Asia/Karachi"
+        },
+        "nodes": [
+          {
+            "name": "Evolution Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Is Customer Message?",
+            "type": "n8n-nodes-base.if",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Message Normalizer",
+            "type": "n8n-nodes-base.set",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Resolve Business (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "cb0f82f84343",
+            "credentials": {}
+          },
+          {
+            "name": "Load Business Profile (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "8bc579a888fb",
+            "credentials": {}
+          },
+          {
+            "name": "Construct Session Identity",
+            "type": "n8n-nodes-base.set",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Redis Transient Session & Dedup Gate",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "4efbd1631355",
+            "credentials": {}
+          },
+          {
+            "name": "PostgreSQL Persistent Conversation Store",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "f522dc4e8291",
+            "credentials": {}
+          },
+          {
+            "name": "AI Agent (Shared Engine)",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Groq Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {
+              "groqApi": {
+                "id": "YOUR_GROQ_CREDENTIAL_ID",
+                "name": "Groq Account"
+              }
+            }
+          },
+          {
+            "name": "Window Buffer Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Search Knowledge Base",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "24b9d1ea32c0",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Manage Calendar",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "587ccf6b75f1",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Sync CRM",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "d89d8bb93293",
+            "credentials": {}
+          },
+          {
+            "name": "Send WhatsApp Response (Evolution Router)",
+            "type": "n8n-nodes-base.httpRequest",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Business Data Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "aaf6cccfaad7",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Action Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "22a7b389a5c9",
+            "credentials": {}
+          },
+          {
+            "name": "Result Validator & Response Guard",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "d454fd0968d1",
+            "credentials": {}
+          }
+        ],
+        "connections": {
+          "Evolution Webhook": {
+            "main": [
+              [
+                {
+                  "node": "Is Customer Message?",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Is Customer Message?": {
+            "main": [
+              [
+                {
+                  "node": "Message Normalizer",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Message Normalizer": {
+            "main": [
+              [
+                {
+                  "node": "Resolve Business (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Resolve Business (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Load Business Profile (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Load Business Profile (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Construct Session Identity",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Construct Session Identity": {
+            "main": [
+              [
+                {
+                  "node": "Redis Transient Session & Dedup Gate",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Redis Transient Session & Dedup Gate": {
+            "main": [
+              [
+                {
+                  "node": "PostgreSQL Persistent Conversation Store",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Groq Chat Model": {
+            "ai_languageModel": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_languageModel",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Window Buffer Memory": {
+            "ai_memory": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_memory",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Search Knowledge Base": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Manage Calendar": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Sync CRM": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "PostgreSQL Persistent Conversation Store": {
+            "main": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "AI Agent (Shared Engine)": {
+            "main": [
+              [
+                {
+                  "node": "Result Validator & Response Guard",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Business Data Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Action Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Result Validator & Response Guard": {
+            "main": [
+              [
+                {
+                  "node": "Send WhatsApp Response (Evolution Router)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          }
+        },
+        "publishedConnections": null,
+        "publishedNodes": []
+      },
+      {
+        "id": "I6hSJPrpkK98btAU",
+        "name": "Evolution API WhatsApp AI Agent Bot ",
+        "active": 0,
+        "versionId": "845dc211-eeb3-4e79-bf29-f3beb65f5db2",
+        "activeVersionId": null,
+        "settings": {
+          "executionOrder": "v1",
+          "binaryMode": "separate"
+        },
+        "nodes": [
+          {
+            "name": "Evolution Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Is Customer Message?",
+            "type": "n8n-nodes-base.if",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Message Normalizer",
+            "type": "n8n-nodes-base.set",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Resolve Business (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "cb0f82f84343",
+            "credentials": {}
+          },
+          {
+            "name": "Load Business Profile (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "8bc579a888fb",
+            "credentials": {}
+          },
+          {
+            "name": "Construct Session Identity",
+            "type": "n8n-nodes-base.set",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Redis Transient Session & Dedup Gate",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "4efbd1631355",
+            "credentials": {}
+          },
+          {
+            "name": "PostgreSQL Persistent Conversation Store",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "f522dc4e8291",
+            "credentials": {}
+          },
+          {
+            "name": "AI Agent (Shared Engine)",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Groq Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {
+              "groqApi": {
+                "id": "YOUR_GROQ_CREDENTIAL_ID",
+                "name": "Groq Account"
+              }
+            }
+          },
+          {
+            "name": "Window Buffer Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Search Knowledge Base",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "24b9d1ea32c0",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Manage Calendar",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "587ccf6b75f1",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Sync CRM",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "d89d8bb93293",
+            "credentials": {}
+          },
+          {
+            "name": "Send WhatsApp Response (Evolution Router)",
+            "type": "n8n-nodes-base.httpRequest",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Business Data Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "aaf6cccfaad7",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Action Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "22a7b389a5c9",
+            "credentials": {}
+          },
+          {
+            "name": "Result Validator & Response Guard",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "d454fd0968d1",
+            "credentials": {}
+          }
+        ],
+        "connections": {
+          "Evolution Webhook": {
+            "main": [
+              [
+                {
+                  "node": "Is Customer Message?",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Is Customer Message?": {
+            "main": [
+              [
+                {
+                  "node": "Message Normalizer",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Message Normalizer": {
+            "main": [
+              [
+                {
+                  "node": "Resolve Business (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Resolve Business (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Load Business Profile (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Load Business Profile (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Construct Session Identity",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Construct Session Identity": {
+            "main": [
+              [
+                {
+                  "node": "Redis Transient Session & Dedup Gate",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Redis Transient Session & Dedup Gate": {
+            "main": [
+              [
+                {
+                  "node": "PostgreSQL Persistent Conversation Store",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Groq Chat Model": {
+            "ai_languageModel": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_languageModel",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Window Buffer Memory": {
+            "ai_memory": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_memory",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Search Knowledge Base": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Manage Calendar": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Sync CRM": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "PostgreSQL Persistent Conversation Store": {
+            "main": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "AI Agent (Shared Engine)": {
+            "main": [
+              [
+                {
+                  "node": "Result Validator & Response Guard",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Business Data Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Action Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Result Validator & Response Guard": {
+            "main": [
+              [
+                {
+                  "node": "Send WhatsApp Response (Evolution Router)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          }
+        },
+        "publishedConnections": null,
+        "publishedNodes": []
+      },
+      {
+        "id": "Ag4HbAjKlfHH6Xk7",
+        "name": "Evolution API WhatsApp AI Agent Bot ",
+        "active": 1,
+        "versionId": "2dea9d33-591e-46d0-a031-0ead966d160e",
+        "activeVersionId": "2dea9d33-591e-46d0-a031-0ead966d160e",
+        "settings": {
+          "executionOrder": "v1",
+          "binaryMode": "separate",
+          "saveDataSuccessExecution": "all",
+          "saveExecutionProgress": true,
+          "saveDataErrorExecution": "all"
+        },
+        "nodes": [
+          {
+            "name": "No Operation, do nothing",
+            "type": "n8n-nodes-base.noOp",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Evolution Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Is Customer Message?",
+            "type": "n8n-nodes-base.if",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Message Normalizer",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "f3e138b1f37f",
+            "credentials": {}
+          },
+          {
+            "name": "Resolve Business (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "d1aab8791752",
+            "credentials": {}
+          },
+          {
+            "name": "Load Business Profile (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "9c27e512950f",
+            "credentials": {}
+          },
+          {
+            "name": "Construct Session Identity",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "dfecd9a9724e",
+            "credentials": {}
+          },
+          {
+            "name": "Redis Transient Session & Dedup Gate",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "e1bd53eed5cc",
+            "credentials": {}
+          },
+          {
+            "name": "PostgreSQL Persistent Conversation Store",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "a47529a78fc2",
+            "credentials": {}
+          },
+          {
+            "name": "AI Agent (Shared Engine)",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Groq Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {
+              "groqApi": {
+                "id": "gSJlxXUjC6bDmZLk",
+                "name": "Groq account 3"
+              }
+            }
+          },
+          {
+            "name": "Window Buffer Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Search Knowledge Base",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "90c6dfe3d4ef",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Business Data Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "9f52fa847d1e",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Action Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "22a7b389a5c9",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Manage Calendar",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "97d3d4d8e08d",
+            "credentials": {}
+          },
+          {
+            "name": "Tool: Sync CRM",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "d7295062a6ae",
+            "credentials": {}
+          },
+          {
+            "name": "Result Validator & Response Guard",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "4a21bf0abacb",
+            "credentials": {}
+          },
+          {
+            "name": "Send WhatsApp Response (Evolution Router)",
+            "type": "n8n-nodes-base.httpRequest",
+            "disabled": false,
+            "codeHash": null,
+            "credentials": {}
+          }
+        ],
+        "connections": {
+          "Evolution Webhook": {
+            "main": [
+              [
+                {
+                  "node": "Is Customer Message?",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Is Customer Message?": {
+            "main": [
+              [
+                {
+                  "node": "Message Normalizer",
+                  "type": "main",
+                  "index": 0
+                }
+              ],
+              [
+                {
+                  "node": "No Operation, do nothing",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Message Normalizer": {
+            "main": [
+              [
+                {
+                  "node": "Resolve Business (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Resolve Business (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Load Business Profile (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Load Business Profile (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Construct Session Identity",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Construct Session Identity": {
+            "main": [
+              [
+                {
+                  "node": "Redis Transient Session & Dedup Gate",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Redis Transient Session & Dedup Gate": {
+            "main": [
+              [
+                {
+                  "node": "PostgreSQL Persistent Conversation Store",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "PostgreSQL Persistent Conversation Store": {
+            "main": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "AI Agent (Shared Engine)": {
+            "main": [
+              [
+                {
+                  "node": "Result Validator & Response Guard",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Groq Chat Model": {
+            "ai_languageModel": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_languageModel",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Window Buffer Memory": {
+            "ai_memory": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_memory",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Business Data Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Result Validator & Response Guard": {
+            "main": [
+              [
+                {
+                  "node": "Send WhatsApp Response (Evolution Router)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Search Knowledge Base": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Action Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Manage Calendar": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Sync CRM": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          }
+        },
+        "publishedConnections": {
+          "Evolution Webhook": {
+            "main": [
+              [
+                {
+                  "node": "Is Customer Message?",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Is Customer Message?": {
+            "main": [
+              [
+                {
+                  "node": "Message Normalizer",
+                  "type": "main",
+                  "index": 0
+                }
+              ],
+              [
+                {
+                  "node": "No Operation, do nothing",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Message Normalizer": {
+            "main": [
+              [
+                {
+                  "node": "Resolve Business (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Resolve Business (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Load Business Profile (platform_db)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Load Business Profile (platform_db)": {
+            "main": [
+              [
+                {
+                  "node": "Construct Session Identity",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Construct Session Identity": {
+            "main": [
+              [
+                {
+                  "node": "Redis Transient Session & Dedup Gate",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Redis Transient Session & Dedup Gate": {
+            "main": [
+              [
+                {
+                  "node": "PostgreSQL Persistent Conversation Store",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "PostgreSQL Persistent Conversation Store": {
+            "main": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "AI Agent (Shared Engine)": {
+            "main": [
+              [
+                {
+                  "node": "Result Validator & Response Guard",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Groq Chat Model": {
+            "ai_languageModel": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_languageModel",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Window Buffer Memory": {
+            "ai_memory": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_memory",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Business Data Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Result Validator & Response Guard": {
+            "main": [
+              [
+                {
+                  "node": "Send WhatsApp Response (Evolution Router)",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Search Knowledge Base": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Action Gateway": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Manage Calendar": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Tool: Sync CRM": {
+            "ai_tool": [
+              [
+                {
+                  "node": "AI Agent (Shared Engine)",
+                  "type": "ai_tool",
+                  "index": 0
+                }
+              ]
+            ]
+          }
+        },
+        "publishedNodes": [
+          {
+            "name": "No Operation, do nothing",
+            "type": "n8n-nodes-base.noOp",
+            "disabled": false,
+            "codeHash": null
+          },
+          {
+            "name": "Evolution Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "disabled": false,
+            "codeHash": null
+          },
+          {
+            "name": "Is Customer Message?",
+            "type": "n8n-nodes-base.if",
+            "disabled": false,
+            "codeHash": null
+          },
+          {
+            "name": "Message Normalizer",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "f3e138b1f37f"
+          },
+          {
+            "name": "Resolve Business (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "d1aab8791752"
+          },
+          {
+            "name": "Load Business Profile (platform_db)",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "9c27e512950f"
+          },
+          {
+            "name": "Construct Session Identity",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "dfecd9a9724e"
+          },
+          {
+            "name": "Redis Transient Session & Dedup Gate",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "e1bd53eed5cc"
+          },
+          {
+            "name": "PostgreSQL Persistent Conversation Store",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "a47529a78fc2"
+          },
+          {
+            "name": "AI Agent (Shared Engine)",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "disabled": false,
+            "codeHash": null
+          },
+          {
+            "name": "Groq Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "disabled": false,
+            "codeHash": null
+          },
+          {
+            "name": "Window Buffer Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "disabled": false,
+            "codeHash": null
+          },
+          {
+            "name": "Tool: Search Knowledge Base",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "90c6dfe3d4ef"
+          },
+          {
+            "name": "Tool: Business Data Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "9f52fa847d1e"
+          },
+          {
+            "name": "Tool: Action Gateway",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "22a7b389a5c9"
+          },
+          {
+            "name": "Tool: Manage Calendar",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "97d3d4d8e08d"
+          },
+          {
+            "name": "Tool: Sync CRM",
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "disabled": false,
+            "codeHash": "d7295062a6ae"
+          },
+          {
+            "name": "Result Validator & Response Guard",
+            "type": "n8n-nodes-base.code",
+            "disabled": false,
+            "codeHash": "4a21bf0abacb"
+          },
+          {
+            "name": "Send WhatsApp Response (Evolution Router)",
+            "type": "n8n-nodes-base.httpRequest",
+            "disabled": false,
+            "codeHash": null
+          }
+        ]
+      }
+    ],
+    "webhooks": [
+      {
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "webhookPath": "evolution-whatsapp-agent",
+        "method": "POST",
+        "node": "Evolution Webhook"
+      }
+    ],
+    "executions": [
+      {
+        "id": 3048,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:29:17.095",
+        "stoppedAt": "2026-10-01 10:29:21.875",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "1a80fb97fa23",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3047,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:29:16.856",
+        "stoppedAt": "2026-10-01 10:29:22.809",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "1a80fb97fa23",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3046,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:28:32.896",
+        "stoppedAt": "2026-10-01 10:28:33.319",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "8c59acfd3e91",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3045,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:28:32.501",
+        "stoppedAt": "2026-10-01 10:28:33.313",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "8c59acfd3e91",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3044,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:28:15.829",
+        "stoppedAt": "2026-10-01 10:28:15.896",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "191a4687896b",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3043,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:28:15.818",
+        "stoppedAt": "2026-10-01 10:28:15.892",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "191a4687896b",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3042,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:27:20.077",
+        "stoppedAt": "2026-10-01 10:27:26.036",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "fb92e74863fd",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3041,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:27:19.974",
+        "stoppedAt": "2026-10-01 10:27:25.279",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "fb92e74863fd",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3039,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:24:09.654",
+        "stoppedAt": "2026-10-01 10:24:12.333",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "a072645fda24",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3038,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:24:08.172",
+        "stoppedAt": "2026-10-01 10:25:08.468",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "767269be98f3",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3036,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:24:08.061",
+        "stoppedAt": "2026-10-01 10:25:07.957",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "d54a3fc3273d",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3035,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:24:07.988",
+        "stoppedAt": "2026-10-01 10:24:09.143",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "a072645fda24",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3034,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:24:00.099",
+        "stoppedAt": "2026-10-01 10:24:58.424",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "d54a3fc3273d",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3033,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:59.770",
+        "stoppedAt": "2026-10-01 10:24:58.410",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "8b202e9c8523",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3032,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:59.598",
+        "stoppedAt": "2026-10-01 10:24:58.392",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "8b202e9c8523",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3031,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:48.196",
+        "stoppedAt": "2026-10-01 10:23:48.593",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "9389ec7922ea",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3030,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:41.696",
+        "stoppedAt": "2026-10-01 10:23:44.718",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "911757a36087",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3029,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:41.628",
+        "stoppedAt": "2026-10-01 10:23:44.699",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "911757a36087",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3028,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:41.460",
+        "stoppedAt": "2026-10-01 10:23:44.688",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "c3632d22ad39",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3027,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:41.324",
+        "stoppedAt": "2026-10-01 10:23:44.681",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "a4353d276988",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3026,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:41.185",
+        "stoppedAt": "2026-10-01 10:23:44.673",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "65b40d09a893",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3025,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:41.017",
+        "stoppedAt": "2026-10-01 10:24:53.658",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "a0348e1ed355",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3024,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:40.996",
+        "stoppedAt": "2026-10-01 10:23:44.472",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "c3632d22ad39",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3023,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:40.954",
+        "stoppedAt": "2026-10-01 10:23:44.463",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "a4353d276988",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3022,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:40.905",
+        "stoppedAt": "2026-10-01 10:24:56.088",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "e55493c44a17",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3021,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:40.840",
+        "stoppedAt": "2026-10-01 10:23:44.186",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "9389ec7922ea",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3020,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:40.703",
+        "stoppedAt": "2026-10-01 10:24:52.726",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "e55493c44a17",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3019,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:40.490",
+        "stoppedAt": "2026-10-01 10:23:43.990",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "b1339109f970",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3018,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:39.767",
+        "stoppedAt": "2026-10-01 10:23:43.981",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "b1339109f970",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3017,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:39.570",
+        "stoppedAt": "2026-10-01 10:25:38.672",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "c7a19378d3b2",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3016,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:29.166",
+        "stoppedAt": "2026-10-01 10:25:38.652",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "a0348e1ed355",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3015,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:22.711",
+        "stoppedAt": "2026-10-01 10:23:43.703",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "65b40d09a893",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3014,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:23:12.088",
+        "stoppedAt": "2026-10-01 10:25:38.665",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "2d206d81c53f",
+        "senderHash": "bca9c63c9941",
+        "senderLast4": "7471",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 3013,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:10:04.188",
+        "stoppedAt": "2026-10-01 10:17:53.900",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "f09101e02030",
+        "senderHash": "dfc3ff78b1d7",
+        "senderLast4": "6900",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3012,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:09:56.986",
+        "stoppedAt": "2026-10-01 10:17:51.132",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "f09101e02030",
+        "senderHash": "dfc3ff78b1d7",
+        "senderLast4": "6900",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3011,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:09:40.555",
+        "stoppedAt": "2026-10-01 10:23:40.778",
+        "lastNode": "Resolve Business (platform_db)",
+        "error": {
+          "message": "Task request timed out after 60 seconds"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "74a2b07f528e",
+        "senderHash": "87ce067ab31b",
+        "senderLast4": "1303",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)"
+        ]
+      },
+      {
+        "id": 3010,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 10:09:37.715",
+        "stoppedAt": "2026-10-01 10:22:54.265",
+        "lastNode": "Resolve Business (platform_db)",
+        "error": {
+          "message": "Task request timed out after 60 seconds"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "74a2b07f528e",
+        "senderHash": "87ce067ab31b",
+        "senderLast4": "1303",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)"
+        ]
+      },
+      {
+        "id": 3009,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:10.100",
+        "stoppedAt": "2026-10-01 09:14:10.486",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "66668c3b803e",
+        "senderHash": "55733d40b645",
+        "senderLast4": "7080",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3008,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:10.089",
+        "stoppedAt": "2026-10-01 09:14:10.479",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "66668c3b803e",
+        "senderHash": "55733d40b645",
+        "senderLast4": "7080",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3007,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:10.023",
+        "stoppedAt": "2026-10-01 09:14:10.468",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "f39007471cf5",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3006,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:10.013",
+        "stoppedAt": "2026-10-01 09:14:10.456",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": true,
+        "messageIdHash": "f39007471cf5",
+        "senderHash": "903014d34903",
+        "senderLast4": "1384",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3005,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:06.637",
+        "stoppedAt": "2026-10-01 09:14:22.578",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "55ebb7cd1e84",
+        "senderHash": "157e7638f1df",
+        "senderLast4": "3969",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3004,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:06.531",
+        "stoppedAt": "2026-10-01 09:14:22.555",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "55ebb7cd1e84",
+        "senderHash": "157e7638f1df",
+        "senderLast4": "3969",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 3003,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:06.524",
+        "stoppedAt": "2026-10-01 09:14:10.244",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "d77ab6255ebe",
+        "senderHash": "dce1bae7d34e",
+        "senderLast4": "2683",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3002,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:06.478",
+        "stoppedAt": "2026-10-01 09:14:10.220",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "d77ab6255ebe",
+        "senderHash": "dce1bae7d34e",
+        "senderLast4": "2683",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3001,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:06.173",
+        "stoppedAt": "2026-10-01 09:14:09.977",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "a3ad4916de85",
+        "senderHash": "dce1bae7d34e",
+        "senderLast4": "2683",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 3000,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:06.165",
+        "stoppedAt": "2026-10-01 09:14:09.967",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "a3ad4916de85",
+        "senderHash": "dce1bae7d34e",
+        "senderLast4": "2683",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2999,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:05.914",
+        "stoppedAt": "2026-10-01 09:14:09.762",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "e3cab0cba280",
+        "senderHash": "27d96a6e2abc",
+        "senderLast4": "0190",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2998,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:05.907",
+        "stoppedAt": "2026-10-01 09:14:09.739",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "e3cab0cba280",
+        "senderHash": "27d96a6e2abc",
+        "senderLast4": "0190",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2997,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:05.891",
+        "stoppedAt": "2026-10-01 09:14:07.466",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "bbf160b8200d",
+        "senderHash": "4f7e6ce499a8",
+        "senderLast4": "6715",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2996,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:03.081",
+        "stoppedAt": "2026-10-01 09:14:06.424",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "bbf160b8200d",
+        "senderHash": "4f7e6ce499a8",
+        "senderLast4": "6715",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2995,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:03.074",
+        "stoppedAt": "2026-10-01 09:14:06.417",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "4e83f9a15550",
+        "senderHash": "4f7e6ce499a8",
+        "senderLast4": "6715",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2994,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:02.093",
+        "stoppedAt": "2026-10-01 09:14:06.329",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "4e83f9a15550",
+        "senderHash": "4f7e6ce499a8",
+        "senderLast4": "6715",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2993,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:02.085",
+        "stoppedAt": "2026-10-01 09:14:06.306",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "b1b40ccc4715",
+        "senderHash": "6bed2b456298",
+        "senderLast4": "2234",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2992,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:14:02.077",
+        "stoppedAt": "2026-10-01 09:14:06.300",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "b1b40ccc4715",
+        "senderHash": "6bed2b456298",
+        "senderLast4": "2234",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2991,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:59.171",
+        "stoppedAt": "2026-10-01 09:14:44.021",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": {
+          "message": "The DNS server returned an error, perhaps the server is offline",
+          "node": "Send WhatsApp Response (Evolution Router)"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "89fedd409d6e",
+        "senderHash": "30739bfbb583",
+        "senderLast4": "0732",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 2990,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:59.158",
+        "stoppedAt": "2026-10-01 09:14:05.603",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "4dc4083731df",
+        "senderHash": "9e146b76a905",
+        "senderLast4": "6130",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2989,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:59.150",
+        "stoppedAt": "2026-10-01 09:14:05.594",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "4dc4083731df",
+        "senderHash": "9e146b76a905",
+        "senderLast4": "6130",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2988,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:59.136",
+        "stoppedAt": "2026-10-01 09:14:22.591",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "89fedd409d6e",
+        "senderHash": "30739bfbb583",
+        "senderLast4": "0732",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 2987,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:58.157",
+        "stoppedAt": "2026-10-01 09:14:05.576",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "e6833aac2392",
+        "senderHash": "5ff27039cf20",
+        "senderLast4": "6638",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2986,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:58.145",
+        "stoppedAt": "2026-10-01 09:14:05.570",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "e6833aac2392",
+        "senderHash": "5ff27039cf20",
+        "senderLast4": "6638",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2985,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:58.130",
+        "stoppedAt": "2026-10-01 09:14:04.260",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "62c489c76204",
+        "senderHash": "dfc3ff78b1d7",
+        "senderLast4": "6900",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2984,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:58.121",
+        "stoppedAt": "2026-10-01 09:14:04.251",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "62c489c76204",
+        "senderHash": "dfc3ff78b1d7",
+        "senderLast4": "6900",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2983,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:56.992",
+        "stoppedAt": "2026-10-01 09:14:35.005",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": {
+          "message": "The DNS server returned an error, perhaps the server is offline",
+          "node": "Send WhatsApp Response (Evolution Router)"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "4bb494719d50",
+        "senderHash": "ec2c99600c24",
+        "senderLast4": "6625",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 2982,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:56.500",
+        "stoppedAt": "2026-10-01 09:14:22.123",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "4bb494719d50",
+        "senderHash": "ec2c99600c24",
+        "senderLast4": "6625",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 2981,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:56.216",
+        "stoppedAt": "2026-10-01 09:14:03.934",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "ca2d436d77db",
+        "senderHash": "a5db72102e9f",
+        "senderLast4": "6844",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2980,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:55.898",
+        "stoppedAt": "2026-10-01 09:14:03.911",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "ca2d436d77db",
+        "senderHash": "a5db72102e9f",
+        "senderLast4": "6844",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2979,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:53.053",
+        "stoppedAt": "2026-10-01 09:14:03.421",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "21c8bfafe1c8",
+        "senderHash": "3080f73fb434",
+        "senderLast4": "9634",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2978,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.838",
+        "stoppedAt": "2026-10-01 09:13:59.388",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "999e9f5d4618",
+        "senderHash": "a5db72102e9f",
+        "senderLast4": "6844",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2977,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.305",
+        "stoppedAt": "2026-10-01 09:13:59.354",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "999e9f5d4618",
+        "senderHash": "a5db72102e9f",
+        "senderLast4": "6844",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2976,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.119",
+        "stoppedAt": "2026-10-01 09:13:59.229",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "517a1fff84e4",
+        "senderHash": "a283ea0d17e9",
+        "senderLast4": "8613",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2975,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.094",
+        "stoppedAt": "2026-10-01 09:13:59.208",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "517a1fff84e4",
+        "senderHash": "a283ea0d17e9",
+        "senderLast4": "8613",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2974,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.080",
+        "stoppedAt": "2026-10-01 09:14:38.610",
+        "lastNode": "Send WhatsApp Response (Evolution Router)",
+        "error": {
+          "message": "The DNS server returned an error, perhaps the server is offline",
+          "node": "Send WhatsApp Response (Evolution Router)"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "55ebb7cd1e84",
+        "senderHash": "157e7638f1df",
+        "senderLast4": "3969",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)",
+          "Result Validator & Response Guard",
+          "Send WhatsApp Response (Evolution Router)"
+        ],
+        "guard": {
+          "blocked": false,
+          "status": "VERIFIED"
+        }
+      },
+      {
+        "id": 2973,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "error",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.046",
+        "stoppedAt": "2026-10-01 09:14:22.139",
+        "lastNode": "AI Agent (Shared Engine)",
+        "error": {
+          "message": "The service is receiving too many requests from you",
+          "node": "Groq Chat Model"
+        },
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "55ebb7cd1e84",
+        "senderHash": "157e7638f1df",
+        "senderLast4": "3969",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 1,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "Message Normalizer",
+          "Resolve Business (platform_db)",
+          "Load Business Profile (platform_db)",
+          "Construct Session Identity",
+          "Redis Transient Session & Dedup Gate",
+          "PostgreSQL Persistent Conversation Store",
+          "Window Buffer Memory",
+          "Groq Chat Model",
+          "AI Agent (Shared Engine)"
+        ]
+      },
+      {
+        "id": 2972,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.032",
+        "stoppedAt": "2026-10-01 09:13:59.113",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "8df3ed8963bb",
+        "senderHash": "52c742f5d9a3",
+        "senderLast4": "5430",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2971,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.023",
+        "stoppedAt": "2026-10-01 09:13:59.105",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "8df3ed8963bb",
+        "senderHash": "52c742f5d9a3",
+        "senderLast4": "5430",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2970,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:47.012",
+        "stoppedAt": "2026-10-01 09:13:59.097",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "7e10ec20c0b6",
+        "senderHash": "2104decd2e10",
+        "senderLast4": "9915",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2969,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:46.992",
+        "stoppedAt": "2026-10-01 09:13:58.109",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "08f0601b3481",
+        "senderHash": "a5db72102e9f",
+        "senderLast4": "6844",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2968,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:46.981",
+        "stoppedAt": "2026-10-01 09:13:58.103",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "7e10ec20c0b6",
+        "senderHash": "2104decd2e10",
+        "senderLast4": "9915",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      },
+      {
+        "id": 2967,
+        "workflowId": "Ag4HbAjKlfHH6Xk7",
+        "mode": "webhook",
+        "status": "success",
+        "retryOf": null,
+        "startedAt": "2026-10-01 09:13:46.968",
+        "stoppedAt": "2026-10-01 09:13:58.095",
+        "lastNode": "No Operation, do nothing",
+        "error": null,
+        "event": "Message",
+        "instance": "student-assistant",
+        "fromMe": false,
+        "messageIdHash": "08f0601b3481",
+        "senderHash": "a5db72102e9f",
+        "senderLast4": "6844",
+        "bodyKeys": [
+          "data",
+          "event",
+          "instanceId",
+          "instanceName",
+          "instanceToken"
+        ],
+        "infoKeys": [
+          "AddressingMode",
+          "BroadcastListOwner",
+          "BroadcastRecipients",
+          "Category",
+          "Chat",
+          "DeviceSentMeta",
+          "Edit",
+          "ID",
+          "IsFromMe",
+          "IsGroup",
+          "MediaType",
+          "MsgBotInfo",
+          "MsgMetaInfo",
+          "Multicast",
+          "PushName",
+          "RecipientAlt",
+          "Sender",
+          "SenderAlt",
+          "ServerID",
+          "Timestamp",
+          "Type",
+          "VerifiedName"
+        ],
+        "agentRuns": 0,
+        "nodes": [
+          "Evolution Webhook",
+          "Is Customer Message?",
+          "No Operation, do nothing"
+        ]
+      }
+    ],
+    "executionLogging": {
+      "EXECUTIONS_DATA_SAVE_ON_ERROR": "default",
+      "EXECUTIONS_DATA_SAVE_ON_SUCCESS": "default",
+      "EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS": "default",
+      "EXECUTIONS_DATA_PRUNE": "default",
+      "NODE_FUNCTION_ALLOW_EXTERNAL": "pg,ioredis"
+    }
+  },
+  "evolution": {
+    "httpStatus": 200,
+    "globalWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+    "instances": [
+      {
+        "id": "36caf15a-8939-483d-baa6-2b3c84b7e5e3",
+        "name": "point-of-sale",
+        "numberLast4": "4407",
+        "instanceWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+        "events": "MESSAGE",
+        "connected": false,
+        "loggedIn": false,
+        "ignoreGroups": false,
+        "ignoreStatus": false,
+        "disconnectReason": "Disconnected emitted because the websocket is closed by the server."
+      },
+      {
+        "id": "3ce073e7-6f47-4dda-84a5-0d074b47421f",
+        "name": "hospital-assistant",
+        "numberLast4": "1081",
+        "instanceWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+        "events": "MESSAGE",
+        "connected": false,
+        "loggedIn": false,
+        "ignoreGroups": false,
+        "ignoreStatus": false,
+        "disconnectReason": "Reconnecting"
+      },
+      {
+        "id": "00179367-7588-4d05-9fcf-c66aeab65815",
+        "name": "student-assistant",
+        "numberLast4": "5:47",
+        "instanceWebhook": "",
+        "events": "MESSAGE",
+        "connected": false,
+        "loggedIn": false,
+        "ignoreGroups": false,
+        "ignoreStatus": false,
+        "disconnectReason": "Reconnecting"
+      }
+    ]
+  },
+  "evolution-goLogs": [
+    "2026/10/01 08:45:48 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] ===== WEBHOOK SKIPPED ===== doWebhook=false",
+    "2026/10/01 08:45:48 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] ===== WEBHOOK SKIPPED ===== doWebhook=false",
+    "2026/10/01 08:45:56 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:46:16 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:46:16 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:46:16 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:46:16 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:46:17 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:46:19 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:47:15 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message was read by [NUMBER_REDACTED]@lid in status@broadcast",
+    "2026/10/01 08:47:16 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Receipt, Queue: [UUID_REDACTED].receipt, DataSize: 492 bytes",
+    "2026/10/01 08:47:16 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Receipt",
+    "2026/10/01 08:47:30 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:47:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== MESSAGE RECEIVED ===== ID: AC80E12ED834770641CC7BA145D5AF15, From: [NUMBER_REDACTED]@lid, Type: text, Size: unknown",
+    "2026/10/01 08:47:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== MESSAGE PROCESSING COMPLETED ===== ID: AC80E12ED834770641CC7BA145D5AF15, From: [NUMBER_REDACTED]@s.whatsapp.net, Type: text, Webhook: true",
+    "2026/10/01 08:47:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Message, Queue: [UUID_REDACTED].message, DataSize: 1449 bytes",
+    "2026/10/01 08:47:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Message",
+    "2026/10/01 08:47:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Event received of type Message",
+    "2026/10/01 08:47:50 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:47:58 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message was read by [NUMBER_REDACTED]@lid in status@broadcast",
+    "2026/10/01 08:47:58 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message duplicated ignored: A523FBE5E76E8924E2B37D833B197C8B",
+    "2026/10/01 08:47:58 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Receipt, Queue: [UUID_REDACTED].receipt, DataSize: 493 bytes",
+    "2026/10/01 08:47:58 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Receipt",
+    "2026/10/01 08:48:10 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:48:30 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:48:30 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:48:30 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:48:30 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:48:31 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:48:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:49:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:49:47 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== MESSAGE RECEIVED ===== ID: A52442BF4A86E1F0326F8F09C741E076, From: status@broadcast, Type: media, Size: unknown",
+    "2026/10/01 08:49:48 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== MESSAGE RECEIVED ===== ID: A52442BF4A86E1F0326F8F09C741E076, From: status@broadcast, Type: media, Size: 110779 bytes",
+    "2026/10/01 08:49:48 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: PushName, Queue: [UUID_REDACTED].pushname, DataSize: 948 bytes",
+    "2026/10/01 08:49:48 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType PushName",
+    "2026/10/01 08:49:52 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:50:12 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:50:32 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:50:32 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:50:32 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:50:32 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:50:34 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:50:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:51:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:52:00 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:52:20 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:52:40 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:52:40 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:52:40 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:52:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:52:41 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:52:42 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:53:16 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] ===== WEBHOOK SKIPPED ===== doWebhook=false",
+    "2026/10/01 08:53:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== MESSAGE RECEIVED ===== ID: AC02FB94680B84ED4CAA61AD277A67D5, From: [NUMBER_REDACTED]@lid, Type: text, Size: unknown",
+    "2026/10/01 08:53:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== MESSAGE PROCESSING COMPLETED ===== ID: AC02FB94680B84ED4CAA61AD277A67D5, From: [NUMBER_REDACTED]@s.whatsapp.net, Type: text, Webhook: true",
+    "2026/10/01 08:53:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Message, Queue: [UUID_REDACTED].message, DataSize: 1449 bytes",
+    "2026/10/01 08:53:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Message",
+    "2026/10/01 08:53:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Event received of type Message",
+    "2026/10/01 08:53:42 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:54:02 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:54:22 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:54:42 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:54:42 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:54:42 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:54:42 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:54:43 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:54:46 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:55:46 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:56:06 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:56:26 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:56:46 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:56:46 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:56:46 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:56:46 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:56:47 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:56:49 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:57:49 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:58:09 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:58:29 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:58:49 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 08:58:49 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 08:58:49 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 08:58:49 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 08:58:50 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 08:58:51 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 08:59:33 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message was read by [NUMBER_REDACTED]@lid in status@broadcast",
+    "2026/10/01 08:59:33 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message duplicated ignored: A523FBE5E76E8924E2B37D833B197C8B",
+    "2026/10/01 08:59:33 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Receipt, Queue: [UUID_REDACTED].receipt, DataSize: 493 bytes",
+    "2026/10/01 08:59:33 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Receipt",
+    "2026/10/01 08:59:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message was read by [NUMBER_REDACTED]@lid in status@broadcast",
+    "2026/10/01 08:59:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Message duplicated ignored: A523FBE5E76E8924E2B37D833B197C8B",
+    "2026/10/01 08:59:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Receipt, Queue: [UUID_REDACTED].receipt, DataSize: 492 bytes",
+    "2026/10/01 08:59:40 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Receipt",
+    "2026/10/01 08:59:51 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:00:11 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:00:31 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:00:51 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 09:00:51 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Error during forced logout: the store doesn't contain a device JID",
+    "2026/10/01 09:00:51 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 09:00:51 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 09:00:53 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 09:00:54 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:01:49 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Unhandled event *events.KeepAliveTimeout: &{ErrorCount:1 LastSuccess:2026-10-01 09:01:15.220421602 -0300 -03 m=+10128.809688479}",
+    "2026/10/01 09:01:53 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:01:56 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Unhandled event *events.KeepAliveTimeout: &{ErrorCount:1 LastSuccess:2026-10-01 09:01:26.41736927 -0300 -03 m=+10140.010929088}",
+    "2026/10/01 09:01:57 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Disconnected detected, restarting instance",
+    "2026/10/01 09:02:03 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Disconnected, Queue: [UUID_REDACTED].disconnected, DataSize: 160 bytes",
+    "2026/10/01 09:02:03 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Disconnected",
+    "2026/10/01 09:02:08 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] ===== DISPATCHING WEBHOOK ===== Event: Disconnected, Queue: [UUID_REDACTED].disconnected, DataSize: 168 bytes",
+    "2026/10/01 09:02:08 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] Disconnected detected, restarting instance",
+    "2026/10/01 09:02:08 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType Disconnected",
+    "2026/10/01 09:02:16 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:02:37 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRCode",
+    "2026/10/01 09:02:57 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] Maximum QR code count reached (5), forcing logout and QRTimeout",
+    "2026/10/01 09:02:57 \u001b[43m[WARN]\u001b[0m [[UUID_REDACTED]] QR timeout — signaling kill channel",
+    "2026/10/01 09:02:57 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType QRTimeout",
+    "2026/10/01 09:02:58 \u001b[44m[INFO]\u001b[0m [[UUID_REDACTED]] subscriptions [MESSAGE] eventType LoggedOut",
+    "2026/10/01 09:03:14 \u001b[41m[ERR]\u001b[0m [[UUID_REDACTED]] Failed to connect: failed to dial whatsapp web websocket: failed to WebSocket dial: failed to send handshake request: Get \"https://web.whatsapp.com/ws/chat\": dial tcp: lookup web.whatsapp.com on 127.0.0.11:53: no such host",
+    "2026/10/01 09:03:14 \u001b[41m[ERR]\u001b[0m [[UUID_REDACTED]] Failed to connect: failed to dial whatsapp web websocket: failed to WebSocket dial: failed to send handshake request: Get \"https://web.whatsapp.com/ws/chat\": dial tcp: lookup web.whatsapp.com on 127.0.0.11:53: no such host",
+    "2026/10/01 09:03:14 \u001b[41m[ERR]\u001b[0m [[UUID_REDACTED]] Failed to connect: failed to dial whatsapp web websocket: failed to WebSocket dial: failed to send handshake request: Get \"https://web.whatsapp.com/ws/chat\": dial tcp: lookup web.whatsapp.com on 127.0.0.11:53: no such host"
+  ],
+  "n8nLogs": [
+    "Error tracking disabled because this release is older than 6 weeks.",
+    "Failed to start Python task runner in internal mode. because Python 3 is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: https://docs.n8n.io/hosting/configuration/task-runners/#setting-up-external-mode",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Task runner connection attempt failed: invalid or expired grant token",
+    "operation timed out for an unknown reason",
+    "[runnner:js] Error: Failed to connect to n8n task broker at 127.0.0.1:5679",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Task runner connection attempt failed: invalid or expired grant token",
+    "[runnner:js] Error: Failed to connect to n8n task broker at 127.0.0.1:5679",
+    "Task runner connection attempt failed: invalid or expired grant token",
+    "[runnner:js] Error: Failed to connect to n8n task broker at 127.0.0.1:5679",
+    "Registered runner \"JS Task Runner\" (5s8cdXF_i3Ciwy6wZMXFC) ",
+    "Activated workflow \"Evolution API WhatsApp AI Agent Bot \" (ID: Ag4HbAjKlfHH6Xk7)",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Database connection timed out",
+    "Error fetching feature flags DOMException [TimeoutError]: The operation was aborted due to timeout",
+    "    at Timeout._onTimeout (node:internal/abort_controller:154:9)",
+    "    at listOnTimeout (node:internal/timers:605:17)",
+    "(node:7) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities."
+  ]
+}

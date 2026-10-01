@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-01T12:37:04.800Z",
+  "backup": "D:\\AI-Automation\\backups\\repair-step1-20261001-172000",
+  "instance": "student-assistant",
+  "beforeWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+  "globalWebhookDisabled": true,
+  "connectHttpStatus": 200,
+  "instanceWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+  "events": "MESSAGE",
+  "connected": true,
+  "loggedIn": true,
+  "dispatchConfigured": true,
+  "sessionReady": true
+}

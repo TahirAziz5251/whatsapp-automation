@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-01T10:33:38.051Z",
+  "instance": "student-assistant",
+  "globalWebhook": "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent",
+  "instanceWebhook": "",
+  "connected": true,
+  "loggedIn": true,
+  "pass": true
+}

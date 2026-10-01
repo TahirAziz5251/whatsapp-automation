@@ -1,0 +1,5025 @@
+{
+  "records": [
+    {
+      "database": "evogo_auth",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "public",
+          "table": "poll_votes"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_lid_map"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_nct_salt"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_version"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "id",
+          "position": 1,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "company_id",
+          "position": 2,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "instance_id",
+          "position": 3,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "poll_message_id",
+          "position": 4,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "poll_chat_jid",
+          "position": 5,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "vote_message_id",
+          "position": 6,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "voter_jid",
+          "position": 7,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "voter_phone",
+          "position": 8,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "voter_name",
+          "position": 9,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "selected_options",
+          "position": 10,
+          "type": "ARRAY",
+          "udt": "_text",
+          "nullable": "NO",
+          "default": "'{}'::text[]"
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "voted_at",
+          "position": 11,
+          "type": "timestamp without time zone",
+          "udt": "timestamp",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "column": "received_at",
+          "position": 12,
+          "type": "timestamp without time zone",
+          "udt": "timestamp",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "column": "jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "column": "name",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "column": "version",
+          "position": 3,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "column": "index_mac",
+          "position": 4,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "column": "value_mac",
+          "position": 5,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "column": "jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "column": "key_id",
+          "position": 2,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "column": "key_data",
+          "position": 3,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "column": "timestamp",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "column": "fingerprint",
+          "position": 5,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "column": "jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "column": "name",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "column": "version",
+          "position": 3,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "column": "hash",
+          "position": 4,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "column": "chat_jid",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "column": "muted_until",
+          "position": 3,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": "0"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "column": "pinned",
+          "position": 4,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "NO",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "column": "archived",
+          "position": 5,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "NO",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "their_jid",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "first_name",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "full_name",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "push_name",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "business_name",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "column": "redacted_phone",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "lid",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "facebook_uuid",
+          "position": 3,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "registration_id",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "noise_key",
+          "position": 5,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "identity_key",
+          "position": 6,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "signed_pre_key",
+          "position": 7,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "signed_pre_key_id",
+          "position": 8,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "signed_pre_key_sig",
+          "position": 9,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "adv_key",
+          "position": 10,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "adv_details",
+          "position": 11,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "adv_account_sig",
+          "position": 12,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "adv_account_sig_key",
+          "position": 13,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "adv_device_sig",
+          "position": 14,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "platform",
+          "position": 15,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": "''::text"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "business_name",
+          "position": 16,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": "''::text"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "push_name",
+          "position": 17,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": "''::text"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "column": "lid_migration_ts",
+          "position": 18,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": "0"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "column": "ciphertext_hash",
+          "position": 2,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "column": "plaintext",
+          "position": 3,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "column": "server_timestamp",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "column": "insert_timestamp",
+          "position": 5,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "column": "their_id",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "column": "identity",
+          "position": 3,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_lid_map",
+          "column": "lid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_lid_map",
+          "column": "pn",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "column": "chat_jid",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "column": "sender_jid",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "column": "message_id",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "column": "key",
+          "position": 5,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_nct_salt",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_nct_salt",
+          "column": "salt",
+          "position": 2,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "column": "jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "column": "key_id",
+          "position": 2,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "column": "key",
+          "position": 3,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "column": "uploaded",
+          "position": 4,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "column": "their_jid",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "column": "token",
+          "position": 3,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "column": "timestamp",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "column": "sender_timestamp",
+          "position": 5,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "column": "chat_jid",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "column": "message_id",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "column": "format",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "column": "plaintext",
+          "position": 5,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "column": "timestamp",
+          "position": 6,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "column": "chat_id",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "column": "sender_id",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "column": "sender_key",
+          "position": 4,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions",
+          "column": "our_jid",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions",
+          "column": "their_id",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions",
+          "column": "session",
+          "position": 3,
+          "type": "bytea",
+          "udt": "bytea",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_version",
+          "column": "version",
+          "position": 1,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_version",
+          "column": "compat",
+          "position": 2,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "YES",
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "name": "poll_votes_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "name": "unique_vote_per_poll",
+          "type": "u",
+          "definition": "UNIQUE (poll_message_id, voter_jid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "name": "whatsmeow_app_state_mutation_macs_index_mac_check",
+          "type": "c",
+          "definition": "CHECK ((length(index_mac) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "name": "whatsmeow_app_state_mutation_macs_jid_name_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (jid, name) REFERENCES whatsmeow_app_state_version(jid, name) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "name": "whatsmeow_app_state_mutation_macs_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (jid, name, version, index_mac)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "name": "whatsmeow_app_state_mutation_macs_value_mac_check",
+          "type": "c",
+          "definition": "CHECK ((length(value_mac) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "name": "whatsmeow_app_state_sync_keys_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "name": "whatsmeow_app_state_sync_keys_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (jid, key_id)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "name": "whatsmeow_app_state_version_hash_check",
+          "type": "c",
+          "definition": "CHECK ((length(hash) = 128))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "name": "whatsmeow_app_state_version_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "name": "whatsmeow_app_state_version_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (jid, name)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "name": "whatsmeow_chat_settings_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "name": "whatsmeow_chat_settings_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, chat_jid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "name": "whatsmeow_contacts_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "name": "whatsmeow_contacts_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, their_jid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_adv_account_sig_check",
+          "type": "c",
+          "definition": "CHECK ((length(adv_account_sig) = 64))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_adv_account_sig_key_check",
+          "type": "c",
+          "definition": "CHECK ((length(adv_account_sig_key) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_adv_device_sig_check",
+          "type": "c",
+          "definition": "CHECK ((length(adv_device_sig) = 64))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_identity_key_check",
+          "type": "c",
+          "definition": "CHECK ((length(identity_key) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_noise_key_check",
+          "type": "c",
+          "definition": "CHECK ((length(noise_key) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (jid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_registration_id_check",
+          "type": "c",
+          "definition": "CHECK (((registration_id >= 0) AND (registration_id < '4294967296'::bigint)))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_signed_pre_key_check",
+          "type": "c",
+          "definition": "CHECK ((length(signed_pre_key) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_signed_pre_key_id_check",
+          "type": "c",
+          "definition": "CHECK (((signed_pre_key_id >= 0) AND (signed_pre_key_id < 16777216)))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "name": "whatsmeow_device_signed_pre_key_sig_check",
+          "type": "c",
+          "definition": "CHECK ((length(signed_pre_key_sig) = 64))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "name": "whatsmeow_event_buffer_ciphertext_hash_check",
+          "type": "c",
+          "definition": "CHECK ((length(ciphertext_hash) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "name": "whatsmeow_event_buffer_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "name": "whatsmeow_event_buffer_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, ciphertext_hash)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "name": "whatsmeow_identity_keys_identity_check",
+          "type": "c",
+          "definition": "CHECK ((length(identity) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "name": "whatsmeow_identity_keys_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "name": "whatsmeow_identity_keys_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, their_id)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_lid_map",
+          "name": "whatsmeow_lid_map_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (lid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_lid_map",
+          "name": "whatsmeow_lid_map_pn_key",
+          "type": "u",
+          "definition": "UNIQUE (pn)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "name": "whatsmeow_message_secrets_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "name": "whatsmeow_message_secrets_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, chat_jid, sender_jid, message_id)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_nct_salt",
+          "name": "whatsmeow_nct_salt_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_nct_salt",
+          "name": "whatsmeow_nct_salt_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "name": "whatsmeow_pre_keys_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "name": "whatsmeow_pre_keys_key_check",
+          "type": "c",
+          "definition": "CHECK ((length(key) = 32))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "name": "whatsmeow_pre_keys_key_id_check",
+          "type": "c",
+          "definition": "CHECK (((key_id >= 0) AND (key_id < 16777216)))"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "name": "whatsmeow_pre_keys_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (jid, key_id)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "name": "whatsmeow_privacy_tokens_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, their_jid)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "name": "whatsmeow_retry_buffer_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "name": "whatsmeow_retry_buffer_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, chat_jid, message_id)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "name": "whatsmeow_sender_keys_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "name": "whatsmeow_sender_keys_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, chat_id, sender_id)"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions",
+          "name": "whatsmeow_sessions_our_jid_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions",
+          "name": "whatsmeow_sessions_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (our_jid, their_id)"
+        }
+      ],
+      "security": [
+        {
+          "schema": "public",
+          "table": "poll_votes",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_version",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_device",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_identity_keys",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_pre_keys",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sessions",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_sender_keys",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_sync_keys",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_version",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_app_state_mutation_macs",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_contacts",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_chat_settings",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_message_secrets",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_privacy_tokens",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_nct_salt",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_lid_map",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_event_buffer",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "whatsmeow_retry_buffer",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "evolution-postgres"
+    },
+    {
+      "database": "evogo_users",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "public",
+          "table": "instances"
+        },
+        {
+          "schema": "public",
+          "table": "labels"
+        },
+        {
+          "schema": "public",
+          "table": "messages"
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "name",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "token",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "webhook",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "rabbitmq_enable",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "web_socket_enable",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "nats_enable",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "jid",
+          "position": 8,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "qrcode",
+          "position": 9,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "connected",
+          "position": 10,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "expiration",
+          "position": 11,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "disconnect_reason",
+          "position": 12,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "events",
+          "position": 13,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "os_name",
+          "position": 14,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "proxy",
+          "position": 15,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "client_name",
+          "position": 16,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "created_at",
+          "position": 17,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "always_online",
+          "position": 18,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "YES",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "reject_call",
+          "position": 19,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "YES",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "msg_reject_call",
+          "position": 20,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": "''::text"
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "read_messages",
+          "position": 21,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "YES",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "ignore_groups",
+          "position": 22,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "YES",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "column": "ignore_status",
+          "position": 23,
+          "type": "boolean",
+          "udt": "bool",
+          "nullable": "YES",
+          "default": "false"
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "column": "instance_id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "column": "label_id",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "column": "label_name",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "column": "label_color",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "column": "predefined_id",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "column": "message_id",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "column": "timestamp",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "column": "status",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "column": "source",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "column": "referral",
+          "position": 6,
+          "type": "jsonb",
+          "udt": "jsonb",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "column": "id",
+          "position": 1,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": "nextval('runtime_configs_id_seq'::regclass)"
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "column": "key",
+          "position": 2,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "column": "value",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "column": "created_at",
+          "position": 4,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "column": "updated_at",
+          "position": 5,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "public",
+          "table": "instances",
+          "name": "instances_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "public",
+          "table": "instances",
+          "name": "uni_instances_token",
+          "type": "u",
+          "definition": "UNIQUE (token)"
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "name": "labels_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "name": "messages_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "name": "uni_messages_message_id",
+          "type": "u",
+          "definition": "UNIQUE (message_id)"
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "name": "runtime_configs_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "security": [
+        {
+          "schema": "public",
+          "table": "instances",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "messages",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "labels",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "runtime_configs",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "evolution-postgres"
+    },
+    {
+      "database": "postgres",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "public",
+          "table": "appointments"
+        },
+        {
+          "schema": "public",
+          "table": "chat_history"
+        },
+        {
+          "schema": "public",
+          "table": "leads"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "event_id",
+          "position": 1,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "customer_phone",
+          "position": 2,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "push_name",
+          "position": 3,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "booking_date",
+          "position": 4,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "booking_time",
+          "position": 5,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "status",
+          "position": 6,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": "'SCHEDULED'::character varying"
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "summary",
+          "position": 7,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "column": "created_at",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "id",
+          "position": 1,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": "nextval('chat_history_id_seq'::regclass)"
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "session_id",
+          "position": 2,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "customer_phone",
+          "position": 3,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "push_name",
+          "position": 4,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "sender",
+          "position": 5,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "message_text",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "column": "created_at",
+          "position": 7,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "customer_phone",
+          "position": 1,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "push_name",
+          "position": 2,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "city",
+          "position": 3,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": "'Lahore (Default)'::character varying"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "lead_stage",
+          "position": 4,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": "'NEW_LEAD'::character varying"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "intent",
+          "position": 5,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": "'GENERAL'::character varying"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "last_message",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "ai_reply",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "booking_status",
+          "position": 8,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": "'NONE'::character varying"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "booking_date",
+          "position": 9,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "booking_time",
+          "position": 10,
+          "type": "character varying",
+          "udt": "varchar",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "created_at",
+          "position": 11,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "column": "updated_at",
+          "position": 12,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "public",
+          "table": "appointments",
+          "name": "appointments_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (event_id)"
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "name": "chat_history_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "public",
+          "table": "leads",
+          "name": "leads_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (customer_phone)"
+        }
+      ],
+      "security": [
+        {
+          "schema": "public",
+          "table": "leads",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "chat_history",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "public",
+          "table": "appointments",
+          "owner": "postgres",
+          "rls": false,
+          "force_rls": false
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "evolution-postgres"
+    },
+    {
+      "database": "agent_dev",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "public"
+      ],
+      "tables": null,
+      "columns": null,
+      "constraints": null,
+      "security": null,
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "business-agent-dev-postgres-1"
+    },
+    {
+      "database": "control_db",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "app_meta",
+        "platform",
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox"
+        },
+        {
+          "schema": "platform",
+          "table": "instances"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "version",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "checksum",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "applied_at",
+          "position": 3,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "request_ref",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "actor_ref",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "event_type",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "resource_ref",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "outcome",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "details",
+          "position": 8,
+          "type": "jsonb",
+          "udt": "jsonb",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "created_at",
+          "position": 9,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "code",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "display_name",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "domain",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "timezone",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "status",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_version",
+          "position": 7,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "created_at",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "config_revision",
+          "position": 3,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "event_type",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "payload",
+          "position": 5,
+          "type": "jsonb",
+          "udt": "jsonb",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "payload_hash",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "status",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "attempts",
+          "position": 8,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "next_attempt_at",
+          "position": 9,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "lease_until",
+          "position": 10,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "column": "created_at",
+          "position": 11,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "provider",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "external_instance_id",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "credential_ref",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "status",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "created_at",
+          "position": 7,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "name": "schema_migrations_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (version)"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_check",
+          "type": "c",
+          "definition": "CHECK ((((length(actor_ref) >= 1) AND (length(actor_ref) <= 128)) AND ((length(event_type) >= 1) AND (length(event_type) <= 80))))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_details_check",
+          "type": "c",
+          "definition": "CHECK (((jsonb_typeof(details) = 'object'::text) AND (octet_length((details)::text) <= 2048) AND ((details - ARRAY['reason_code'::text, 'config_revision'::text, 'correlation_ref'::text]) = '{}'::jsonb)))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_outcome_check",
+          "type": "c",
+          "definition": "CHECK ((outcome = ANY (ARRAY['success'::text, 'denied'::text, 'failure'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check",
+          "type": "c",
+          "definition": "CHECK ((((length(code) >= 1) AND (length(code) <= 80)) AND ((length(display_name) >= 1) AND (length(display_name) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_code_key",
+          "type": "u",
+          "definition": "UNIQUE (code)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_version_check",
+          "type": "c",
+          "definition": "CHECK ((config_version > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_domain_check",
+          "type": "c",
+          "definition": "CHECK ((domain = ANY (ARRAY['sales'::text, 'bise'::text, 'hospital'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_timezone_check",
+          "type": "c",
+          "definition": "CHECK ((timezone = 'Asia/Karachi'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_attempts_check",
+          "type": "c",
+          "definition": "CHECK ((attempts >= 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_business_id_config_revision_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, config_revision)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_payload_check",
+          "type": "c",
+          "definition": "CHECK (((jsonb_typeof(payload) = 'object'::text) AND (octet_length((payload)::text) <= 16384)))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_payload_hash_check",
+          "type": "c",
+          "definition": "CHECK ((payload_hash ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "name": "configuration_outbox_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'sending'::text, 'delivered'::text, 'retry_wait'::text, 'failed'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check",
+          "type": "c",
+          "definition": "CHECK ((((length(provider) >= 1) AND (length(provider) <= 80)) AND ((length(external_instance_id) >= 1) AND (length(external_instance_id) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_provider_external_instance_id_key",
+          "type": "u",
+          "definition": "UNIQUE (provider, external_instance_id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        }
+      ],
+      "security": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "owner": "control_owner",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_outbox",
+          "owner": "control_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "owner": "control_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "owner": "control_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "owner": "control_owner",
+          "rls": true,
+          "force_rls": true
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "business-agent-dev-postgres-1"
+    },
+    {
+      "database": "pos_db",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "app_meta",
+        "platform",
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox"
+        },
+        {
+          "schema": "platform",
+          "table": "instances"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "version",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "checksum",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "applied_at",
+          "position": 3,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "request_ref",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "actor_ref",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "event_type",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "resource_ref",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "outcome",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "details",
+          "position": 8,
+          "type": "jsonb",
+          "udt": "jsonb",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "created_at",
+          "position": 9,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "code",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "display_name",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "domain",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "timezone",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "status",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_version",
+          "position": 7,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "created_at",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_revision",
+          "position": 9,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "valid_until",
+          "position": 10,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "origin_event_ref",
+          "position": 3,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "config_revision",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "payload_hash",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "applied_at",
+          "position": 6,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "created_at",
+          "position": 7,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "provider",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "external_instance_id",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "status",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "created_at",
+          "position": 6,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "config_revision",
+          "position": 7,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "valid_until",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "name": "schema_migrations_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (version)"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_check",
+          "type": "c",
+          "definition": "CHECK ((((length(actor_ref) >= 1) AND (length(actor_ref) <= 128)) AND ((length(event_type) >= 1) AND (length(event_type) <= 80))))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_details_check",
+          "type": "c",
+          "definition": "CHECK (((jsonb_typeof(details) = 'object'::text) AND (octet_length((details)::text) <= 2048) AND ((details - ARRAY['reason_code'::text, 'config_revision'::text, 'correlation_ref'::text]) = '{}'::jsonb)))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_outcome_check",
+          "type": "c",
+          "definition": "CHECK ((outcome = ANY (ARRAY['success'::text, 'denied'::text, 'failure'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check",
+          "type": "c",
+          "definition": "CHECK ((((length(code) >= 1) AND (length(code) <= 80)) AND ((length(display_name) >= 1) AND (length(display_name) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check1",
+          "type": "c",
+          "definition": "CHECK ((valid_until > created_at))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check2",
+          "type": "c",
+          "definition": "CHECK ((config_revision = config_version))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_code_key",
+          "type": "u",
+          "definition": "UNIQUE (code)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_version_check",
+          "type": "c",
+          "definition": "CHECK ((config_version > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_domain_check",
+          "type": "c",
+          "definition": "CHECK ((domain = 'sales'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_timezone_check",
+          "type": "c",
+          "definition": "CHECK ((timezone = 'Asia/Karachi'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_config_revision_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, config_revision)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_origin_event_ref_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, origin_event_ref)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_payload_hash_check",
+          "type": "c",
+          "definition": "CHECK ((payload_hash ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check",
+          "type": "c",
+          "definition": "CHECK ((valid_until > created_at))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check1",
+          "type": "c",
+          "definition": "CHECK ((((length(provider) >= 1) AND (length(provider) <= 80)) AND ((length(external_instance_id) >= 1) AND (length(external_instance_id) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_provider_external_instance_id_key",
+          "type": "u",
+          "definition": "UNIQUE (provider, external_instance_id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        }
+      ],
+      "security": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "owner": "pos_owner",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "owner": "pos_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "owner": "pos_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "owner": "pos_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "owner": "pos_owner",
+          "rls": true,
+          "force_rls": true
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "business-agent-dev-postgres-1"
+    },
+    {
+      "database": "bise_db",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "app_meta",
+        "platform",
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox"
+        },
+        {
+          "schema": "platform",
+          "table": "instances"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "version",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "checksum",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "applied_at",
+          "position": 3,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "request_ref",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "actor_ref",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "event_type",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "resource_ref",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "outcome",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "details",
+          "position": 8,
+          "type": "jsonb",
+          "udt": "jsonb",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "created_at",
+          "position": 9,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "code",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "display_name",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "domain",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "timezone",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "status",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_version",
+          "position": 7,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "created_at",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_revision",
+          "position": 9,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "valid_until",
+          "position": 10,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "origin_event_ref",
+          "position": 3,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "config_revision",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "payload_hash",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "applied_at",
+          "position": 6,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "created_at",
+          "position": 7,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "provider",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "external_instance_id",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "status",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "created_at",
+          "position": 6,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "config_revision",
+          "position": 7,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "valid_until",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "name": "schema_migrations_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (version)"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_check",
+          "type": "c",
+          "definition": "CHECK ((((length(actor_ref) >= 1) AND (length(actor_ref) <= 128)) AND ((length(event_type) >= 1) AND (length(event_type) <= 80))))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_details_check",
+          "type": "c",
+          "definition": "CHECK (((jsonb_typeof(details) = 'object'::text) AND (octet_length((details)::text) <= 2048) AND ((details - ARRAY['reason_code'::text, 'config_revision'::text, 'correlation_ref'::text]) = '{}'::jsonb)))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_outcome_check",
+          "type": "c",
+          "definition": "CHECK ((outcome = ANY (ARRAY['success'::text, 'denied'::text, 'failure'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check",
+          "type": "c",
+          "definition": "CHECK ((((length(code) >= 1) AND (length(code) <= 80)) AND ((length(display_name) >= 1) AND (length(display_name) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check1",
+          "type": "c",
+          "definition": "CHECK ((valid_until > created_at))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check2",
+          "type": "c",
+          "definition": "CHECK ((config_revision = config_version))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_code_key",
+          "type": "u",
+          "definition": "UNIQUE (code)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_version_check",
+          "type": "c",
+          "definition": "CHECK ((config_version > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_domain_check",
+          "type": "c",
+          "definition": "CHECK ((domain = 'bise'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_timezone_check",
+          "type": "c",
+          "definition": "CHECK ((timezone = 'Asia/Karachi'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_config_revision_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, config_revision)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_origin_event_ref_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, origin_event_ref)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_payload_hash_check",
+          "type": "c",
+          "definition": "CHECK ((payload_hash ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check",
+          "type": "c",
+          "definition": "CHECK ((valid_until > created_at))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check1",
+          "type": "c",
+          "definition": "CHECK ((((length(provider) >= 1) AND (length(provider) <= 80)) AND ((length(external_instance_id) >= 1) AND (length(external_instance_id) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_provider_external_instance_id_key",
+          "type": "u",
+          "definition": "UNIQUE (provider, external_instance_id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        }
+      ],
+      "security": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "owner": "bise_owner",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "owner": "bise_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "owner": "bise_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "owner": "bise_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "owner": "bise_owner",
+          "rls": true,
+          "force_rls": true
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "business-agent-dev-postgres-1"
+    },
+    {
+      "database": "hospital_db",
+      "version": "15.19",
+      "read_only": "on",
+      "schemas": [
+        "app_meta",
+        "platform",
+        "public"
+      ],
+      "tables": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox"
+        },
+        {
+          "schema": "platform",
+          "table": "instances"
+        }
+      ],
+      "columns": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "version",
+          "position": 1,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "checksum",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "column": "applied_at",
+          "position": 3,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "request_ref",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "actor_ref",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "event_type",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "resource_ref",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "YES",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "outcome",
+          "position": 7,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "details",
+          "position": 8,
+          "type": "jsonb",
+          "udt": "jsonb",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "column": "created_at",
+          "position": 9,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "code",
+          "position": 2,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "display_name",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "domain",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "timezone",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "status",
+          "position": 6,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_version",
+          "position": 7,
+          "type": "integer",
+          "udt": "int4",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "created_at",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "config_revision",
+          "position": 9,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "column": "valid_until",
+          "position": 10,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "origin_event_ref",
+          "position": 3,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "config_revision",
+          "position": 4,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "payload_hash",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "applied_at",
+          "position": 6,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "column": "created_at",
+          "position": 7,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "business_id",
+          "position": 1,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "id",
+          "position": 2,
+          "type": "uuid",
+          "udt": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "provider",
+          "position": 3,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "external_instance_id",
+          "position": 4,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "status",
+          "position": 5,
+          "type": "text",
+          "udt": "text",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "created_at",
+          "position": 6,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": "now()"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "config_revision",
+          "position": 7,
+          "type": "bigint",
+          "udt": "int8",
+          "nullable": "NO",
+          "default": null
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "column": "valid_until",
+          "position": 8,
+          "type": "timestamp with time zone",
+          "udt": "timestamptz",
+          "nullable": "NO",
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "name": "schema_migrations_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (version)"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_check",
+          "type": "c",
+          "definition": "CHECK ((((length(actor_ref) >= 1) AND (length(actor_ref) <= 128)) AND ((length(event_type) >= 1) AND (length(event_type) <= 80))))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_details_check",
+          "type": "c",
+          "definition": "CHECK (((jsonb_typeof(details) = 'object'::text) AND (octet_length((details)::text) <= 2048) AND ((details - ARRAY['reason_code'::text, 'config_revision'::text, 'correlation_ref'::text]) = '{}'::jsonb)))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_outcome_check",
+          "type": "c",
+          "definition": "CHECK ((outcome = ANY (ARRAY['success'::text, 'denied'::text, 'failure'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "name": "audit_events_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check",
+          "type": "c",
+          "definition": "CHECK ((((length(code) >= 1) AND (length(code) <= 80)) AND ((length(display_name) >= 1) AND (length(display_name) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check1",
+          "type": "c",
+          "definition": "CHECK ((valid_until > created_at))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_check2",
+          "type": "c",
+          "definition": "CHECK ((config_revision = config_version))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_code_key",
+          "type": "u",
+          "definition": "UNIQUE (code)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_config_version_check",
+          "type": "c",
+          "definition": "CHECK ((config_version > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_domain_check",
+          "type": "c",
+          "definition": "CHECK ((domain = 'hospital'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "name": "businesses_timezone_check",
+          "type": "c",
+          "definition": "CHECK ((timezone = 'Asia/Karachi'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_config_revision_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, config_revision)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_business_id_origin_event_ref_key",
+          "type": "u",
+          "definition": "UNIQUE (business_id, origin_event_ref)"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_payload_hash_check",
+          "type": "c",
+          "definition": "CHECK ((payload_hash ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "name": "configuration_inbox_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_business_id_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (business_id) REFERENCES platform.businesses(id) ON DELETE RESTRICT"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check",
+          "type": "c",
+          "definition": "CHECK ((valid_until > created_at))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_check1",
+          "type": "c",
+          "definition": "CHECK ((((length(provider) >= 1) AND (length(provider) <= 80)) AND ((length(external_instance_id) >= 1) AND (length(external_instance_id) <= 200))))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_config_revision_check",
+          "type": "c",
+          "definition": "CHECK ((config_revision > 0))"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (business_id, id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_provider_external_instance_id_key",
+          "type": "u",
+          "definition": "UNIQUE (provider, external_instance_id)"
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "name": "instances_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))"
+        }
+      ],
+      "security": [
+        {
+          "schema": "app_meta",
+          "table": "schema_migrations",
+          "owner": "hospital_owner",
+          "rls": false,
+          "force_rls": false
+        },
+        {
+          "schema": "platform",
+          "table": "configuration_inbox",
+          "owner": "hospital_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "businesses",
+          "owner": "hospital_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "instances",
+          "owner": "hospital_owner",
+          "rls": true,
+          "force_rls": true
+        },
+        {
+          "schema": "platform",
+          "table": "audit_events",
+          "owner": "hospital_owner",
+          "rls": true,
+          "force_rls": true
+        }
+      ],
+      "extensions": [
+        {
+          "name": "plpgsql",
+          "version": "1.0"
+        }
+      ],
+      "vector_available": false,
+      "container": "business-agent-dev-postgres-1"
+    }
+  ],
+  "captured_at": "2026-09-23T15:21:35.7297223Z",
+  "development_databases": [
+    "agent_dev",
+    "bise_db",
+    "control_db",
+    "hospital_db",
+    "pos_db",
+    "postgres"
+  ],
+  "stage": "after"
+}

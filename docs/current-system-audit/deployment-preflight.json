@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-01T10:52:17.872Z",
+  "sameEncryptionKey": true,
+  "sameImage": true,
+  "sameDataVolume": true,
+  "changedEnvironmentKeys": [
+    "NODE_FUNCTION_ALLOW_EXTERNAL",
+    "WEBHOOK_URL"
+  ],
+  "pass": true
+}

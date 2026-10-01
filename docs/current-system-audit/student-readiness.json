@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-01T12:38:09.918Z",
+  "/healthz": 200,
+  "/healthz/readiness": 503,
+  "studentStatus": {
+    "httpStatus": 200,
+    "connected": true,
+    "loggedIn": true
+  },
+  "globalWebhookConfigured": false,
+  "instanceWebhookEmpty": false
+}

@@ -1,0 +1,458 @@
+{
+  "scope": "Live Phase 5 batched SQL contract tests using real restricted credentials. Mutations occur inside rolled-back test transactions. Does not verify public WhatsApp/subject authorization or live CRM synchronization.",
+  "tested_at": "2026-09-23T16:12:33.7697713Z",
+  "passed": 75,
+  "results": [
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "missing_context_hides_contacts",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "missing_context_cannot_create",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "actor_required",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "three_contacts_only_in_authorized_business",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "other_business_profile_hidden",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "other_business_instance_rejected",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "blocked_contact_rejected",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "invalid_identity_kind_rejected",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "contact_create_replay_audit_and_profile_preservation",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "shared_identity_does_not_merge_businesses",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "same_identity_in_business_B_stays_separate",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "direct_contact_insert_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "direct_contact_update_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "direct_contact_delete_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "direct_identity_rebinding_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "runtime_cannot_assume_owner",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "functions_have_fixed_path_and_no_public_execute",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "two_seed_leads_visible_and_progressed_stage_preserved",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "cross_tenant_lead_command_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "blocked_contact_cannot_create_lead",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "lead_create_advance_replay_returns_original_outcome",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "same_event_key_changed_payload_rejected",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "stale_expected_version_rejected",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "general_inquiry_cannot_reset_progressed_lead",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "changed_actor_cannot_replay_event",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "failed_outer_operation_rolls_back_lead_event_and_audit",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "raw_lead_update_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "event_update_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "event_delete_denied",
+      "role": "pos_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "owner_cross_tenant_identity_FK_rejected",
+      "role": "pos_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "duplicate_instance_identity_rejected",
+      "role": "pos_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "owner_force_RLS_rejects_cross_business_insert",
+      "role": "pos_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "pos_db",
+      "name": "failed_DDL_transaction_leaves_no_probe",
+      "role": "pos_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "missing_context_hides_contacts",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "missing_context_cannot_create",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "actor_required",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "three_contacts_only_in_authorized_business",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "other_business_profile_hidden",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "other_business_instance_rejected",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "blocked_contact_rejected",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "invalid_identity_kind_rejected",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "contact_create_replay_audit_and_profile_preservation",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "shared_identity_does_not_merge_businesses",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "same_identity_in_business_B_stays_separate",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "direct_contact_insert_denied",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "direct_contact_update_denied",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "direct_contact_delete_denied",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "direct_identity_rebinding_denied",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "runtime_cannot_assume_owner",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "functions_have_fixed_path_and_no_public_execute",
+      "role": "bise_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "owner_cross_tenant_identity_FK_rejected",
+      "role": "bise_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "duplicate_instance_identity_rejected",
+      "role": "bise_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "owner_force_RLS_rejects_cross_business_insert",
+      "role": "bise_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "bise_db",
+      "name": "failed_DDL_transaction_leaves_no_probe",
+      "role": "bise_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "missing_context_hides_contacts",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "missing_context_cannot_create",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "actor_required",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "three_contacts_only_in_authorized_business",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "other_business_profile_hidden",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "other_business_instance_rejected",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "blocked_contact_rejected",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "invalid_identity_kind_rejected",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "contact_create_replay_audit_and_profile_preservation",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "shared_identity_does_not_merge_businesses",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "same_identity_in_business_B_stays_separate",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "direct_contact_insert_denied",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "direct_contact_update_denied",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "direct_contact_delete_denied",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "direct_identity_rebinding_denied",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "runtime_cannot_assume_owner",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "functions_have_fixed_path_and_no_public_execute",
+      "role": "hospital_runtime"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "owner_cross_tenant_identity_FK_rejected",
+      "role": "hospital_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "duplicate_instance_identity_rejected",
+      "role": "hospital_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "owner_force_RLS_rejects_cross_business_insert",
+      "role": "hospital_migrator"
+    },
+    {
+      "status": "PASS",
+      "database": "hospital_db",
+      "name": "failed_DDL_transaction_leaves_no_probe",
+      "role": "hospital_migrator"
+    }
+  ],
+  "failed": 0
+}

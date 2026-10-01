@@ -1,0 +1,10 @@
+const fs=require('fs'),cp=require('child_process');
+const audit=JSON.parse(fs.readFileSync('docs/development-repair-20261001/step1-current.json','utf8'));
+const student=audit.evolution.instances.find(i=>i.name==='student-assistant');
+const r=cp.spawnSync('docker',['logs','--timestamps','--since','2026-10-01T11:45:00Z','--until','2026-10-01T12:15:00Z','evolution-go'],{encoding:'utf8',windowsHide:true,timeout:90000,maxBuffer:20*1024*1024});
+const raw=(r.stdout||'')+'\n'+(r.stderr||'');
+const selected=raw.split('\n').filter(l=>l.includes(student.id)&&/webhook|subscription|Event received|connect|error|timeout|timed out|keepalive|Message duplicated/i.test(l));
+const clean=l=>l.split(student.id).join('[student-assistant]').replace(/\b[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}\b/gi,'[UUID_REDACTED]').replace(/\b\d{10,16}\b/g,'[NUMBER_REDACTED]').replace(/((?:token|apikey|password)\s*[:=]\s*)\S+/gi,'$1[REDACTED]');
+const windowLines=raw.split('\n').filter(Boolean);
+const report={at:new Date().toISOString(),reportedTime:'2026-10-01T16:53:00+05:00',reportedSenderLast4:'4789',reportedQuery:'I want to check my result, my roll number is 102450',dockerExit:r.status,readError:r.error?.message,windowLineCount:windowLines.length,firstTimestamp:windowLines[0]?.split(' ')[0],lastTimestamp:windowLines.at(-1)?.split(' ')[0],matchedLines:selected.length,lines:selected.map(clean)};
+fs.writeFileSync('docs/development-repair-20261001/step1-message-trace.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

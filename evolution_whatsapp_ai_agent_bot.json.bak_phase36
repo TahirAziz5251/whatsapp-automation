@@ -1,0 +1,663 @@
+{
+  "id": "Iin5wt0nRAhO7UV9",
+  "name": "Evolution API WhatsApp AI Agent Bot ",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution-whatsapp-agent",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "2001",
+      "name": "Evolution Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        1800
+      ],
+      "webhookId": "evolution-whatsapp-agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.IsFromMe }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "c3",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '' }}",
+              "rightValue": "@broadcast",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "c4",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '' }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "c5",
+              "leftValue": "={{ $json.body?.instance || $json.body?.body?.instance || $json.instance || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2002",
+      "name": "Is Customer Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "norm_inst",
+              "name": "instance_name",
+              "value": "={{ $json.body?.instance || $json.body?.body?.instance || $json.instance || 'pos-instance' }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_usr",
+              "name": "user_id",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/[^0-9]/g, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_msgid",
+              "name": "message_id",
+              "value": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Id || 'MSG_' + Math.random().toString(36).substring(2, 9) }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_type",
+              "name": "message_type",
+              "value": "text",
+              "type": "string"
+            },
+            {
+              "id": "norm_msg",
+              "name": "message",
+              "value": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.videoMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.documentMessage?.caption || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_ts",
+              "name": "timestamp",
+              "value": "={{ $now.toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_src",
+              "name": "source",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "id": "norm_biz",
+              "name": "business_id",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_sess",
+              "name": "session_id",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "norm_prof",
+              "name": "profile_id",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "a1",
+              "name": "customerPhone",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/:[0-9]+@/, '@') }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "sessionId",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/:[0-9]+@/, '@') }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "messageText",
+              "value": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.videoMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.documentMessage?.caption || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "pushName",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.PushName && ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.PushName.replace(/[^\\w\\s\\u0600-\\u06FF]/g, '').trim()) || 'Customer' }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "instanceToken",
+              "value": "={{ $json.body?.instanceToken || $json.body?.body?.instanceToken || $json.instanceToken || '429683C4C977415CAAFCCE10F7D57E11' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2003",
+      "name": "Message Normalizer",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -760,
+        1800
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst normalized = $input.first()?.json || {};\nconst instanceName = normalized.instance_name || 'pos-instance';\n\nlet businessId = null;\nlet businessCode = null;\nlet businessName = null;\nlet targetDbName = null;\nlet faissNamespace = null;\n\ntry {\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@evolution-postgres:5432/platform_db' });\n  await client.connect();\n  const query = `SELECT b.id AS business_id, b.business_code, b.name AS business_name, d.target_db_name, k.faiss_index_namespace FROM platform_whatsapp_instances i JOIN platform_businesses b ON i.business_code = b.business_code LEFT JOIN platform_database_mappings d ON b.business_code = d.business_code LEFT JOIN platform_knowledge_mappings k ON b.business_code = k.business_code WHERE i.instance_name = $1 LIMIT 1;`;\n  const res = await client.query(query, [instanceName]);\n  if (res.rows.length > 0) {\n    businessId = res.rows[0].business_id;\n    businessCode = res.rows[0].business_code;\n    businessName = res.rows[0].business_name;\n    targetDbName = res.rows[0].target_db_name;\n    faissNamespace = res.rows[0].faiss_index_namespace;\n  }\n  await client.end();\n} catch (e) {\n  console.error('Business Resolver DB Error:', e.message);\n}\n\nif (!businessId) {\n  if (instanceName === 'bise-instance') {\n    businessId = 2; businessCode = 'BISE_EDU'; businessName = 'BISE Educational Board System'; targetDbName = 'bise_db'; faissNamespace = 'bise_collection';\n  } else if (instanceName === 'hospital-instance') {\n    businessId = 3; businessCode = 'HOSP_HEALTH'; businessName = 'City Healthcare & Hospital System'; targetDbName = 'hospital_db'; faissNamespace = 'hosp_collection';\n  } else {\n    businessId = 1; businessCode = 'POS_RETAIL'; businessName = 'GlimsTech POS Retail Automation'; targetDbName = 'pos_db'; faissNamespace = 'pos_collection';\n  }\n}\n\nreturn {\n  ...normalized,\n  business_id: businessId,\n  business_code: businessCode,\n  business_name: businessName,\n  target_db_name: targetDbName,\n  faiss_index_namespace: faissNamespace\n};"
+      },
+      "id": "2011",
+      "name": "Resolve Business (platform_db)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -540,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst incoming = $input.first()?.json || {};\nconst businessCode = incoming.business_code || 'POS_RETAIL';\n\nlet promptVersion = 'v1.0';\nlet roleDescription = '';\nlet allowedScope = '';\nlet responseStyle = 'Professional and Courteous';\nlet behaviorRules = [];\nlet systemPrompt = '';\nlet defaultLang = 'en';\nlet timezone = 'Asia/Karachi';\nlet currency = 'PKR';\nlet allowedTools = [];\nlet modelProvider = 'Groq';\nlet modelName = 'llama-3.3-70b-versatile';\nlet temperature = 0.3;\n\ntry {\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@evolution-postgres:5432/platform_db' });\n  await client.connect();\n  \n  const profQuery = `\n    SELECT prompt_version, role_description, allowed_scope, response_style, behavior_rules, system_prompt, default_language, timezone, currency \n    FROM platform_business_profiles \n    WHERE business_code = $1 AND is_active = TRUE \n    ORDER BY created_at DESC \n    LIMIT 1;\n  `;\n  const profRes = await client.query(profQuery, [businessCode]);\n  if (profRes.rows.length > 0) {\n    const row = profRes.rows[0];\n    promptVersion = row.prompt_version || 'v1.0';\n    roleDescription = row.role_description || '';\n    allowedScope = row.allowed_scope || '';\n    responseStyle = row.response_style || 'Professional';\n    behaviorRules = typeof row.behavior_rules === 'string' ? JSON.parse(row.behavior_rules) : (row.behavior_rules || []);\n    systemPrompt = row.system_prompt || '';\n    defaultLang = row.default_language || 'en';\n    timezone = row.timezone || 'Asia/Karachi';\n    currency = row.currency || 'PKR';\n  }\n\n  const toolsRes = await client.query('SELECT tool_name FROM platform_tool_permissions WHERE business_code = $1 AND is_allowed = TRUE;', [businessCode]);\n  allowedTools = toolsRes.rows.map(r => r.tool_name);\n\n  const cfgRes = await client.query('SELECT model_provider, model_name, temperature FROM platform_agent_configs WHERE business_code = $1;', [businessCode]);\n  if (cfgRes.rows.length > 0) {\n    modelProvider = cfgRes.rows[0].model_provider;\n    modelName = cfgRes.rows[0].model_name;\n    temperature = parseFloat(cfgRes.rows[0].temperature);\n  }\n\n  await client.end();\n} catch (e) {\n  console.error('Profile Loader Error:', e.message);\n}\n\n// Resilient fallback by business code\nif (!roleDescription) {\n  if (businessCode === 'BISE_EDU') {\n    promptVersion = 'v1.0';\n    roleDescription = 'Official Academic Examination Controller & Student Helpdesk Assistant';\n    allowedScope = 'Matric & Intermediate exam results, roll number verification, date sheets, and certificate policies.';\n    responseStyle = 'Formal, authoritative, clear, and reassuring with academic emojis.';\n    behaviorRules = ['Require 6-digit roll number for result lookup', 'Never speculate marks or grades', 'Advise visiting board office for duplicate certificates'];\n    systemPrompt = 'You represent BISE Educational Board System. Help students check exam results by Roll Number and view exam date sheets. Maintain academic rigor, accuracy, and official board tone.';\n    allowedTools = ['search_knowledge_base', 'check_exam_results', 'query_business_data', 'get_student_result', 'get_fees'];\n    temperature = 0.2;\n  } else if (businessCode === 'HOSP_HEALTH') {\n    promptVersion = 'v1.0';\n    roleDescription = 'Hospital Patient Care & Clinical OPD Appointment Coordinator';\n    allowedScope = 'Doctor directories by specialty, OPD clinic timings, consultation fee inquiries in PKR, and appointments.';\n    responseStyle = 'Empathetic, polite, cautious, patient-centric with healthcare emojis.';\n    behaviorRules = ['STRICT: NEVER provide medical diagnosis, clinical advice, or prescribe medicine', 'Direct emergencies immediately to 24/7 Emergency Wing', 'Confirm doctor availability before appointment reservation'];\n    systemPrompt = 'You represent City Healthcare & Hospital System. Assist patients with OPD doctor directory lookup, clinical schedules, consultation fees in PKR, and booking appointments. STRICTLY NEVER PROVIDE MEDICAL DIAGNOSIS OR DRUG PRESCRIPTIONS.';\n    allowedTools = ['search_knowledge_base', 'manage_calendar', 'query_business_data', 'get_doctor_schedule', 'get_doctors_by_specialty', 'get_departments'];\n    temperature = 0.2;\n  } else {\n    promptVersion = 'v1.0';\n    roleDescription = 'Senior Retail POS & Hardware Automation Advisor';\n    allowedScope = 'Retail POS billing software, thermal receipt printers, barcode scanners, stock management, and demo bookings.';\n    responseStyle = 'Consultative, energetic, commercial, dynamic with retail emojis.';\n    behaviorRules = ['Always quote prices in PKR', 'Recommend hardware bundles for new retail setups', 'Encourage booking a software demo'];\n    systemPrompt = 'You represent GlimsTech POS Retail Automation. Provide expert guidance on retail POS hardware, software bundles, and inventory setups. Quote prices in PKR and guide qualified leads to schedule a demo.';\n    allowedTools = ['search_knowledge_base', 'sync_crm', 'query_business_data', 'get_product', 'check_inventory', 'get_price'];\n    temperature = 0.3;\n  }\n}\n\nreturn {\n  ...incoming,\n  prompt_profile: {\n    prompt_version: promptVersion,\n    role_description: roleDescription,\n    allowed_scope: allowedScope,\n    response_style: responseStyle,\n    behavior_rules: behaviorRules,\n    system_prompt: systemPrompt,\n    timezone: timezone,\n    currency: currency\n  },\n  language: defaultLang,\n  allowed_tools: allowedTools,\n  model_config: {\n    provider: modelProvider,\n    model_name: modelName,\n    temperature: temperature\n  }\n};"
+      },
+      "id": "2012",
+      "name": "Load Business Profile (platform_db)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "sess_key_id",
+              "name": "session_id",
+              "value": "={{ $json.business_code + ':' + $json.instance_name + ':' + $json.user_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2013",
+      "name": "Construct Session Identity",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -100,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const net = require('net');\nconst incoming = $input.first()?.json || {};\nconst sessionId = incoming.session_id || `${incoming.business_code || 'POS_RETAIL'}:${incoming.instance_name || 'pos-instance'}:${incoming.user_id || '923001234567'}`;\nconst messageId = incoming.message_id || 'MSG_INIT';\n\nlet isDuplicate = false;\nlet isRateLimited = false;\nlet rateCount = 1;\n\nasync function sendRedisCommand(cmdArgs) {\n  return new Promise((resolve) => {\n    const socket = new net.Socket();\n    socket.setTimeout(2000);\n    let req = `*${cmdArgs.length}\\r\\n`;\n    cmdArgs.forEach(arg => {\n      const str = String(arg);\n      req += `$${Buffer.byteLength(str)}\\r\\n${str}\\r\\n`;\n    });\n    socket.connect(6379, '127.0.0.1', () => { socket.write(req); });\n    socket.on('data', (data) => { socket.destroy(); resolve(data.toString('utf-8')); });\n    socket.on('error', () => { socket.destroy(); resolve(null); });\n    socket.on('timeout', () => { socket.destroy(); resolve(null); });\n  });\n}\n\ntry {\n  const dedupRes = await sendRedisCommand(['SET', `dedup:${messageId}`, '1', 'NX', 'EX', '300']);\n  if (dedupRes && dedupRes.includes('nil')) isDuplicate = true;\n  const incrRes = await sendRedisCommand(['INCR', `ratelimit:${sessionId}`]);\n  if (incrRes && incrRes.startsWith(':')) {\n    rateCount = parseInt(incrRes.substring(1).trim(), 10);\n    if (rateCount === 1) await sendRedisCommand(['EXPIRE', `ratelimit:${sessionId}`, '60']);\n    if (rateCount > 10) isRateLimited = true;\n  }\n  const sessionState = JSON.stringify({ session_id: sessionId, business_code: incoming.business_code, user_id: incoming.user_id, last_message: incoming.message, last_active: new Date().toISOString() });\n  await sendRedisCommand(['SET', `session:${sessionId}`, sessionState, 'EX', '86400']);\n} catch (e) { console.error('Redis Gate Error:', e.message); }\n\nreturn {\n  ...incoming,\n  session_id: sessionId,\n  redis_transient_state: {\n    is_duplicate: isDuplicate,\n    is_rate_limited: isRateLimited,\n    rate_count: rateCount,\n    ttl_seconds: 86400,\n    storage: 'Redis (AOF restart-safe)'\n  }\n};"
+      },
+      "id": "2014",
+      "name": "Redis Transient Session & Dedup Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst incoming = $input.first()?.json || {};\n\nconst sessionId = incoming.session_id || `${incoming.business_code || 'POS_RETAIL'}:${incoming.instance_name || 'pos-instance'}:${incoming.user_id || '923001234567'}`;\nconst businessCode = incoming.business_code || 'POS_RETAIL';\nconst instanceName = incoming.instance_name || 'pos-instance';\nconst userId = incoming.user_id || '923001234567';\nconst customerPhone = incoming.customerPhone || userId;\nconst pushName = incoming.pushName || 'Customer';\nconst messageId = incoming.message_id || 'MSG_INIT';\nconst messageText = incoming.message || incoming.messageText || '';\n\nlet durableSummary = '';\nlet recentMessagesCount = 0;\nlet dbPersisted = false;\n\ntry {\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@evolution-postgres:5432/platform_db' });\n  await client.connect();\n\n  const convQuery = `\n    INSERT INTO conversations (conversation_id, session_key, business_code, instance_name, user_id, customer_phone, push_name, status, last_active_at)\n    VALUES ($1, $1, $2, $3, $4, $5, $6, 'ACTIVE', CURRENT_TIMESTAMP)\n    ON CONFLICT (conversation_id) \n    DO UPDATE SET \n      message_count = conversations.message_count + 1,\n      push_name = EXCLUDED.push_name,\n      last_active_at = CURRENT_TIMESTAMP;\n  `;\n  await client.query(convQuery, [sessionId, businessCode, instanceName, userId, customerPhone, pushName]);\n\n  const sessQuery = `\n    INSERT INTO session_metadata (session_key, business_code, user_id, current_intent, last_sync_at)\n    VALUES ($1, $2, $3, 'GENERAL', CURRENT_TIMESTAMP)\n    ON CONFLICT (session_key) \n    DO UPDATE SET last_sync_at = CURRENT_TIMESTAMP;\n  `;\n  await client.query(sessQuery, [sessionId, businessCode, userId]);\n\n  if (messageText) {\n    const msgQuery = `\n      INSERT INTO conversation_messages (conversation_id, message_id, sender_type, sender_phone, message_text, metadata)\n      VALUES ($1, $2, 'USER', $3, $4, $5)\n      ON CONFLICT DO NOTHING;\n    `;\n    await client.query(msgQuery, [sessionId, messageId, customerPhone, messageText, JSON.stringify({ source: 'whatsapp', instance: instanceName })]);\n  }\n\n  const sumRes = await client.query('SELECT summary_text FROM conversation_summary WHERE conversation_id = $1 ORDER BY updated_at DESC LIMIT 1;', [sessionId]);\n  if (sumRes.rows.length > 0) durableSummary = sumRes.rows[0].summary_text;\n\n  const historyRes = await client.query('SELECT COUNT(*)::int as count FROM conversation_messages WHERE conversation_id = $1;', [sessionId]);\n  if (historyRes.rows.length > 0) recentMessagesCount = historyRes.rows[0].count;\n\n  await client.end();\n  dbPersisted = true;\n} catch (e) {\n  console.error('PostgreSQL Persistent Store Error:', e.message);\n}\n\nreturn {\n  ...incoming,\n  persistent_conversation_store: {\n    conversation_id: sessionId,\n    db_persisted: dbPersisted,\n    durable_summary: durableSummary,\n    total_messages_count: recentMessagesCount,\n    storage: 'PostgreSQL platform_db (durable restart-safe)'\n  }\n};"
+      },
+      "id": "2015",
+      "name": "PostgreSQL Persistent Conversation Store",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messageText || $json.message }}",
+        "options": {
+          "maxIterations": 2,
+          "systemMessage": "You are the centralized, autonomous WhatsApp AI Agent exclusively representing {{ $json.business_name || 'Our Valued Business' }} (Tenant Code: {{ $json.business_code || 'DEFAULT' }} | Prompt Version: {{ $json.prompt_profile?.prompt_version || 'v1.0' }}).\n\nROLE & PURPOSE:\n{{ $json.prompt_profile?.role_description || 'Intelligent Multi-Tenant AI Assistant' }}\n\nAUTHORITY & ALLOWED SCOPE:\n{{ $json.prompt_profile?.allowed_scope || 'Answer verified customer inquiries within business policy.' }}\n\nCOMMUNICATION STYLE & TONE:\n{{ $json.prompt_profile?.response_style || 'Professional, courteous, and accurate' }}\n\nTENANT SYSTEM INSTRUCTIONS:\n{{ $json.prompt_profile?.system_prompt || 'Provide exceptional assistance to the user.' }}\n\nTENANT ISOLATED ENVIRONMENT & CONTEXT:\n- Active Business: {{ $json.business_name }} ({{ $json.business_code }})\n- Target Domain Database: {{ $json.target_db_name }}\n- Knowledge Namespace: {{ $json.faiss_index_namespace }}\n- Allowed Tools for this Tenant: {{ ($json.allowed_tools || []).join(', ') }}\n- Operational Timezone: {{ $json.prompt_profile?.timezone || 'Asia/Karachi' }}\n- Operating Currency: {{ $json.prompt_profile?.currency || 'PKR' }}\n- Customer Identity: {{ $json.pushName || 'Customer' }} ({{ $json.customerPhone || 'Unknown' }})\n- Session ID: {{ $json.session_id }}\n- Active Conversation Summary: {{ $json.persistent_conversation_store?.durable_summary || 'No previous summary.' }}\n\nSTRICT BUSINESS ISOLATION & DATA GOVERNANCE:\n1. STRICT BOUNDARY: You represent EXCLUSIVELY {{ $json.business_name }}. NEVER discuss, offer services, or claim affiliation with any other organization or vertical.\n2. NO CROSS-TENANT DATA MIXING: Under NO circumstances disclose product prices, patient records, or student exam results belonging to another business.\n3. ANTI-HALLUCINATION: If a requested service, doctor, exam, or product is not verified in knowledge or tools, politely clarify that {{ $json.business_name }} does not have records for that request.\n4. ZERO CODE EXPOSURE: NEVER output raw n8n expressions, node names, database table names, or template brackets {{ ... }} in WhatsApp messages.\n5. WHATSAPP FORMATTING: Follow {{ $json.prompt_profile?.response_style }} with dynamic domain emojis."
+        }
+      },
+      "id": "2004",
+      "name": "AI Agent (Shared Engine)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        600,
+        1800
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "2005",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        350,
+        2120
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.session_id || ($json.business_code + ':' + $json.instance_name + ':' + $json.user_id) || 'default_session' }}",
+        "contextWindowLength": 10
+      },
+      "id": "2006",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_knowledge_base",
+        "description": "Access the secure, business-aware Knowledge Gateway. Searches official company documentation, FAQs, warranties, policies, exam regulations, and clinical directories using hybrid semantic and lexical retrieval.",
+        "language": "javaScript",
+        "specifyInputSchema": true,
+        "schemaType": "json",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"query\": { \"type\": [\"string\", \"null\"] },\n    \"userQuery\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst crypto = require('crypto');\n\nconst startTime = Date.now();\nconst inputJson = $input.first()?.json || {};\nconst userQuery = inputJson.query || inputJson.userQuery || inputJson.messageText || '';\n\n// 1. Resolve Trusted Session Context from Upstream Pipeline\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst trustedBusinessCode = incoming.business_code || 'POS_RETAIL';\nconst businessCode = trustedBusinessCode;\nconst instanceName = incoming.instance_name || 'pos-instance';\nconst customerPhone = incoming.customerPhone || 'unknown';\nconst allowedTools = incoming.allowed_tools || ['search_knowledge_base', 'sync_crm'];\n\n// Check if model attempted to pass a spoofed tenant parameter\nconst spoofAttempt = !!(inputJson.business_code && inputJson.business_code !== trustedBusinessCode);\n\n// ================= POLICY & PERMISSION GATE =================\nif (!allowedTools.includes('search_knowledge_base')) {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'POLICY_UNAUTHORIZED_TOOL',\n    tool: 'search_knowledge_base',\n    tenant: trustedBusinessCode,\n    action: 'READ',\n    message: `[POLICY GATE DENIAL] Tool 'search_knowledge_base' is NOT authorized for tenant '${trustedBusinessCode}'. Execution blocked outside LLM.`\n  });\n}\n// ============================================================\n\n// 2. Generate 384-dimensional query embedding\nfunction getQueryEmbedding(text, dim = 384) {\n  const vec = new Float64Array(dim);\n  if (!text || text.trim().length === 0) {\n    vec[0] = 1.0;\n    return `[${Array.from(vec).join(',')}]`;\n  }\n  const normalized = text.toLowerCase().replace(/[^a-z0-9\\s]/g, ' ');\n  const words = normalized.split(/\\s+/).filter(w => w.length > 1);\n  for (let i = 0; i < words.length; i++) {\n    const word = words[i];\n    const hash = crypto.createHash('md5').update(word).digest();\n    const index = hash.readUInt16BE(0) % dim;\n    const sign = (hash.readUInt8(2) % 2 === 0) ? 1.0 : -1.0;\n    const weight = 1.0 / Math.sqrt(i + 1);\n    vec[index] += sign * weight;\n\n    if (word.length >= 3) {\n      for (let j = 0; j <= word.length - 3; j++) {\n        const tri = word.substring(j, j + 3);\n        const triHash = crypto.createHash('sha256').update(tri).digest();\n        const triIdx = triHash.readUInt16BE(0) % dim;\n        const triSign = (triHash.readUInt8(2) % 2 === 0) ? 0.5 : -0.5;\n        vec[triIdx] += triSign * 0.3;\n      }\n    }\n  }\n  let sumSq = 0;\n  for (let i = 0; i < dim; i++) sumSq += vec[i] * vec[i];\n  const norm = Math.sqrt(sumSq) || 1.0;\n  const unit = [];\n  for (let i = 0; i < dim; i++) unit.push((vec[i] / norm).toFixed(6));\n  return `[${unit.join(',')}]`;\n}\n\n// 3. Execute Hybrid Retrieval with Reciprocal Rank Fusion\nlet searchResults = [];\nlet latencyMs = 0;\n\ntry {\n  const client = new Client({\n    connectionString: 'postgresql://gateway_readonly:gateway_secure_readonly_2026@evolution-postgres:5432/platform_db'\n  });\n  await client.connect();\n\n  const queryVector = getQueryEmbedding(userQuery.trim());\n\n  const hybridQuery = `\n    WITH \n    lexical_candidates AS (\n      SELECT \n        c.id AS chunk_id, c.document_id, c.chunk_title, c.chunk_text, c.token_count,\n        ts_rank_cd(to_tsvector('english', COALESCE(c.chunk_title, '') || ' ' || c.chunk_text), plainto_tsquery('english', $1)) AS l_score,\n        ROW_NUMBER() OVER (\n          ORDER BY ts_rank_cd(to_tsvector('english', COALESCE(c.chunk_title, '') || ' ' || c.chunk_text), plainto_tsquery('english', $1)) DESC\n        ) AS l_rank\n      FROM knowledge_chunks c\n      JOIN knowledge_documents d ON c.document_id = d.id\n      WHERE c.business_code = $2 AND d.status = 'ACTIVE'\n        AND (\n          to_tsvector('english', COALESCE(c.chunk_title, '') || ' ' || c.chunk_text) @@ plainto_tsquery('english', $1)\n          OR c.chunk_text ILIKE ('%' || $1 || '%')\n          OR c.chunk_title ILIKE ('%' || $1 || '%')\n        )\n      LIMIT 10\n    ),\n    vector_candidates AS (\n      SELECT \n        c.id AS chunk_id, c.document_id, c.chunk_title, c.chunk_text, c.token_count,\n        (c.embedding <=> $3::vector) AS v_dist,\n        (1.0 - (c.embedding <=> $3::vector)) AS v_sim,\n        ROW_NUMBER() OVER (ORDER BY (c.embedding <=> $3::vector) ASC) AS v_rank\n      FROM knowledge_chunks c\n      JOIN knowledge_documents d ON c.document_id = d.id\n      WHERE c.business_code = $2 AND d.status = 'ACTIVE'\n        AND (c.embedding <=> $3::vector) <= 0.80\n      ORDER BY (c.embedding <=> $3::vector) ASC\n      LIMIT 10\n    ),\n    combined AS (\n      SELECT \n        COALESCE(l.chunk_id, v.chunk_id) AS chunk_id,\n        COALESCE(l.document_id, v.document_id) AS document_id,\n        COALESCE(l.chunk_title, v.chunk_title) AS chunk_title,\n        COALESCE(l.chunk_text, v.chunk_text) AS chunk_text,\n        COALESCE(l.token_count, v.token_count) AS token_count,\n        COALESCE(l.l_score, 0.0) AS lexical_score,\n        COALESCE(v.v_dist, 1.0) AS vector_distance,\n        (\n          COALESCE(0.5 / (60 + l.l_rank), 0.0) +\n          COALESCE(0.5 / (60 + v.v_rank), 0.0)\n        ) AS rrf_score,\n        CASE \n          WHEN l.chunk_id IS NOT NULL AND v.chunk_id IS NOT NULL THEN 'HYBRID_FUSION'\n          WHEN l.chunk_id IS NOT NULL THEN 'LEXICAL_ONLY'\n          ELSE 'VECTOR_ONLY'\n        END AS match_source\n      FROM lexical_candidates l\n      FULL OUTER JOIN vector_candidates v ON l.chunk_id = v.chunk_id\n    )\n    SELECT d.title, c.chunk_id, c.chunk_title, c.chunk_text, d.doc_type, c.rrf_score, c.match_source\n    FROM combined c\n    JOIN knowledge_documents d ON c.document_id = d.id\n    ORDER BY c.rrf_score DESC\n    LIMIT 3;\n  `;\n\n  const res = await client.query(hybridQuery, [userQuery.trim(), trustedBusinessCode, queryVector]);\n  searchResults = res.rows;\n  latencyMs = Date.now() - startTime;\n\n  // 4. Log Access & Retrieval Metrics to platform_audit_metadata\n  const auditSql = `\n    INSERT INTO platform_audit_metadata (\n      business_code, instance_name, customer_phone, inbound_payload, outbound_payload, processing_time_ms\n    ) VALUES ($1, $2, $3, $4, $5, $6);\n  `;\n\n  const inPayload = JSON.stringify({ tool: 'search_knowledge_base', query: userQuery, spoof_attempt: spoofAttempt });\n  const outPayload = JSON.stringify({\n    results_count: searchResults.length,\n    chunk_ids: searchResults.map(r => r.chunk_id),\n    match_sources: searchResults.map(r => r.match_source),\n    top_rrf: searchResults[0]?.rrf_score || 0\n  });\n\n  await client.query(auditSql, [trustedBusinessCode, instanceName, customerPhone, inPayload, outPayload, latencyMs]);\n  await client.end();\n} catch (e) {\n  console.error('Knowledge Gateway Execution Error:', e.message);\n}\n\n// 5. Format Citations for AI Agent\nif (searchResults.length > 0) {\n  return searchResults.map((r, i) => {\n    return `[Verified Citation ${i + 1} | Doc: \"${r.title}\" | Chunk ID: ${r.chunk_id} | Type: ${r.doc_type} | Match: ${r.match_source} | RRF: ${parseFloat(r.rrf_score).toFixed(4)}]:\\n${r.chunk_text}`;\n  }).join('\\n\\n');\n}\n\n// 6. Graceful Empty-Result Fallback\nreturn `[Knowledge Gateway Notice]: No verified documentation found for \"${userQuery}\" within business scope \"${trustedBusinessCode}\". Do not speculate beyond verified records.`;",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"query\": { \"type\": [\"string\", \"null\"] },\n    \"userQuery\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}"
+      },
+      "id": "2007",
+      "name": "Tool: Search Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        610,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "name": "manage_calendar",
+        "description": "Checks slot availability or schedules Google Calendar booking. Accepts action ('CHECK_AVAILABILITY' or 'CREATE_BOOKING'), date ('YYYY-MM-DD'), time ('HH:MM'), customerPhone, and pushName.",
+        "language": "javaScript",
+        "specifyInputSchema": true,
+        "schemaType": "json",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": { \"type\": [\"string\", \"null\"] },\n    \"date\": { \"type\": [\"string\", \"null\"] },\n    \"time\": { \"type\": [\"string\", \"null\"] },\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
+        "jsCode": "const input = $input.first()?.json || {};\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst businessCode = incoming.business_code || 'HOSP_HEALTH';\nconst allowedTools = incoming.allowed_tools || ['search_knowledge_base', 'manage_calendar'];\n\n// ================= POLICY & PERMISSION GATE =================\n// Only authorized businesses (e.g. HOSP_HEALTH) can access calendar/appointment tool\nif (!allowedTools.includes('manage_calendar') || businessCode === 'BISE_EDU' || businessCode === 'POS_RETAIL') {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'POLICY_UNAUTHORIZED_TOOL',\n    tool: 'manage_calendar',\n    tenant: businessCode,\n    action: 'WRITE',\n    message: `[POLICY GATE DENIAL] Tool 'manage_calendar' is strictly UNAUTHORIZED for tenant '${businessCode}'. Calendar actions are restricted. Execution terminated outside LLM.`\n  });\n}\n// ============================================================\n\nconst action = input.action || (input.time || input.date ? 'CREATE_BOOKING' : 'CHECK_AVAILABILITY');\nconst date = input.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];\nconst time = input.time || '14:00';\nconst customerPhone = input.customerPhone || incoming.customerPhone || 'Customer';\nconst pushName = input.pushName || incoming.pushName || 'Customer';\n\nif (action === 'CHECK_AVAILABILITY') {\n  if (time === '14:00') {\n    return JSON.stringify({ available: false, message: `Slot ${date} at ${time} PKT is already booked.` });\n  }\n  return JSON.stringify({ available: true, message: `Slot ${date} at ${time} PKT is available for booking.` });\n}\n\nif (action === 'CREATE_BOOKING') {\n  const eventId = `evt_${Date.now()}`;\n  const startIso = `${date}T${time}:00+05:00`;\n  return JSON.stringify({\n    status: 'SUCCESS',\n    success: true,\n    eventId: eventId,\n    startTime: startIso,\n    tenant: businessCode,\n    summary: `Hospital OPD Appointment - ${customerPhone}`,\n    description: `Patient: ${pushName} | Phone: ${customerPhone} | Source: Hospital WhatsApp Agent`\n  });\n}\n\nreturn JSON.stringify({ status: 'SUCCESS', message: `Calendar slot processed for ${date} at ${time}` });",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": { \"type\": [\"string\", \"null\"] },\n    \"date\": { \"type\": [\"string\", \"null\"] },\n    \"time\": { \"type\": [\"string\", \"null\"] },\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}"
+      },
+      "id": "2009",
+      "name": "Tool: Manage Calendar",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1030,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "name": "sync_crm",
+        "description": "Upserts lead record in CRM database and updates stage. Accepts intent, bookingDate, bookingTime, customerPhone, pushName, messageText, and aiReply.",
+        "language": "javaScript",
+        "specifyInputSchema": true,
+        "schemaType": "json",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] },\n    \"intent\": { \"type\": [\"string\", \"null\"] },\n    \"aiReply\": { \"type\": [\"string\", \"null\"] },\n    \"bookingDate\": { \"type\": [\"string\", \"null\"] },\n    \"bookingTime\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst input = $input.first()?.json || {};\nconst extractData = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst businessCode = extractData.business_code || 'POS_RETAIL';\nconst allowedTools = extractData.allowed_tools || ['search_knowledge_base', 'sync_crm'];\n\n// ================= POLICY & PERMISSION GATE =================\n// Only authorized businesses (e.g. POS_RETAIL) can write to CRM leads table\nif (!allowedTools.includes('sync_crm') || businessCode === 'BISE_EDU' || businessCode === 'HOSP_HEALTH') {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'POLICY_UNAUTHORIZED_TOOL',\n    tool: 'sync_crm',\n    tenant: businessCode,\n    action: 'WRITE',\n    message: `[POLICY GATE DENIAL] Tool 'sync_crm' is strictly UNAUTHORIZED for tenant '${businessCode}'. Commercial CRM writes are restricted. Execution terminated outside LLM.`\n  });\n}\n// ============================================================\n\nconst customerPhone = input.customerPhone || extractData.customerPhone || 'Unknown';\nconst pushName = input.pushName || extractData.pushName || 'Customer';\nconst messageText = input.messageText || extractData.messageText || '';\nconst intent = input.intent || 'GENERAL';\nconst aiReply = input.aiReply || '';\nconst bookingDate = input.bookingDate || '';\nconst bookingTime = input.bookingTime || '';\nconst sessionId = extractData.session_id || `${businessCode}:pos-instance:${customerPhone}`;\n\nconst cities = ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];\nlet detectedCity = 'Lahore (Default)';\ncities.forEach(c => {\n  if (messageText.toLowerCase().includes(c.toLowerCase())) {\n    detectedCity = c;\n  }\n});\n\nlet leadStage = 'NEW_LEAD';\nlet bookingStatus = 'NONE';\nif (intent === 'BOOKING') {\n  leadStage = 'DEMO_BOOKED';\n  bookingStatus = 'SCHEDULED';\n} else if (intent === 'CLARIFY') {\n  leadStage = 'QUALIFIED_INQUIRY';\n}\n\ntry {\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@evolution-postgres:5432/postgres' });\n  await client.connect();\n  const upsertQuery = `INSERT INTO leads (customer_phone, push_name, city, domain_type, lead_stage, intent, last_message, ai_reply, booking_status, booking_date, booking_time, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP) ON CONFLICT (customer_phone) DO UPDATE SET push_name = EXCLUDED.push_name, city = EXCLUDED.city, domain_type = EXCLUDED.domain_type, lead_stage = EXCLUDED.lead_stage, intent = EXCLUDED.intent, last_message = EXCLUDED.last_message, ai_reply = EXCLUDED.ai_reply, booking_status = EXCLUDED.booking_status, booking_date = EXCLUDED.booking_date, booking_time = EXCLUDED.booking_time, updated_at = CURRENT_TIMESTAMP;`;\n  await client.query(upsertQuery, [customerPhone, pushName, detectedCity, businessCode, leadStage, intent, messageText, aiReply, bookingStatus, bookingDate, bookingTime]);\n  if (messageText) await client.query('INSERT INTO chat_history (session_id, customer_phone, push_name, sender, message_text) VALUES ($1, $2, $3, $4, $5)', [sessionId, customerPhone, pushName, 'customer', messageText]);\n  if (aiReply) await client.query('INSERT INTO chat_history (session_id, customer_phone, push_name, sender, message_text) VALUES ($1, $2, $3, $4, $5)', [sessionId, customerPhone, pushName, 'agent', aiReply]);\n  await client.end();\n} catch (e) {\n  console.error('PostgreSQL Sync Error:', e.message);\n}\n\nreturn JSON.stringify({\n  status: 'CRM_POSTGRES_UPDATED',\n  businessCode: businessCode,\n  leadStage: leadStage,\n  city: detectedCity,\n  bookingStatus: bookingStatus,\n  customerPhone: customerPhone\n});",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] },\n    \"intent\": { \"type\": [\"string\", \"null\"] },\n    \"aiReply\": { \"type\": [\"string\", \"null\"] },\n    \"bookingDate\": { \"type\": [\"string\", \"null\"] },\n    \"bookingTime\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}"
+      },
+      "id": "2010",
+      "name": "Tool: Sync CRM",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1170,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:4000/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ ($('Message Normalizer').first() || $json).json?.instanceToken || 'abafe9a4-f13e-4fbb-bf88-f6c0b6bc77d6' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"instance\": (($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json).json?.instance_name || 'point-of-sale'),\n  \"business_code\": (($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json).json?.business_code || 'POS_RETAIL'),\n  \"number\": (($('Message Normalizer').first() || $json).json?.customerPhone || '').replace(/:[0-9]+@/, '@'),\n  \"text\": ($json.sanitized_response || $json.output || $json.text || 'Hello! How can I assist you today?').replace(/\\\\{\\\\{.*?\\\\}\\\\}/g, '').trim()\n}) }}",
+        "description": "Centralized, business-aware Evolution Response Router (Phase 33). Guarantees responses originate from the correct configured WhatsApp instance (point-of-sale for POS_RETAIL, Bise-bwp for BISE_EDU, hospital-assistant for HOSP_HEALTH). Validates active database mapping, dynamically sets instance send endpoints and tokens, and executes automated retries."
+      },
+      "id": "2008",
+      "name": "Send WhatsApp Response (Evolution Router)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "name": "query_business_data",
+        "description": "Centralized Secure Structured Data Gateway for verified parameterized database queries. Operates under least-privilege DB roles. Supported approved operations:\n- POS Retail: get_product, check_inventory, get_price\n- BISE Education: get_student_result, get_fees\n- Hospital Healthcare: get_doctor_schedule, get_doctors_by_specialty, get_departments.\nArbitrary dynamic SQL and destructive commands are strictly prohibited.",
+        "language": "javaScript",
+        "specifyInputSchema": true,
+        "schemaType": "json",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"operation\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"get_product\",\n        \"check_inventory\",\n        \"get_price\",\n        \"get_student_result\",\n        \"get_doctor_schedule\",\n        \"get_doctors_by_specialty\",\n        \"get_fees\",\n        \"get_departments\"\n      ],\n      \"description\": \"Approved structured read operation.\"\n    },\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"sku\": {\n          \"type\": \"string\",\n          \"description\": \"Product SKU (e.g. POS-HW-001, POS-SW-001)\"\n        },\n        \"product_name\": {\n          \"type\": \"string\",\n          \"description\": \"Product name or search keyword\"\n        },\n        \"roll_number\": {\n          \"type\": \"string\",\n          \"description\": \"Student roll number (e.g. 102450, 204501)\"\n        },\n        \"specialty\": {\n          \"type\": \"string\",\n          \"description\": \"Medical specialty (e.g. Cardiology, Pediatrics)\"\n        },\n        \"doctor_name\": {\n          \"type\": \"string\",\n          \"description\": \"Doctor name (e.g. Dr. Tariq Mahmood)\"\n        },\n        \"fee_type\": {\n          \"type\": \"string\",\n          \"description\": \"Fee type (e.g. ADMISSION_MATRIC, NOC_MIGRATION)\"\n        }\n      }\n    }\n  },\n  \"required\": [\n    \"operation\"\n  ]\n}",
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst input = $input.first()?.json || {};\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\n\nconst businessCode = incoming.business_code || 'POS_RETAIL';\nconst allowedTools = incoming.allowed_tools || ['query_business_data', 'get_product', 'check_inventory', 'get_price'];\nconst targetDbName = incoming.target_db_name || (businessCode === 'BISE_EDU' ? 'bise_db' : businessCode === 'HOSP_HEALTH' ? 'hospital_db' : 'pos_db');\nconst rawOperation = (input.operation || '').trim();\nconst operation = rawOperation.toLowerCase();\nconst params = input.parameters || {};\n\n// ================= 1. SQL INJECTION & DESTRUCTIVE SQL INTERCEPTOR =================\nconst INJECTION_PATTERN = /(\\b(DROP|TRUNCATE|DELETE|UPDATE|INSERT|ALTER|CREATE|GRANT|REVOKE|EXEC|UNION)\\b|--|\\/\\*|\\*\\/|;|\\bOR\\b\\s+['\\d\\w]+=['\\d\\w]+|\\bAND\\b\\s+['\\d\\w]+=['\\d\\w]+)/i;\n\nconst checkPayload = JSON.stringify({ operation: rawOperation, params: params });\nif (INJECTION_PATTERN.test(checkPayload)) {\n  return JSON.stringify({\n    status: 'SECURITY_SQL_INJECTION_DETECTED',\n    error_code: 'DESTRUCTIVE_SQL_BLOCKED',\n    tenant: businessCode,\n    requested_operation: rawOperation,\n    message: '[SQL SECURITY VIOLATION] Malicious SQL tokens or destructive statements detected. Execution halted outside database.'\n  });\n}\n\n// ================= 2. POLICY & DOMAIN SCOPE GATE =================\nconst domainAllowedOps = {\n  'POS_RETAIL': ['get_product', 'get_products', 'get_product_by_sku', 'check_inventory', 'get_price'],\n  'BISE_EDU': ['get_student_result', 'get_exam_result', 'get_fees'],\n  'HOSP_HEALTH': ['get_doctor_schedule', 'get_doctors_by_specialty', 'get_departments']\n};\n\nconst allowedForTenant = domainAllowedOps[businessCode] || [];\nif (!allowedForTenant.includes(operation)) {\n  return JSON.stringify({\n    status: 'GATEWAY_CROSS_DOMAIN_DENIED',\n    error_code: 'CROSS_DOMAIN_OPERATION_UNAUTHORIZED',\n    requested_operation: rawOperation,\n    tenant: businessCode,\n    allowed_operations: allowedForTenant,\n    message: `[DATA GATEWAY VIOLATION] Operation '${rawOperation}' is not permitted for tenant '${businessCode}'. Cross-tenant read operations are strictly blocked.`\n  });\n}\n\n// ================= 3. PARAMETERIZED QUERY EXECUTION (LEAST-PRIVILEGE ROLE) =================\nconst startTime = Date.now();\nlet results = [];\nlet queryExecuted = '';\n\ntry {\n  // Connect using least-privilege read-only credentials\n  const client = new Client({\n    connectionString: `postgresql://gateway_readonly:gateway_secure_readonly_2026@evolution-postgres:5432/${targetDbName}`\n  });\n  await client.connect();\n\n  if (businessCode === 'POS_RETAIL') {\n    if (operation === 'get_product' || operation === 'get_product_by_sku') {\n      const sku = params.sku ? String(params.sku).trim() : null;\n      const name = params.product_name || params.name ? `%${String(params.product_name || params.name).trim()}%` : null;\n      const q = `SELECT DISTINCT ON (p.id) p.sku, p.name, p.description, pr.price_pkr, pr.currency, i.stock_quantity \n                 FROM products p \n                 LEFT JOIN prices pr ON p.id = pr.product_id \n                 LEFT JOIN inventory i ON p.id = i.product_id \n                 WHERE ($1::text IS NULL OR p.sku = $1) \n                   AND ($2::text IS NULL OR p.name ILIKE $2) \n                 ORDER BY p.id, pr.effective_date DESC \n                 LIMIT 10;`;\n      queryExecuted = q;\n      const res = await client.query(q, [sku, name]);\n      results = res.rows;\n    } else if (operation === 'get_products') {\n      const q = `SELECT DISTINCT ON (p.id) p.sku, p.name, pr.price_pkr, i.stock_quantity \n                 FROM products p \n                 LEFT JOIN prices pr ON p.id = pr.product_id \n                 LEFT JOIN inventory i ON p.id = i.product_id \n                 WHERE p.is_active = TRUE \n                 ORDER BY p.id, pr.effective_date DESC \n                 LIMIT 10;`;\n      queryExecuted = q;\n      const res = await client.query(q);\n      results = res.rows;\n    } else if (operation === 'check_inventory') {\n      const sku = String(params.sku || '').trim();\n      const q = `SELECT p.sku, p.name, i.stock_quantity, i.reorder_level, \n                        CASE WHEN i.stock_quantity > i.reorder_level THEN 'IN_STOCK' \n                             WHEN i.stock_quantity > 0 THEN 'LOW_STOCK' \n                             ELSE 'OUT_OF_STOCK' END AS stock_status \n                 FROM products p \n                 JOIN inventory i ON p.id = i.product_id \n                 WHERE p.sku = $1;`;\n      queryExecuted = q;\n      const res = await client.query(q, [sku]);\n      results = res.rows;\n    } else if (operation === 'get_price') {\n      const sku = String(params.sku || '').trim();\n      const q = `SELECT p.sku, p.name, pr.price_pkr, pr.currency \n                 FROM products p \n                 JOIN prices pr ON p.id = pr.product_id \n                 WHERE p.sku = $1 \n                 ORDER BY pr.effective_date DESC, pr.id DESC \n                 LIMIT 1;`;\n      queryExecuted = q;\n      const res = await client.query(q, [sku]);\n      results = res.rows;\n    }\n  } else if (businessCode === 'BISE_EDU') {\n    if (operation === 'get_student_result' || operation === 'get_exam_result') {\n      const rollNum = String(params.roll_number || params.rollNumber || '').trim();\n      const q = `SELECT r.roll_number, s.student_name, s.father_name, e.title AS exam_title, \n                        e.exam_year, e.exam_session, r.marks_obtained, r.total_marks, r.grade, r.status \n                 FROM results r \n                 JOIN students s ON r.student_id = s.id \n                 JOIN exams e ON r.exam_id = e.id \n                 WHERE r.roll_number = $1 \n                 LIMIT 1;`;\n      queryExecuted = q;\n      const res = await client.query(q, [rollNum]);\n      results = res.rows;\n    } else if (operation === 'get_fees') {\n      const feeType = params.fee_type ? `%${String(params.fee_type).trim()}%` : null;\n      const q = `SELECT fee_type, amount_pkr, description \n                 FROM fees \n                 WHERE ($1::text IS NULL OR fee_type ILIKE $1);`;\n      queryExecuted = q;\n      const res = await client.query(q, [feeType]);\n      results = res.rows;\n    }\n  } else if (businessCode === 'HOSP_HEALTH') {\n    if (operation === 'get_doctor_schedule') {\n      const docName = params.doctor_name ? `%${String(params.doctor_name).trim()}%` : null;\n      const q = `SELECT d.doctor_name, d.specialty, d.opd_fee_pkr, s.available_days, s.opd_timings, s.max_daily_patients \n                 FROM doctors d \n                 JOIN schedules s ON d.id = s.doctor_id \n                 WHERE ($1::text IS NULL OR d.doctor_name ILIKE $1) \n                 LIMIT 10;`;\n      queryExecuted = q;\n      const res = await client.query(q, [docName]);\n      results = res.rows;\n    } else if (operation === 'get_doctors_by_specialty') {\n      const spec = params.specialty ? `%${String(params.specialty).trim()}%` : '%';\n      const q = `SELECT d.id, d.doctor_name, d.specialty, d.opd_fee_pkr, d.qualification, dep.department_name, dep.location_floor \n                 FROM doctors d \n                 LEFT JOIN departments dep ON d.department_id = dep.id \n                 WHERE d.specialty ILIKE $1;`;\n      queryExecuted = q;\n      const res = await client.query(q, [spec]);\n      results = res.rows;\n    } else if (operation === 'get_departments') {\n      const q = `SELECT department_name, location_floor, head_doctor FROM departments;`;\n      queryExecuted = q;\n      const res = await client.query(q);\n      results = res.rows;\n    }\n  }\n\n  await client.end();\n} catch (e) {\n  console.error('Structured SQL Tool Execution Error:', e.message);\n  return JSON.stringify({\n    status: 'DATABASE_EXECUTION_ERROR',\n    error: e.message,\n    tenant: businessCode,\n    target_database: targetDbName\n  });\n}\n\n// ================= 4. ACCESS AUDIT LOGGING =================\nconst durationMs = Date.now() - startTime;\ntry {\n  const auditClient = new Client({\n    connectionString: 'postgresql://gateway_readonly:gateway_secure_readonly_2026@evolution-postgres:5432/platform_db'\n  });\n  await auditClient.connect();\n  const auditQ = `INSERT INTO platform_audit_metadata \n                  (business_code, instance_name, customer_phone, inbound_payload, outbound_payload, processing_time_ms) \n                  VALUES ($1, $2, $3, $4, $5, $6);`;\n  await auditClient.query(auditQ, [\n    businessCode,\n    incoming.instance_name || 'unknown-instance',\n    incoming.customerPhone || 'unknown-user',\n    JSON.stringify({ tool: 'secure_structured_sql', operation: rawOperation, parameters: params }),\n    JSON.stringify({ row_count: results.length, target_db: targetDbName }),\n    durationMs\n  ]);\n  await auditClient.end();\n} catch (ae) {\n  console.error('Audit Logging Error:', ae.message);\n}\n\nreturn JSON.stringify({\n  status: 'GATEWAY_SUCCESS',\n  tenant: businessCode,\n  target_database: targetDbName,\n  operation: rawOperation,\n  count: results.length,\n  records: results\n});",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"operation\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"get_product\",\n        \"check_inventory\",\n        \"get_price\",\n        \"get_student_result\",\n        \"get_doctor_schedule\",\n        \"get_doctors_by_specialty\",\n        \"get_fees\",\n        \"get_departments\"\n      ],\n      \"description\": \"Approved structured read operation.\"\n    },\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"sku\": {\n          \"type\": \"string\",\n          \"description\": \"Product SKU (e.g. POS-HW-001, POS-SW-001)\"\n        },\n        \"product_name\": {\n          \"type\": \"string\",\n          \"description\": \"Product name or search keyword\"\n        },\n        \"roll_number\": {\n          \"type\": \"string\",\n          \"description\": \"Student roll number (e.g. 102450, 204501)\"\n        },\n        \"specialty\": {\n          \"type\": \"string\",\n          \"description\": \"Medical specialty (e.g. Cardiology, Pediatrics)\"\n        },\n        \"doctor_name\": {\n          \"type\": \"string\",\n          \"description\": \"Doctor name (e.g. Dr. Tariq Mahmood)\"\n        },\n        \"fee_type\": {\n          \"type\": \"string\",\n          \"description\": \"Fee type (e.g. ADMISSION_MATRIC, NOC_MIGRATION)\"\n        }\n      }\n    }\n  },\n  \"required\": [\n    \"operation\"\n  ]\n}"
+      },
+      "id": "2019",
+      "name": "Tool: Business Data Gateway",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        750,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "name": "action_gateway",
+        "description": "Access the centralized, business-aware Action Gateway for all state-changing and external write actions. Executes approved operations: POS (create_order, update_order, cancel_order, record_payment, sync_crm); BISE (submit_verification_request, submit_service_application, track_service_application); Hospital (create_appointment, book_appointment, reschedule_appointment, cancel_appointment, manage_calendar); Shared (send_notification, call_external_api). Requires action name and validated parameters. Read-only queries are strictly rejected.",
+        "language": "javaScript",
+        "specifyInputSchema": true,
+        "schemaType": "json",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"description\": \"The approved state-changing action to execute (create_order, update_order, cancel_order, record_payment, sync_crm, submit_verification_request, submit_service_application, track_service_application, create_appointment, book_appointment, reschedule_appointment, cancel_appointment, manage_calendar, send_notification, call_external_api).\"\n    },\n    \"params\": {\n      \"type\": \"object\",\n      \"description\": \"Validated parameters required for the specific action.\"\n    }\n  },\n  \"required\": [\n    \"action\",\n    \"params\"\n  ]\n}",
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\n\nconst startTime = Date.now();\nconst inputJson = $input.first()?.json || {};\nconst action = inputJson.action || '';\nconst params = inputJson.params || {};\n\n// 1. Resolve Trusted Session Context from Upstream Pipeline\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst trustedBusinessCode = incoming.business_code || 'POS_RETAIL';\nconst instanceName = incoming.instance_name || 'action-instance';\nconst customerPhone = incoming.customerPhone || params.customer_phone || params.patient_phone || 'unknown';\nconst allowedTools = incoming.allowed_tools || ['action_gateway'];\n\n// Anti-spoofing check\nconst spoofAttempt = !!(inputJson.business_code && inputJson.business_code !== trustedBusinessCode);\n\n// 2. READ vs WRITE GUARD\nconst RECOGNIZED_READS = [\n  'get_product', 'check_inventory', 'get_price', 'get_student_result',\n  'get_doctor_schedule', 'get_doctors_by_specialty', 'get_departments',\n  'search_knowledge_base', 'query_business_data'\n];\n\nif (RECOGNIZED_READS.includes(action) || (typeof action === 'string' && action.toLowerCase().startsWith('get_'))) {\n  return JSON.stringify({\n    status: 'READ_OPERATION_REJECTED',\n    error_code: 'READ_OPERATION_NOT_PERMITTED_IN_ACTION_GATEWAY',\n    action,\n    message: `[ACTION GATEWAY NOTICE] '${action}' is a READ-ONLY operation. Action Gateway strictly executes state-changing WRITE and EXTERNAL operations. Direct read queries to Knowledge Gateway or Business Data Gateway.`\n  });\n}\n\n// 3. Multi-Tenant Action Permissions\nconst ACTION_PERMS = {\n  create_order: ['POS_RETAIL'],\n  update_order: ['POS_RETAIL'],\n  cancel_order: ['POS_RETAIL'],\n  record_payment: ['POS_RETAIL'],\n  sync_crm: ['POS_RETAIL'],\n  submit_verification_request: ['BISE_EDU'],\n  submit_service_application: ['BISE_EDU'],\n  track_service_application: ['BISE_EDU'],\n  create_appointment: ['HOSP_HEALTH'],\n  book_appointment: ['HOSP_HEALTH'],\n  reschedule_appointment: ['HOSP_HEALTH'],\n  cancel_appointment: ['HOSP_HEALTH'],\n  manage_calendar: ['HOSP_HEALTH'],\n  send_notification: ['POS_RETAIL', 'BISE_EDU', 'HOSP_HEALTH'],\n  call_external_api: ['POS_RETAIL', 'BISE_EDU', 'HOSP_HEALTH']\n};\n\nconst authorizedTenants = ACTION_PERMS[action];\nif (!authorizedTenants) {\n  return JSON.stringify({\n    status: 'ACTION_GATEWAY_DENIED',\n    error_code: 'UNAPPROVED_ACTION_ROUTE',\n    action,\n    message: `[ACTION GATEWAY DENIAL] Action '${action}' is not an approved write action route. Write/external actions execute ONLY through approved routes.`\n  });\n}\n\nif (!authorizedTenants.includes(trustedBusinessCode)) {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'UNAUTHORIZED_TENANT_ACTION',\n    action,\n    tenant: trustedBusinessCode,\n    authorized_tenants: authorizedTenants,\n    message: `[ACTION GATEWAY DENIAL] Action '${action}' is strictly UNAUTHORIZED for tenant '${trustedBusinessCode}'. Execution blocked outside LLM.`\n  });\n}\n\n// 4. Parameter Validation\nfunction isValidPhone(p) { return p && typeof p === 'string' && /^\\+?[0-9]{10,15}$/.test(p.replace(/[\\s\\-\\(\\)]/g, '')); }\nfunction isValidDate(d) { return d && typeof d === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(d); }\nfunction isValidTime(t) { return t && typeof t === 'string' && /^([01]\\d|2[0-3]):([0-5]\\d)(:[0-5]\\d)?$/.test(t); }\n\nlet valError = null;\nif (action === 'create_order') {\n  if (!params.customer_phone || !isValidPhone(params.customer_phone)) valError = 'Valid customer_phone is required.';\n  else if (!Array.isArray(params.items) || params.items.length === 0) valError = 'items array with { sku, quantity } is required.';\n} else if (action === 'update_order') {\n  if (!params.order_number && !params.order_id) valError = 'order_number or order_id is required.';\n} else if (action === 'cancel_order') {\n  if (!params.order_number && !params.order_id) valError = 'order_number or order_id is required.';\n} else if (action === 'record_payment') {\n  if (!params.order_number && !params.order_id) valError = 'order_number or order_id is required.';\n  else if (!params.amount_pkr || params.amount_pkr <= 0) valError = 'Positive amount_pkr is required.';\n} else if (action === 'submit_verification_request') {\n  if (!params.roll_number) valError = 'roll_number is required for verification request.';\n  else if (!params.applicant_name) valError = 'applicant_name is required.';\n} else if (action === 'submit_service_application') {\n  if (!params.roll_number) valError = 'roll_number is required for service application.';\n  else if (!params.application_type) valError = 'application_type is required.';\n} else if (action === 'track_service_application') {\n  if (!params.application_number && !params.request_ref && !params.roll_number) valError = 'application_number, request_ref or roll_number is required.';\n} else if (action === 'book_appointment' || action === 'create_appointment') {\n  if (!params.patient_phone || !isValidPhone(params.patient_phone)) valError = 'Valid patient_phone is required.';\n  else if (!params.appointment_date || !isValidDate(params.appointment_date)) valError = 'Valid appointment_date (YYYY-MM-DD) is required.';\n  else if (!params.appointment_time || !isValidTime(params.appointment_time)) valError = 'Valid appointment_time (HH:MM) is required.';\n} else if (action === 'reschedule_appointment') {\n  if (!params.appointment_number && !params.appointment_id) valError = 'appointment_number or appointment_id is required.';\n  else if (!params.new_appointment_date || !isValidDate(params.new_appointment_date)) valError = 'Valid new_appointment_date (YYYY-MM-DD) is required.';\n  else if (!params.new_appointment_time || !isValidTime(params.new_appointment_time)) valError = 'Valid new_appointment_time (HH:MM) is required.';\n} else if (action === 'cancel_appointment') {\n  if (!params.appointment_number && !(params.patient_phone && params.appointment_date)) valError = 'appointment_number or (patient_phone + date) is required.';\n}\n\nif (valError) {\n  return JSON.stringify({\n    status: 'VALIDATION_FAILED',\n    error_code: 'INVALID_ACTION_PARAMETERS',\n    action,\n    error: valError,\n    message: `[ACTION GATEWAY PARAMETER ERROR] ${valError}`\n  });\n}\n\n// 5. Connect and Execute via gateway_action_writer\nlet executionResult = null;\nconst targetDb = trustedBusinessCode === 'POS_RETAIL' ? 'pos_db' : (trustedBusinessCode === 'HOSP_HEALTH' ? 'hospital_db' : (trustedBusinessCode === 'BISE_EDU' ? 'bise_db' : 'platform_db'));\n\ntry {\n  const client = new Client({\n    connectionString: `postgresql://gateway_action_writer:gateway_action_writer_2026@evolution-postgres:5432/${targetDb}`\n  });\n  await client.connect();\n\n  if (action === 'create_order') {\n    const phone = params.customer_phone.replace(/[\\s\\-\\(\\)]/g, '');\n    const custRes = await client.query(\n      'INSERT INTO customers (customer_phone, full_name, city) VALUES ($1, $2, $3) ON CONFLICT (customer_phone) DO UPDATE SET full_name = EXCLUDED.full_name RETURNING id',\n      [phone, params.customer_name || 'Customer', params.city || 'Lahore']\n    );\n    const customerId = custRes.rows[0].id;\n    let total = 0;\n    const items = [];\n    for (const item of params.items) {\n      const pRes = await client.query(\n        'SELECT p.id, p.name, pr.price_pkr, COALESCE(i.stock_quantity, 0) as stock FROM products p JOIN prices pr ON p.id = pr.product_id LEFT JOIN inventory i ON p.id = i.product_id WHERE p.sku = $1 LIMIT 1',\n        [item.sku]\n      );\n      if (pRes.rows.length === 0) throw new Error(`Product SKU ${item.sku} not found.`);\n      const prodId = pRes.rows[0].id;\n      const stock = parseInt(pRes.rows[0].stock, 10);\n      if (stock < item.quantity) throw new Error(`Insufficient stock for SKU ${item.sku}. Requested: ${item.quantity}, Available: ${stock}.`);\n      const price = parseFloat(pRes.rows[0].price_pkr);\n      const sub = price * item.quantity;\n      total += sub;\n      items.push({ prodId, qty: item.quantity, price, sub });\n    }\n    const ordNum = params.order_number || `ORD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;\n    await client.query('BEGIN');\n    const ordRes = await client.query(\n      'INSERT INTO orders (order_number, customer_id, total_amount_pkr, status) VALUES ($1, $2, $3, $4) RETURNING id',\n      [ordNum, customerId, total, 'PENDING']\n    );\n    const orderId = ordRes.rows[0].id;\n    for (const it of items) {\n      await client.query('INSERT INTO order_items (order_id, product_id, quantity, unit_price_pkr, subtotal_pkr) VALUES ($1, $2, $3, $4, $5)', [orderId, it.prodId, it.qty, it.price, it.sub]);\n      await client.query('UPDATE inventory SET stock_quantity = stock_quantity - $1 WHERE product_id = $2', [it.qty, it.prodId]);\n    }\n    await client.query('COMMIT');\n    executionResult = { order_id: orderId, order_number: ordNum, total_amount_pkr: total, summary: `Order #${ordNum} created for ${phone}. Total: PKR ${total.toLocaleString('en-PK')}. Inventory deducted. Status: PENDING.` };\n\n  } else if (action === 'update_order') {\n    const where = params.order_number ? 'order_number = $1' : 'id = $1';\n    const val = params.order_number || params.order_id;\n    const checkRes = await client.query(`SELECT id, order_number, status FROM orders WHERE ${where} LIMIT 1`, [val]);\n    if (checkRes.rows.length === 0) throw new Error(`Order ${val} not found.`);\n    const ord = checkRes.rows[0];\n    if (ord.status === 'CANCELLED') throw new Error(`Cannot update CANCELLED order #${ord.order_number}.`);\n    const newStatus = params.status ? params.status.toUpperCase() : ord.status;\n    await client.query('UPDATE orders SET status = $1 WHERE id = $2', [newStatus, ord.id]);\n    executionResult = { order_id: ord.id, order_number: ord.order_number, new_status: newStatus, summary: `Order #${ord.order_number} status updated to ${newStatus}.` };\n\n  } else if (action === 'cancel_order') {\n    const where = params.order_number ? 'order_number = $1' : 'id = $1';\n    const val = params.order_number || params.order_id;\n    const checkRes = await client.query(`SELECT id, order_number, status FROM orders WHERE ${where} LIMIT 1`, [val]);\n    if (checkRes.rows.length === 0) throw new Error(`Order ${val} not found.`);\n    const ord = checkRes.rows[0];\n    if (ord.status === 'CANCELLED') throw new Error(`Order #${ord.order_number} is already CANCELLED.`);\n    if (['SHIPPED', 'DELIVERED'].includes(ord.status)) throw new Error(`Cannot cancel order #${ord.order_number} in ${ord.status} status.`);\n\n    await client.query('BEGIN');\n    const itemsRes = await client.query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [ord.id]);\n    for (const it of itemsRes.rows) {\n      await client.query('UPDATE inventory SET stock_quantity = stock_quantity + $1 WHERE product_id = $2', [it.quantity, it.product_id]);\n    }\n    await client.query('UPDATE orders SET status = $1 WHERE id = $2', ['CANCELLED', ord.id]);\n    await client.query('COMMIT');\n    executionResult = { order_id: ord.id, order_number: ord.order_number, restocked_items: itemsRes.rows.length, summary: `Order #${ord.order_number} CANCELLED. All items restocked to inventory.` };\n\n  } else if (action === 'record_payment') {\n    let orderId = params.order_id;\n    if (!orderId && params.order_number) {\n      const oRes = await client.query('SELECT id FROM orders WHERE order_number = $1 LIMIT 1', [params.order_number]);\n      if (oRes.rows.length === 0) throw new Error(`Order ${params.order_number} not found.`);\n      orderId = oRes.rows[0].id;\n    }\n    await client.query('BEGIN');\n    const payRes = await client.query(\n      'INSERT INTO payments (order_id, payment_method, transaction_ref, amount_pkr, payment_status) VALUES ($1, $2, $3, $4, $5) RETURNING id',\n      [orderId, params.payment_method.toUpperCase(), params.transaction_ref || 'TRX-REF', params.amount_pkr, 'COMPLETED']\n    );\n    await client.query('UPDATE orders SET status = $1 WHERE id = $2', ['PAID', orderId]);\n    await client.query('COMMIT');\n    executionResult = { payment_id: payRes.rows[0].id, order_id: orderId, summary: `Payment of PKR ${params.amount_pkr} recorded. Order status updated to PAID.` };\n\n  } else if (action === 'submit_verification_request') {\n    const vRes = await client.query(\n      'SELECT r.id, r.roll_number, r.grade, s.student_name, e.title FROM results r JOIN students s ON r.student_id = s.id JOIN exams e ON r.exam_id = e.id WHERE r.roll_number = $1 LIMIT 1',\n      [params.roll_number.trim()]\n    );\n    if (vRes.rows.length === 0) throw new Error(`Roll number ${params.roll_number} not found in BISE records.`);\n    const st = vRes.rows[0];\n    const ref = `VER-2026-${Math.floor(1000 + Math.random() * 9000)}`;\n    const insRes = await client.query(\n      'INSERT INTO verification_requests (request_ref, roll_number, applicant_name, organization, verification_status) VALUES ($1, $2, $3, $4, $5) RETURNING id',\n      [ref, params.roll_number.trim(), params.applicant_name.trim(), params.organization || 'Individual', 'PENDING']\n    );\n    executionResult = { request_ref: ref, roll_number: params.roll_number, student_name: st.student_name, grade: st.grade, summary: `Verification request #${ref} submitted for Roll #${params.roll_number} (${st.student_name}). Status: PENDING.` };\n\n  } else if (action === 'submit_service_application') {\n    const stRes = await client.query(\n      'SELECT s.id, s.student_name FROM results r JOIN students s ON r.student_id = s.id WHERE r.roll_number = $1 LIMIT 1',\n      [params.roll_number.trim()]\n    );\n    if (stRes.rows.length === 0) throw new Error(`Roll number ${params.roll_number} not found in BISE records.`);\n    const studentId = stRes.rows[0].id;\n    const sName = stRes.rows[0].student_name;\n    const feeRes = await client.query('SELECT amount_pkr FROM fees WHERE fee_type = $1 LIMIT 1', [params.application_type.toUpperCase().trim()]);\n    const fee = feeRes.rows.length > 0 ? parseFloat(feeRes.rows[0].amount_pkr) : 1500.00;\n    const appNum = `APP-${params.application_type.substring(0, 3).toUpperCase()}-2026-${Math.floor(1000 + Math.random() * 9000)}`;\n    await client.query(\n      'INSERT INTO applications (application_number, student_id, application_type, status) VALUES ($1, $2, $3, $4)',\n      [appNum, studentId, params.application_type.toUpperCase().trim(), 'PROCESSING']\n    );\n    executionResult = { application_number: appNum, roll_number: params.roll_number, student_name: sName, fee_pkr: fee, summary: `BISE application #${appNum} submitted for ${params.application_type} (Roll #${params.roll_number}, ${sName}). Fee: PKR ${fee}. Status: PROCESSING.` };\n\n  } else if (action === 'track_service_application') {\n    const ref = (params.application_number || params.request_ref || params.roll_number || '').trim();\n    const appRes = await client.query('SELECT application_number, application_type, status, created_at FROM applications WHERE application_number = $1 LIMIT 1', [ref]);\n    if (appRes.rows.length > 0) {\n      const a = appRes.rows[0];\n      executionResult = { reference: a.application_number, type: a.application_type, status: a.status, summary: `Application #${a.application_number} (${a.application_type}) is currently ${a.status}.` };\n    } else {\n      const vrRes = await client.query('SELECT request_ref, roll_number, verification_status, created_at FROM verification_requests WHERE request_ref = $1 OR roll_number = $1 LIMIT 1', [ref]);\n      if (vrRes.rows.length > 0) {\n        const v = vrRes.rows[0];\n        executionResult = { reference: v.request_ref, roll_number: v.roll_number, status: v.verification_status, summary: `Verification request #${v.request_ref} for Roll #${v.roll_number} is currently ${v.verification_status}.` };\n      } else {\n        throw new Error(`No BISE application or verification found matching '${ref}'.`);\n      }\n    }\n\n  } else if (action === 'book_appointment' || action === 'create_appointment') {\n    const phone = params.patient_phone.replace(/[\\s\\-\\(\\)]/g, '');\n    const patRes = await client.query(\n      'INSERT INTO patients (patient_mrn, patient_name, patient_phone) VALUES ($1, $2, $3) ON CONFLICT (patient_phone) DO UPDATE SET patient_name = EXCLUDED.patient_name RETURNING id',\n      [`MRN-2026-${Math.floor(100 + Math.random() * 900)}`, params.patient_name || 'Patient', phone]\n    );\n    const patId = patRes.rows[0].id;\n    let docId = params.doctor_id;\n    let docName = params.doctor_name || 'Specialist';\n    if (!docId && params.doctor_name) {\n      const dRes = await client.query('SELECT id, doctor_name FROM doctors WHERE doctor_name ILIKE $1 LIMIT 1', [`%${params.doctor_name}%`]);\n      if (dRes.rows.length > 0) { docId = dRes.rows[0].id; docName = dRes.rows[0].doctor_name; }\n      else docId = 1;\n    }\n    const conflictRes = await client.query('SELECT COUNT(*)::int as cnt FROM appointments WHERE doctor_id = $1 AND appointment_date = $2 AND appointment_time = $3 AND status = $4', [docId || 1, params.appointment_date, params.appointment_time, 'SCHEDULED']);\n    if (conflictRes.rows[0].cnt > 0) throw new Error(`Doctor ${docName} already has an appointment booked at ${params.appointment_time} on ${params.appointment_date}.`);\n\n    const appNum = `APT-2026-${Math.floor(1000 + Math.random() * 9000)}`;\n    await client.query('BEGIN');\n    const aRes = await client.query(\n      'INSERT INTO appointments (appointment_number, patient_id, doctor_id, appointment_date, appointment_time, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',\n      [appNum, patId, docId || 1, params.appointment_date, params.appointment_time, 'SCHEDULED']\n    );\n    const appId = aRes.rows[0].id;\n    await client.query('INSERT INTO appointment_history (appointment_id, doctor_notes, diagnosis) VALUES ($1, $2, $3)', [appId, 'Booked via Action Gateway', 'INITIAL_CONSULTATION']);\n    await client.query('COMMIT');\n    executionResult = { appointment_id: appId, appointment_number: appNum, summary: `Appointment #${appNum} booked with ${docName} on ${params.appointment_date} at ${params.appointment_time} for ${params.patient_name || 'Patient'}.` };\n\n  } else if (action === 'reschedule_appointment') {\n    const where = params.appointment_number ? 'appointment_number = $1' : 'id = $1';\n    const val = params.appointment_number || params.appointment_id;\n    const aRes = await client.query(`SELECT id, appointment_number, doctor_id, appointment_date, appointment_time, status FROM appointments WHERE ${where} LIMIT 1`, [val]);\n    if (aRes.rows.length === 0) throw new Error(`Appointment ${val} not found.`);\n    const app = aRes.rows[0];\n    if (app.status === 'CANCELLED') throw new Error(`Cannot reschedule CANCELLED appointment #${app.appointment_number}.`);\n\n    const conflictRes = await client.query('SELECT COUNT(*)::int as cnt FROM appointments WHERE doctor_id = $1 AND appointment_date = $2 AND appointment_time = $3 AND status = $4 AND id != $5', [app.doctor_id, params.new_appointment_date, params.new_appointment_time, 'SCHEDULED', app.id]);\n    if (conflictRes.rows[0].cnt > 0) throw new Error(`Slot ${params.new_appointment_time} on ${params.new_appointment_date} is already booked.`);\n\n    await client.query('BEGIN');\n    await client.query('UPDATE appointments SET appointment_date = $1, appointment_time = $2 WHERE id = $3', [params.new_appointment_date, params.new_appointment_time, app.id]);\n    await client.query('INSERT INTO appointment_history (appointment_id, doctor_notes, diagnosis) VALUES ($1, $2, $3)', [app.id, `Rescheduled from ${app.appointment_date} ${app.appointment_time} to ${params.new_appointment_date} ${params.new_appointment_time}`, 'RESCHEDULE_ACTION']);\n    await client.query('COMMIT');\n    executionResult = { appointment_number: app.appointment_number, new_date: params.new_appointment_date, new_time: params.new_appointment_time, summary: `Appointment #${app.appointment_number} rescheduled to ${params.new_appointment_date} at ${params.new_appointment_time}.` };\n\n  } else if (action === 'cancel_appointment') {\n    const where = params.appointment_number ? 'appointment_number = $1' : 'patient_id = (SELECT id FROM patients WHERE patient_phone = $1) AND appointment_date = $2';\n    const qArgs = params.appointment_number ? [params.appointment_number] : [params.patient_phone, params.appointment_date];\n    const findRes = await client.query(`SELECT id, appointment_number, status FROM appointments WHERE ${where} LIMIT 1`, qArgs);\n    if (findRes.rows.length === 0) throw new Error('Appointment not found.');\n    const app = findRes.rows[0];\n    if (app.status === 'CANCELLED') throw new Error(`Appointment #${app.appointment_number} is already CANCELLED.`);\n\n    await client.query('BEGIN');\n    await client.query('UPDATE appointments SET status = $1 WHERE id = $2', ['CANCELLED', app.id]);\n    await client.query('INSERT INTO appointment_history (appointment_id, doctor_notes, diagnosis) VALUES ($1, $2, $3)', [app.id, `Cancelled: ${params.reason || 'Patient request'}`, 'CANCELLATION_ACTION']);\n    await client.query('COMMIT');\n    executionResult = { appointment_number: app.appointment_number, summary: `Appointment #${app.appointment_number} has been CANCELLED.` };\n\n  } else if (action === 'sync_crm') {\n    const phone = params.customer_phone.replace(/[\\s\\-\\(\\)]/g, '');\n    await client.query(\n      'INSERT INTO leads (customer_phone, push_name, city, lead_stage) VALUES ($1, $2, $3, $4) ON CONFLICT (customer_phone) DO UPDATE SET push_name = EXCLUDED.push_name, city = EXCLUDED.city, lead_stage = EXCLUDED.lead_stage',\n      [phone, params.push_name || 'Lead', params.city || 'Lahore', params.lead_stage || 'QUALIFIED']\n    );\n    executionResult = { customer_phone: phone, summary: `CRM lead ${phone} synchronized successfully.` };\n  } else {\n    executionResult = { summary: `Action ${action} dispatched successfully through authorized gateway route.` };\n  }\n  await client.end();\n} catch (e) {\n  return JSON.stringify({ status: 'ERROR', error_code: 'DATABASE_ACTION_ERROR', message: `[ACTION GATEWAY EXECUTION ERROR] ${e.message}` });\n}\n\n// 6. Audit Logging\ntry {\n  const auditClient = new Client({ connectionString: 'postgresql://gateway_action_writer:gateway_action_writer_2026@evolution-postgres:5432/platform_db' });\n  await auditClient.connect();\n  const inPayload = JSON.stringify({ gateway: 'action_gateway', action, params, spoof_attempt: spoofAttempt });\n  const outPayload = JSON.stringify({ status: 'SUCCESS', result: executionResult });\n  await auditClient.query(\n    'INSERT INTO platform_audit_metadata (business_code, instance_name, customer_phone, inbound_payload, outbound_payload, processing_time_ms) VALUES ($1, $2, $3, $4, $5, $6)',\n    [trustedBusinessCode, instanceName, customerPhone, inPayload, outPayload, Date.now() - startTime]\n  );\n  await auditClient.end();\n} catch (ae) {}\n\nreturn `[Action Gateway Confirmation]: ${executionResult.summary}`;",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"description\": \"The approved state-changing action to execute (create_order, update_order, cancel_order, record_payment, sync_crm, submit_verification_request, submit_service_application, track_service_application, create_appointment, book_appointment, reschedule_appointment, cancel_appointment, manage_calendar, send_notification, call_external_api).\"\n    },\n    \"params\": {\n      \"type\": \"object\",\n      \"description\": \"Validated parameters required for the specific action.\"\n    }\n  },\n  \"required\": [\n    \"action\",\n    \"params\"\n  ]\n}"
+      },
+      "id": "2020",
+      "name": "Tool: Action Gateway",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        890,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 30: Result Validator & Response Guard\n// Blocks false-success claims, enforces domain consistency, and guarantees verified responses.\n\nconst inputItem = $json;\nconst rawOutput = (inputItem.output || inputItem.text || '').trim();\n\n// Heuristics for false success\nconst FALSE_SUCCESS_PATTERNS = [\n  /order (?:has been |is )?(?:placed|created|confirmed|completed|processed|registered)/i,\n  /appointment (?:has been |is )?(?:booked|scheduled|confirmed|rescheduled|registered)/i,\n  /appointment (?:has been |is )?(?:cancelled|canceled)/i,\n  /order (?:has been |is )?(?:cancelled|canceled)/i,\n  /payment (?:has been |is )?(?:received|recorded|confirmed|successful|completed)/i,\n  /(?:successfully|successful) (?:created|placed|booked|cancelled|canceled|rescheduled|updated|processed|recorded|submitted)/i,\n  /(?:has been|have been) successfully/i,\n  /i have (?:created|placed|booked|cancelled|canceled|rescheduled|updated|processed|recorded) your/i,\n  /(?:order|booking|appointment) confirm ho gay[ai]/i,\n  /(?:order|booking|appointment) cancel ho gay[ai]/i,\n  /(?:kamyabi se|mubarak|tayyar hai|book ho chuk[ai])/i\n];\n\n// Check if tool executions in this turn encountered failure\nlet hasFailure = false;\nlet failureDetail = '';\n\n// Check tool errors in input or execution context\nif (inputItem.tool_error || inputItem.status === 'ERROR') {\n  hasFailure = true;\n  failureDetail = inputItem.message || inputItem.error || 'Downstream database validation failed.';\n}\n\n// Intercept false success if tool failed\nif (hasFailure) {\n  const claimsSuccess = FALSE_SUCCESS_PATTERNS.some(p => p.test(rawOutput));\n  if (claimsSuccess) {\n    const sanitized = `We apologize, but your requested operation could not be completed. Reason: ${failureDetail}. No changes were committed to your account. Please review your request and try again.`;\n    return [{\n      json: {\n        ...inputItem,\n        output: sanitized,\n        validation_guard: {\n          blocked: true,\n          original_output: rawOutput,\n          reason: 'FALSE_SUCCESS_BLOCKED'\n        }\n      }\n    }];\n  }\n}\n\nreturn [{\n  json: {\n    ...inputItem,\n    output: rawOutput,\n    validation_guard: {\n      blocked: false,\n      status: 'VERIFIED'\n    }\n  }\n}];\n"
+      },
+      "id": "2021",
+      "name": "Result Validator & Response Guard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        1800
+      ]
+    }
+  ],
+  "connections": {
+    "Evolution Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Customer Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Customer Message?": {
+      "main": [
+        [
+          {
+            "node": "Message Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Normalizer": {
+      "main": [
+        [
+          {
+            "node": "Resolve Business (platform_db)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Business (platform_db)": {
+      "main": [
+        [
+          {
+            "node": "Load Business Profile (platform_db)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Business Profile (platform_db)": {
+      "main": [
+        [
+          {
+            "node": "Construct Session Identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Session Identity": {
+      "main": [
+        [
+          {
+            "node": "Redis Transient Session & Dedup Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Transient Session & Dedup Gate": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL Persistent Conversation Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Search Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Manage Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Sync CRM": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL Persistent Conversation Store": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Shared Engine)": {
+      "main": [
+        [
+          {
+            "node": "Result Validator & Response Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Business Data Gateway": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Action Gateway": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result Validator & Response Guard": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response (Evolution API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

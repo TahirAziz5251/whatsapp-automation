@@ -1,0 +1,89 @@
+{
+  "at": "2026-10-01T10:28:14.927Z",
+  "tests": [
+    {
+      "name": "Live BISE result matches independent SQL: 102450",
+      "status": "PASS"
+    },
+    {
+      "name": "Live BISE result matches independent SQL: 102451",
+      "status": "PASS"
+    },
+    {
+      "name": "Live BISE result matches independent SQL: 204501",
+      "status": "PASS"
+    },
+    {
+      "name": "Live BISE result matches independent SQL: 204502",
+      "status": "PASS"
+    },
+    {
+      "name": "Subject marks come from live rows",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown roll has no seeded fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Nonexistent exam year is NOT_FOUND",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed roll and SQL injection are rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Cross-tenant operation denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Database failure never returns seed success",
+      "status": "PASS"
+    },
+    {
+      "name": "BISE fees retrieved from DB",
+      "status": "PASS"
+    },
+    {
+      "name": "POS returns exactly the active database SKUs",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital live doctor filter",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital unknown doctor is NOT_FOUND",
+      "status": "PASS"
+    },
+    {
+      "name": "Real Info.ID and device JID normalization",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing ID/self/group/non-message do not process",
+      "status": "PASS"
+    },
+    {
+      "name": "Live resolver and session identity preserve tenant and message",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown instance fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "12 concurrent duplicate claims admit exactly one",
+      "status": "PASS"
+    },
+    {
+      "name": "Same ID across instances is isolated",
+      "status": "PASS"
+    },
+    {
+      "name": "Response guard overwrites fabricated marks with live record",
+      "status": "PASS"
+    }
+  ]
+}

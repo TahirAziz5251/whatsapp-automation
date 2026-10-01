@@ -1,0 +1,21 @@
+const fs=require('fs'),cp=require('child_process');
+(async()=>{
+ const backup='backups/student-remediation-20261001-151004';
+ for(const file of ['evogo_users.dump','evogo_users.toc.txt','runtime-config.dpapi'])if(!fs.existsSync(backup+'/'+file)||!fs.statSync(backup+'/'+file).size)throw Error('Verified Evolution backup missing');
+ const c=JSON.parse(cp.execFileSync('docker',['inspect','evolution-go'],{encoding:'utf8',windowsHide:true,timeout:30000}))[0];
+ const env=Object.fromEntries(c.Config.Env.map(e=>{const i=e.indexOf('=');return[e.slice(0,i),e.slice(i+1)]}));
+ const api=async(path,key,body)=>{const r=await fetch('http://127.0.0.1:4000'+path,{method:body?'POST':'GET',headers:{apikey:key,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Evolution HTTP '+r.status);return r.json()};
+ const i=(await api('/instance/all',env.GLOBAL_API_KEY)).data.find(i=>i.name==='student-assistant');
+ if(!i)throw Error('Student instance missing');
+ const token=i.token||i.Token||i.instanceToken;
+ const before=(await api('/instance/status',token)).data;
+ if(!before.Connected||!before.LoggedIn)throw Error('Student disconnected; settings update must not initiate a new connection');
+ if(i.webhook!==env.WEBHOOK_URL&&i.webhook!=='')throw Error('Webhook drift detected; inspect before changing');
+ const settings={webhookUrl:i.webhook,subscribe:i.events.split(','),immediate:true,rabbitmqEnable:i.rabbitmqEnable,websocketEnable:i.websocketEnable,natsEnable:i.natsEnable};
+ const original=backup+'/student-webhook-settings.json';if(!fs.existsSync(original))fs.writeFileSync(original,JSON.stringify(settings,null,2));
+ if(i.webhook!=='')await api('/instance/connect',token,{...settings,webhookUrl:''});
+ const current=(await api('/instance/all',env.GLOBAL_API_KEY)).data.find(x=>x.id===i.id);
+ const status=(await api('/instance/status',token)).data;
+ const report={at:new Date().toISOString(),instance:i.name,globalWebhook:env.WEBHOOK_URL,instanceWebhook:current.webhook,connected:status.Connected,loggedIn:status.LoggedIn,pass:current.webhook===''&&status.Connected&&status.LoggedIn};
+ fs.writeFileSync('docs/current-system-audit/student-webhook-fix.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(!report.pass)throw Error('Webhook fix verification failed');
+})().catch(e=>{console.error(e.message);process.exitCode=1});

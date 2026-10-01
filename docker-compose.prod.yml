@@ -1,0 +1,243 @@
+version: '3.8'
+
+# ==============================================================================
+# PHASE 40: PRODUCTION DOCKER ARCHITECTURE SPECIFICATION
+# Multi-Tenant AI WhatsApp Automation Platform
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Edge Reverse Proxy & TLS Termination (Nginx)
+  # ----------------------------------------------------------------------------
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: platform-reverse-proxy
+    restart: always
+    ports:
+      - "80:80"     # HTTP Ingress (Redirect to HTTPS)
+      - "443:443"   # HTTPS Ingress (SSL / TLS 1.3 Termination)
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certs_data:/etc/letsencrypt:ro
+    networks:
+      - edge_network
+      - app_network
+    depends_on:
+      - n8n
+      - evolution-go
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # ----------------------------------------------------------------------------
+  # 2. WhatsApp Gateway Service (Evolution API)
+  # ----------------------------------------------------------------------------
+  evolution-go:
+    image: evoapicloud/evolution-go:latest
+    container_name: evolution-go
+    restart: always
+    expose:
+      - "4000"  # Internal communication only (Accessed via reverse-proxy)
+    environment:
+      SERVER_PORT: 4000
+      CLIENT_NAME: "evolution"
+      GLOBAL_API_KEY: "${EVOLUTION_API_KEY}"
+      POSTGRES_AUTH_DB: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+      WADEBUG: "INFO"
+      LOGTYPE: "console"
+      CONNECT_ON_STARTUP: "true"
+      WEBHOOK_FILES: "true"
+      OS_NAME: "Linux"
+      WEBHOOK_URL: "http://n8n:5678/webhook/evolution-whatsapp-agent"
+      EVENT_IGNORE_GROUP: "false"
+      EVENT_IGNORE_STATUS: "true"
+      QRCODE_MAX_COUNT: "5"
+    volumes:
+      - evolution_data:/app/dbdata
+      - evolution_logs:/app/logs
+    networks:
+      - app_network
+      - data_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1536M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ----------------------------------------------------------------------------
+  # 3. AI Agent Workflow Orchestration Engine (n8n)
+  # ----------------------------------------------------------------------------
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: always
+    expose:
+      - "5678"  # Internal communication only (Accessed via reverse-proxy)
+    environment:
+      - N8N_HOST=${N8N_DOMAIN:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${N8N_DOMAIN:-localhost}/
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168  # 7 days retention
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=50000
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - app_network
+      - data_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ----------------------------------------------------------------------------
+  # 4. Multi-Tenant Enterprise Database with Vector Support (PostgreSQL + pgvector)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: evolution-postgres
+    restart: always
+    expose:
+      - "5432"  # STRICT: Data tier isolated, NO public host port published
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init-platform-db.sql:/docker-entrypoint-initdb.d/01-platform.sql:ro
+      - ./database/init-pos-db.sql:/docker-entrypoint-initdb.d/02-pos.sql:ro
+      - ./database/init-bise-db.sql:/docker-entrypoint-initdb.d/03-bise.sql:ro
+      - ./database/init-hospital-db.sql:/docker-entrypoint-initdb.d/04-hospital.sql:ro
+    networks:
+      - data_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ----------------------------------------------------------------------------
+  # 5. Distributed Cache & Session State Store (Redis)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: evolution-redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    expose:
+      - "6379"  # STRICT: Data tier isolated, NO public host port published
+    volumes:
+      - redis_data:/data
+    networks:
+      - data_network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+# ==============================================================================
+# NETWORKS: Strict 3-Tier Zero-Trust Network Segmentation
+# ==============================================================================
+networks:
+  edge_network:
+    name: platform_edge_net
+    driver: bridge
+    internal: false  # Public ingress from internet
+  app_network:
+    name: platform_app_net
+    driver: bridge
+    internal: false  # Ingress from proxy to app engines
+  data_network:
+    name: platform_data_net
+    driver: bridge
+    internal: true   # ZERO egress to internet; accessible only by app containers
+
+# ==============================================================================
+# VOLUMES: Persistent Local Volume Architecture
+# ==============================================================================
+volumes:
+  certs_data:
+    name: platform_certs_data
+    driver: local
+  evolution_data:
+    name: platform_evolution_data
+    driver: local
+  evolution_logs:
+    name: platform_evolution_logs
+    driver: local
+  n8n_data:
+    name: platform_n8n_data
+    driver: local
+  postgres_data:
+    name: platform_postgres_data
+    driver: local
+  redis_data:
+    name: platform_redis_data
+    driver: local

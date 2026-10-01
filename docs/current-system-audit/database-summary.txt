@@ -1,0 +1,282 @@
+{
+  "databases": {
+    "platform_db": [
+      {
+        "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+        "database": "platform_db",
+        "user": "gateway_readonly"
+      },
+      [
+        {
+          "extname": "plpgsql",
+          "extversion": "1.0"
+        },
+        {
+          "extname": "vector",
+          "extversion": "0.8.6"
+        }
+      ]
+    ],
+    "bise_db": [
+      {
+        "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+        "database": "bise_db",
+        "user": "gateway_readonly"
+      },
+      [
+        {
+          "extname": "plpgsql",
+          "extversion": "1.0"
+        }
+      ]
+    ],
+    "pos_db": [
+      {
+        "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+        "database": "pos_db",
+        "user": "gateway_readonly"
+      },
+      [
+        {
+          "extname": "plpgsql",
+          "extversion": "1.0"
+        }
+      ]
+    ],
+    "hospital_db": [
+      {
+        "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+        "database": "hospital_db",
+        "user": "gateway_readonly"
+      },
+      [
+        {
+          "extname": "plpgsql",
+          "extversion": "1.0"
+        }
+      ]
+    ],
+    "evogo_users": [
+      {
+        "version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit",
+        "database": "evogo_users",
+        "user": "gateway_readonly"
+      },
+      [
+        {
+          "extname": "plpgsql",
+          "extversion": "1.0"
+        },
+        {
+          "extname": "uuid-ossp",
+          "extversion": "1.1"
+        }
+      ]
+    ]
+  },
+  "biseResults": [
+    [
+      {
+        "grade": "A+",
+        "title": "Matriculation Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "102450",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 945
+      },
+      {
+        "grade": "A",
+        "title": "Matriculation Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "102451",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 880
+      },
+      {
+        "grade": "A+",
+        "title": "Intermediate Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "204501",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 995
+      },
+      {
+        "grade": "B",
+        "title": "Intermediate Annual Examination 2025",
+        "status": "PASS",
+        "exam_year": 2025,
+        "roll_number": "204502",
+        "total_marks": 1100,
+        "exam_session": "ANNUAL",
+        "marks_obtained": 750
+      }
+    ]
+  ],
+  "registry": [
+    [
+      {
+        "id": 1,
+        "status": "CONNECTED",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "phone_number": null,
+        "business_code": "POS_RETAIL",
+        "instance_name": "pos-instance"
+      },
+      {
+        "id": 2,
+        "status": "CONNECTED",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "phone_number": null,
+        "business_code": "BISE_EDU",
+        "instance_name": "bise-instance"
+      },
+      {
+        "id": 3,
+        "status": "CONNECTED",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "phone_number": null,
+        "business_code": "HOSP_HEALTH",
+        "instance_name": "hospital-instance"
+      },
+      {
+        "id": 4,
+        "status": "CONNECTED",
+        "created_at": "2026-09-29T21:37:34.693787+05:00",
+        "phone_number": "+923127118485",
+        "business_code": "BISE_EDU",
+        "instance_name": "student-assistant"
+      },
+      {
+        "id": 5,
+        "status": "CONNECTED",
+        "created_at": "2026-09-29T21:37:34.693787+05:00",
+        "phone_number": "+923201711081",
+        "business_code": "HOSP_HEALTH",
+        "instance_name": "hospital-assistant"
+      },
+      {
+        "id": 6,
+        "status": "CONNECTED",
+        "created_at": "2026-09-29T21:37:34.693787+05:00",
+        "phone_number": "+923098414407",
+        "business_code": "POS_RETAIL",
+        "instance_name": "point-of-sale"
+      }
+    ],
+    [
+      {
+        "id": 1,
+        "name": "GlimsTech POS Retail Automation",
+        "status": "ACTIVE",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "updated_at": "2026-09-28T11:56:49.366469+05:00",
+        "business_code": "POS_RETAIL",
+        "industry_type": "RETAIL"
+      },
+      {
+        "id": 2,
+        "name": "BISE Educational Board System",
+        "status": "ACTIVE",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "updated_at": "2026-09-28T11:56:49.366469+05:00",
+        "business_code": "BISE_EDU",
+        "industry_type": "EDUCATION"
+      },
+      {
+        "id": 3,
+        "name": "City Healthcare & Hospital System",
+        "status": "ACTIVE",
+        "created_at": "2026-09-28T11:56:49.366469+05:00",
+        "updated_at": "2026-09-28T11:56:49.366469+05:00",
+        "business_code": "HOSP_HEALTH",
+        "industry_type": "HEALTHCARE"
+      }
+    ]
+  ],
+  "safeguards": [
+    [
+      {
+        "rolname": "platform_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "pos_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "bise_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "hospital_app",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=60s"
+        ]
+      },
+      {
+        "rolname": "gateway_readonly",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=10s"
+        ]
+      },
+      {
+        "rolname": "gateway_action_writer",
+        "rolsuper": false,
+        "rolconfig": [
+          "statement_timeout=15s"
+        ]
+      }
+    ],
+    [
+      {
+        "datname": "platform_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      },
+      {
+        "datname": "pos_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      },
+      {
+        "datname": "bise_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      },
+      {
+        "datname": "hospital_db",
+        "setconfig": [
+          "statement_timeout=15s",
+          "lock_timeout=5s",
+          "idle_in_transaction_session_timeout=20s"
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-01T12:29:48.987Z",
+  "backup": "D:\\AI-Automation\\backups\\repair-step1-20261001-172000",
+  "action": "Stage instance-only dispatch; global webhook disabled",
+  "sameImage": true,
+  "sameVolumes": true,
+  "originalEnvironmentMatches": true,
+  "changedEnvironmentKeys": [
+    "WEBHOOK_URL"
+  ],
+  "publishedWorkflowUnchanged": true
+}

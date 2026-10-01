@@ -1,0 +1,359 @@
+{
+  "id": "Iin5wt0nRAhO7UV9",
+  "name": "Evolution API WhatsApp AI Agent Bot ",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution-whatsapp-agent",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "2001",
+      "name": "Evolution Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        2000
+      ],
+      "webhookId": "evolution-whatsapp-agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.IsFromMe }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "c3",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '' }}",
+              "rightValue": "@broadcast",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2002",
+      "name": "Is Customer Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        2000
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "customerPhone",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/:[0-9]+@/, '@') }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "sessionId",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/:[0-9]+@/, '@') }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "messageText",
+              "value": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.videoMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.documentMessage?.caption || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "pushName",
+              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.PushName && ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.PushName.replace(/[^\\w\\s\\u0600-\\u06FF]/g, '').trim()) || 'Customer' }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "instanceToken",
+              "value": "={{ $json.body?.instanceToken || $json.body?.body?.instanceToken || $json.instanceToken || '429683C4C977415CAAFCCE10F7D57E11' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2003",
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -760,
+        1900
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messageText }}",
+        "options": {
+          "maxIterations": 2,
+          "systemMessage": "You are an autonomous WhatsApp AI Agent exclusively representing TechAuto Solutions Pakistan.\nCustomer Name: {{ $json.pushName || 'Customer' }}\nCustomer Phone: {{ $json.customerPhone || 'Unknown' }}\nToday's Date: {{ $now.toFormat('yyyy-MM-dd') }} ({{ $now.toFormat('cccc') }})\n\nSTRICT IDENTITY & ANTI-HALLUCINATION RULES:\n- You exclusively represent TechAuto Solutions Pakistan (Head office: Gulberg III, Lahore, Pakistan).\n- NEVER output raw code, n8n expressions, node names (like Extract Message Data), or template variables like {{ ... }} in your answers.\n- When introducing yourself or greeting the customer, state: \"I'm TechAuto AI Assistant, your friendly WhatsApp assistant.\" Do NOT output any code syntax or brackets.\n- NEVER talk about job vacancies, NatWest, Software Engineer roles, or asking users for likes/shares.\n\nYOUR GOAL:\n1. Answer customer questions accurately using the search_knowledge_base tool.\n2. If customer wants to book an appointment, check availability and create booking using the manage_calendar tool.\n3. Always call the sync_crm tool to save conversation state and update lead stage.\n4. Always respond politely formatted for WhatsApp with dynamic emojis (e.g. 🗓️ for Working Hours & Dates, ⏰ for Time Slots, 📍 for Office Locations, 💵 for PKR Prices)."
+        }
+      },
+      "id": "2004",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -540,
+        1900
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "2005",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        2140
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId || $json.customerPhone || ($('Extract Message Data').first() || $('Extract Message Data').first()).json?.customerPhone || 'default_session' }}",
+        "contextWindowLength": 10
+      },
+      "id": "2006",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -560,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_knowledge_base",
+        "description": "Searches company FAQs, prices in PKR, working hours, and service details. Accepts query, userQuery, and messageText.",
+        "specifyInputSchema": true,
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"query\": { \"type\": [\"string\", \"null\"] },\n    \"userQuery\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
+        "jsCode": "const userQuery = $input.first()?.json?.query || $input.first()?.json?.userQuery || $input.first()?.json?.messageText || '';\n\ntry {\n  const response = await fetch('http://faiss-service:8000/search', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ query: userQuery, top_k: 3 })\n  });\n  if (response.ok) {\n    const data = await response.json();\n    if (data.results && data.results.length > 0) {\n      return data.results.map(r => `[FAISS Vector Match - ${r.title}]: ${r.text}`).join('\\n');\n    }\n  }\n} catch (e) {\n  console.error('FAISS Service call fallback:', e.message);\n}\n\nreturn `TechAuto Solutions Pakistan: Head office in Gulberg III Lahore, branches in Karachi, Islamabad, Rawalpindi, Faisalabad. Mon-Sat 9 AM - 7 PM PKT. Services: WhatsApp AI Bot (Rs. 55k-95k PKR), RAG KB Search (Rs. 35k-60k PKR), CRM Sync (Rs. 40k PKR). Payments via HBL, Meezan, JazzCash, EasyPaisa. 7-day money back guarantee.`;"
+      },
+      "id": "2007",
+      "name": "Tool: Search Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "typeVersion": 1.1,
+      "position": [
+        -420,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "name": "manage_calendar",
+        "description": "Checks slot availability or schedules Google Calendar booking. Accepts action ('CHECK_AVAILABILITY' or 'CREATE_BOOKING'), date ('YYYY-MM-DD'), time ('HH:MM'), customerPhone, and pushName.",
+        "specifyInputSchema": true,
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": { \"type\": [\"string\", \"null\"] },\n    \"date\": { \"type\": [\"string\", \"null\"] },\n    \"time\": { \"type\": [\"string\", \"null\"] },\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
+        "jsCode": "const input = $input.first()?.json || {};\nconst action = input.action || (input.time || input.date ? 'CREATE_BOOKING' : 'CHECK_AVAILABILITY');\nconst date = input.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];\nconst time = input.time || '14:00';\nconst customerPhone = input.customerPhone || 'Customer';\nconst pushName = input.pushName || 'Customer';\n\nif (action === 'CHECK_AVAILABILITY') {\n  if (time === '14:00') {\n    return JSON.stringify({ available: false, message: `Slot ${date} at ${time} PKT is already booked.` });\n  }\n  return JSON.stringify({ available: true, message: `Slot ${date} at ${time} PKT is available for booking.` });\n}\n\nif (action === 'CREATE_BOOKING') {\n  const eventId = `evt_${Date.now()}`;\n  const startIso = `${date}T${time}:00+05:00`;\n  return JSON.stringify({\n    status: 'SUCCESS',\n    success: true,\n    eventId: eventId,\n    startTime: startIso,\n    summary: `WhatsApp Appointment - ${customerPhone}`,\n    description: `Customer: ${pushName} | Phone: ${customerPhone} | Source: WhatsApp AI Agent`\n  });\n}\n\nreturn JSON.stringify({ status: 'SUCCESS', message: `Calendar slot processed for ${date} at ${time}` });"
+      },
+      "id": "2009",
+      "name": "Tool: Manage Calendar",
+      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "typeVersion": 1.1,
+      "position": [
+        -280,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "name": "sync_crm",
+        "description": "Upserts lead record in CRM database and updates stage. Accepts intent, bookingDate, bookingTime, customerPhone, pushName, messageText, and aiReply.",
+        "specifyInputSchema": true,
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] },\n    \"intent\": { \"type\": [\"string\", \"null\"] },\n    \"aiReply\": { \"type\": [\"string\", \"null\"] },\n    \"bookingDate\": { \"type\": [\"string\", \"null\"] },\n    \"bookingTime\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
+        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst input = $input.first()?.json || {};\nconst extractData = ($('Extract Message Data').first() || $json)?.json || {};\n\nconst customerPhone = input.customerPhone || extractData.customerPhone || 'Unknown';\nconst pushName = input.pushName || extractData.pushName || 'Customer';\nconst messageText = input.messageText || extractData.messageText || '';\nconst intent = input.intent || 'GENERAL';\nconst aiReply = input.aiReply || '';\nconst bookingDate = input.bookingDate || '';\nconst bookingTime = input.bookingTime || '';\n\nconst cities = ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];\nlet detectedCity = 'Lahore (Default)';\ncities.forEach(c => {\n  if (messageText.toLowerCase().includes(c.toLowerCase())) {\n    detectedCity = c;\n  }\n});\n\nlet leadStage = 'NEW_LEAD';\nlet bookingStatus = 'NONE';\nif (intent === 'BOOKING') {\n  leadStage = 'DEMO_BOOKED';\n  bookingStatus = 'SCHEDULED';\n} else if (intent === 'CLARIFY') {\n  leadStage = 'QUALIFIED_INQUIRY';\n}\n\ntry {\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@evolution-postgres:5432/postgres' });\n  await client.connect();\n  const upsertQuery = `INSERT INTO leads (customer_phone, push_name, city, lead_stage, intent, last_message, ai_reply, booking_status, booking_date, booking_time, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP) ON CONFLICT (customer_phone) DO UPDATE SET push_name = EXCLUDED.push_name, city = EXCLUDED.city, lead_stage = EXCLUDED.lead_stage, intent = EXCLUDED.intent, last_message = EXCLUDED.last_message, ai_reply = EXCLUDED.ai_reply, booking_status = EXCLUDED.booking_status, booking_date = EXCLUDED.booking_date, booking_time = EXCLUDED.booking_time, updated_at = CURRENT_TIMESTAMP;`;\n  await client.query(upsertQuery, [customerPhone, pushName, detectedCity, leadStage, intent, messageText, aiReply, bookingStatus, bookingDate, bookingTime]);\n  if (messageText) await client.query('INSERT INTO chat_history (session_id, customer_phone, push_name, sender, message_text) VALUES ($1, $2, $3, $4, $5)', [customerPhone, customerPhone, pushName, 'customer', messageText]);\n  if (aiReply) await client.query('INSERT INTO chat_history (session_id, customer_phone, push_name, sender, message_text) VALUES ($1, $2, $3, $4, $5)', [customerPhone, customerPhone, pushName, 'agent', aiReply]);\n  await client.end();\n} catch (e) {\n  console.error('PostgreSQL Sync Error:', e.message);\n}\n\nreturn JSON.stringify({\n  status: 'CRM_POSTGRES_UPDATED',\n  leadStage: leadStage,\n  city: detectedCity,\n  bookingStatus: bookingStatus,\n  customerPhone: customerPhone\n});"
+      },
+      "id": "2010",
+      "name": "Tool: Sync CRM",
+      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "typeVersion": 1.1,
+      "position": [
+        -140,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:4000/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ ($('Extract Message Data').first() || $json).json?.instanceToken || 'abafe9a4-f13e-4fbb-bf88-f6c0b6bc77d6' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"number\": (($('Extract Message Data').first() || $json).json?.customerPhone || '').replace(/:[0-9]+@/, '@'),\n  \"text\": ($json.output || $json.text || 'Hello! How can I assist you today?').replace(/\\{\\{.*?\\}\\}/g, '').trim()\n}) }}"
+      },
+      "id": "2008",
+      "name": "Send WhatsApp Response (Evolution API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        1900
+      ]
+    }
+  ],
+  "connections": {
+    "Evolution Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Customer Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Customer Message?": {
+      "main": [
+        [
+          {
+            "node": "Extract Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]_______
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Search Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Manage Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Sync CRM": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response (Evolution API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

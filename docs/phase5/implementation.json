@@ -1,0 +1,56 @@
+{
+  "status": "implemented_pending_verification",
+  "target": "business-agent-dev-postgres-1",
+  "completed_at": "2026-09-23T16:12:36.0360129Z",
+  "databases": [
+    {
+      "before": {
+        "database": "pos_db",
+        "version": "15.19",
+        "owner": "pos_owner",
+        "managed": "phase4-dev-managed",
+        "phase4_entries": 2,
+        "phase5_entries": {
+          "005_customer_crm": "d4ded5d9d77727a691c7f39ab59d083d5e890da56f722178d7cb38452c1a9ea2",
+          "005_synthetic_fixtures": "a9e20332c87f721b156114394724442ac745b905d205bfbd32d3301803d40ffa"
+        },
+        "base_tables": 9
+      },
+      "database": "pos_db",
+      "status": "already_applied_checksums_match"
+    },
+    {
+      "before": {
+        "database": "bise_db",
+        "version": "15.19",
+        "owner": "bise_owner",
+        "managed": "phase4-dev-managed",
+        "phase4_entries": 2,
+        "phase5_entries": {
+          "005_customer_crm": "42a1a4e1a35feaa44e7d64191b7ebb1068e7161a8e5be80a017b50936e3a1a54",
+          "005_synthetic_fixtures": "79d5b4337c1122ab48c3324d78de351ff007ac78d7fa6fce4a4c895b9d9417b5"
+        },
+        "base_tables": 7
+      },
+      "database": "bise_db",
+      "status": "already_applied_checksums_match"
+    },
+    {
+      "before": {
+        "database": "hospital_db",
+        "version": "15.19",
+        "owner": "hospital_owner",
+        "managed": "phase4-dev-managed",
+        "phase4_entries": 2,
+        "phase5_entries": {
+          "005_customer_crm": "f4d8ba03f24e44fd747ce51db53e344b9d4951a3036d4e393aa4647b2f301a54",
+          "005_synthetic_fixtures": "2ed3a12f0ac0dc6303c5e4d83067a58fcd976cce0818f70bccdb789c82d5acd9"
+        },
+        "base_tables": 7
+      },
+      "database": "hospital_db",
+      "status": "already_applied_checksums_match"
+    }
+  ],
+  "started_at": "2026-09-23T16:12:34.1465443Z"
+}

@@ -1,0 +1,50 @@
+{
+  "backup": {
+    "path": "D:\\AI-Automation\\backups\\phase4-20260923-203858\\dev-before.sql.dpapi",
+    "full_server_restore_tested": false,
+    "encrypted": true,
+    "decryption_verified": true
+  },
+  "target": "business-agent-dev-postgres-1",
+  "databases": [
+    {
+      "database": "control_db",
+      "status": "migrated_and_seeded",
+      "roles": [
+        "control_owner",
+        "control_runtime",
+        "control_migrator"
+      ]
+    },
+    {
+      "database": "pos_db",
+      "status": "migrated_and_seeded",
+      "roles": [
+        "pos_owner",
+        "pos_runtime",
+        "pos_migrator"
+      ]
+    },
+    {
+      "database": "bise_db",
+      "status": "migrated_and_seeded",
+      "roles": [
+        "bise_owner",
+        "bise_runtime",
+        "bise_migrator"
+      ]
+    },
+    {
+      "database": "hospital_db",
+      "status": "migrated_and_seeded",
+      "roles": [
+        "hospital_owner",
+        "hospital_runtime",
+        "hospital_migrator"
+      ]
+    }
+  ],
+  "status": "implemented_pending_tests",
+  "postgres_version_num": "150019",
+  "updated_at": "2026-09-23T15:45:28.2041812Z"
+}

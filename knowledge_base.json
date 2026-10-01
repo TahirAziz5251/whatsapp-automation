@@ -1,0 +1,59 @@
+{
+  "company": {
+    "name": "GlimsTech Solutions Pakistan",
+    "business": "AI & WhatsApp Automation Agency",
+    "head_office": "City Garden, Civil Hospital Road, Bahawalpur, Pakistan",
+    "branches": [
+      "Lahore",
+      "Karachi",
+      "Islamabad",
+      "Rawalpindi",
+      "Faisalabad"
+    ],
+    "working_hours": "Monday to Saturday, 9:00 AM - 7:00 PM PKT",
+    "support_email": "[glimstech@gmail.com]",
+    "contact_phone": "+92 312 7118485"
+  },
+  "services": [
+    {
+      "id": "srv_whatsapp_bot",
+      "name": "WhatsApp AI Booking & Customer Support Bot",
+      "description": "Automated WhatsApp bot powered by Evolution API, n8n, and Groq LLM with Google Calendar integration.",
+      "price": "Rs. 55,000 - Rs. 95,000 PKR (One-time setup)"
+    },
+    {
+      "id": "srv_rag_knowledge",
+      "name": "Custom RAG Knowledge Base Integration (Hybrid Search)",
+      "description": "Connect company FAQs, manuals, and catalog documents to WhatsApp AI bot with Hybrid Search (BM25 + Semantic Vector) for zero-hallucination support.",
+      "price": "Rs. 35,000 - Rs. 60,000 PKR"
+    },
+    {
+      "id": "srv_crm_integration",
+      "name": "CRM & Database Automation",
+      "description": "Sync WhatsApp leads directly with HubSpot, Google Sheets, or PostgreSQL CRM.",
+      "price": "Rs. 40,000 PKR"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What are your business working hours and locations?",
+      "answer": "Our head office is located in Bahawalpur, Pakistan. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!"
+    },
+    {
+      "question": "How do I book a consultation or demo?",
+      "answer": "You can request an appointment directly in this WhatsApp chat by specifying your preferred date and time (e.g., 'Book a demo tomorrow at 3 PM'). The bot will schedule it into our Google Calendar automatically."
+    },
+    {
+      "question": "What is your refund and cancellation policy?",
+      "answer": "Appointments can be rescheduled or cancelled up to 4 hours in advance without any fee. Service setup fees have a 7-day money-back guarantee in Rupees (Rs) if setup fails."
+    },
+    {
+      "question": "What currency do you accept for payment in Pakistan?",
+      "answer": "All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa."
+    },
+    {
+      "question": "Do you support custom AI model integrations?",
+      "answer": "Yes, we support Groq (openai/gpt-oss-20b), Google Gemini, OpenAI GPT-4o, and self-hosted open-source models."
+    }
+  ]
+}

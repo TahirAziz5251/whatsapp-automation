@@ -1,0 +1,10 @@
+{
+  "business_code": "POS_RETAIL",
+  "namespace": "pos_collection",
+  "source": "technical_spec",
+  "title": "GlimsTech POS Cloud Sync & Offline Architecture",
+  "doc_type": "SPECIFICATION",
+  "version": "v1.0",
+  "status": "ACTIVE",
+  "content": "GlimsTech POS Pro features an offline-first hybrid operational architecture. The local checkout terminal records all retail transactions, barcode scans, and cash drawer triggers directly into a local embedded SQLite database without requiring active internet connectivity. When broadband or cellular 4G connectivity is established, the background sync worker pushes pending sales invoices, customer profile records, and inventory decrements to the centralized cloud PostgreSQL cluster using encrypted HTTPS endpoints. The sync worker features exponential backoff retry mechanisms, SHA-256 idempotency tokens preventing double-billing, and automatic WhatsApp digital receipt generation dispatched immediately upon invoice confirmation."
+}

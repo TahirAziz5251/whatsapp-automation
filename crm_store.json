@@ -1,0 +1,348 @@
+{
+  "leads": [
+    {
+      "customerPhone": "+923001234567",
+      "pushName": "Ali Raza",
+      "city": "Lahore",
+      "intent": "BOOKING",
+      "lastMessage": "Book consultation demo for tomorrow at 3 PM in Lahore office.",
+      "aiReply": "Your appointment has been booked for 2026-09-17 at 15:00.",
+      "leadStage": "DEMO_BOOKED",
+      "bookingStatus": "SCHEDULED",
+      "bookingDate": "2026-09-17",
+      "bookingTime": "15:00",
+      "createdAt": "2026-09-16T18:00:00.000Z",
+      "updatedAt": "2026-09-16T18:31:00.000Z"
+    },
+    {
+      "customerPhone": "+923219876543",
+      "pushName": "Usman Khan",
+      "city": "Lahore (Default)",
+      "intent": "BOOKING",
+      "lastMessage": "Great, book demo consultation for tomorrow at 2 PM.",
+      "aiReply": "Your appointment has been booked for 2026-09-17 at 14:00.",
+      "leadStage": "DEMO_BOOKED",
+      "bookingStatus": "SCHEDULED",
+      "bookingDate": "2026-09-17",
+      "bookingTime": "14:00",
+      "createdAt": "2026-09-16T13:50:04.721Z",
+      "updatedAt": "2026-09-16T13:50:04.741Z"
+    },
+    {
+      "customerPhone": "+923001112233",
+      "pushName": "Zeeshan Ahmed",
+      "city": "Lahore (Default)",
+      "intent": "BOOKING",
+      "lastMessage": "Perfect! Please book a consultation for tomorrow at 3 PM.",
+      "aiReply": "Your consultation has been booked for 2026-09-17 at 15:00.",
+      "leadStage": "DEMO_BOOKED",
+      "bookingStatus": "SCHEDULED",
+      "bookingDate": "2026-09-17",
+      "bookingTime": "15:00",
+      "createdAt": "2026-09-16T13:59:42.265Z",
+      "updatedAt": "2026-09-16T13:59:42.278Z"
+    },
+    {
+      "customerPhone": "+923456667788",
+      "pushName": "Hamza Malik",
+      "city": "Lahore (Default)",
+      "intent": "GENERAL",
+      "lastMessage": "Where is your head office located in Pakistan and what is your refund policy?",
+      "aiReply": "Our head office is in Gulberg III, Lahore. We have a 7-day money-back guarantee in PKR (Rs) if setup fails.",
+      "leadStage": "NEW_LEAD",
+      "bookingStatus": "NONE",
+      "bookingDate": "",
+      "bookingTime": "",
+      "createdAt": "2026-09-16T13:59:42.280Z",
+      "updatedAt": "2026-09-16T13:59:42.280Z"
+    },
+    {
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "pushName": "TahirAziz",
+      "city": "Lahore",
+      "intent": "BOOKING",
+      "lastMessage": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-23 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "leadStage": "DEMO_BOOKED",
+      "bookingStatus": "SCHEDULED",
+      "bookingDate": "2026-09-23",
+      "bookingTime": "2:30",
+      "createdAt": "2026-09-16T16:04:01.328Z",
+      "updatedAt": "2026-09-22T15:35:00.163Z"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log_1001",
+      "customerPhone": "+923001234567",
+      "messageText": "Book consultation demo for tomorrow at 3 PM in Lahore office.",
+      "intent": "BOOKING",
+      "aiReply": "Your appointment has been booked for 2026-09-17 at 15:00.",
+      "timestamp": "2026-09-16T18:31:00.000Z"
+    },
+    {
+      "id": "log_1789566604737",
+      "customerPhone": "+923219876543",
+      "messageText": "Assalam-o-Alaikum, what is the price of RAG bot in Karachi?",
+      "intent": "GENERAL",
+      "aiReply": "Walaikum Assalam! The price for RAG bot is Rs. 35,000 - Rs. 60,000 PKR.",
+      "timestamp": "2026-09-16T13:50:04.721Z"
+    },
+    {
+      "id": "log_1789566604741",
+      "customerPhone": "+923219876543",
+      "messageText": "Great, book demo consultation for tomorrow at 2 PM.",
+      "intent": "BOOKING",
+      "aiReply": "Your appointment has been booked for 2026-09-17 at 14:00.",
+      "timestamp": "2026-09-16T13:50:04.741Z"
+    },
+    {
+      "id": "log_1789567182273_104",
+      "customerPhone": "+923001112233",
+      "messageText": "AOA, do you provide WhatsApp bot service in Islamabad and what is the price in Rs?",
+      "intent": "GENERAL",
+      "aiReply": "Walaikum Assalam! Yes, we serve Islamabad. WhatsApp AI Bot price is Rs. 55,000 - Rs. 95,000 PKR.",
+      "timestamp": "2026-09-16T13:59:42.265Z"
+    },
+    {
+      "id": "log_1789567182278_420",
+      "customerPhone": "+923001112233",
+      "messageText": "Perfect! Please book a consultation for tomorrow at 3 PM.",
+      "intent": "BOOKING",
+      "aiReply": "Your consultation has been booked for 2026-09-17 at 15:00.",
+      "timestamp": "2026-09-16T13:59:42.278Z"
+    },
+    {
+      "id": "log_1789567182280_564",
+      "customerPhone": "+923456667788",
+      "messageText": "Where is your head office located in Pakistan and what is your refund policy?",
+      "intent": "GENERAL",
+      "aiReply": "Our head office is in Gulberg III, Lahore. We have a 7-day money-back guarantee in PKR (Rs) if setup fails.",
+      "timestamp": "2026-09-16T13:59:42.280Z"
+    },
+    {
+      "id": "log_1789574641332",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-16T16:04:01.328Z"
+    },
+    {
+      "id": "log_1789574641367",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-17 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-16T16:04:01.367Z"
+    },
+    {
+      "id": "log_1789659241367",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-17T15:34:01.357Z"
+    },
+    {
+      "id": "log_1789659241384",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-18 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-17T15:34:01.384Z"
+    },
+    {
+      "id": "log_1789735086198",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T12:38:06.168Z"
+    },
+    {
+      "id": "log_1789735086207",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T12:38:06.207Z"
+    },
+    {
+      "id": "log_1789738343031",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T13:32:23.016Z"
+    },
+    {
+      "id": "log_1789738343036",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T13:32:23.036Z"
+    },
+    {
+      "id": "log_1789739857735",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T13:57:37.715Z"
+    },
+    {
+      "id": "log_1789739857750",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T13:57:37.750Z"
+    },
+    {
+      "id": "log_1789740493111",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T14:08:13.099Z"
+    },
+    {
+      "id": "log_1789740493117",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T14:08:13.116Z"
+    },
+    {
+      "id": "log_1789741205349",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T14:20:05.306Z"
+    },
+    {
+      "id": "log_1789741205355",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T14:20:05.355Z"
+    },
+    {
+      "id": "log_1789741738805",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T14:28:58.791Z"
+    },
+    {
+      "id": "log_1789741738811",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T14:28:58.811Z"
+    },
+    {
+      "id": "log_1789743474064",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T14:57:54.027Z"
+    },
+    {
+      "id": "log_1789743474072",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T14:57:54.072Z"
+    },
+    {
+      "id": "log_1789744676641",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T15:17:56.626Z"
+    },
+    {
+      "id": "log_1789744676648",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T15:17:56.648Z"
+    },
+    {
+      "id": "log_1789747437048",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-18T16:03:57.027Z"
+    },
+    {
+      "id": "log_1789747437053",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-19 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-18T16:03:57.053Z"
+    },
+    {
+      "id": "log_1790078648977",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-22T12:04:08.966Z"
+    },
+    {
+      "id": "log_1790078648984",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-23 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-22T12:04:08.984Z"
+    },
+    {
+      "id": "log_1790084009225",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-22T13:33:29.213Z"
+    },
+    {
+      "id": "log_1790084009235",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-23 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-22T13:33:29.235Z"
+    },
+    {
+      "id": "log_1790091300158",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "AOA, what services do you offer in Karachi and what are the prices?",
+      "intent": "GENERAL",
+      "aiReply": "Hello TahirAziz! 👋 [FAQ: What currency do you accept for payment in Pakistan?]: Q: What currency do you accept for payment in Pakistan? A: All prices are in Pakistani Rupees (Rs / PKR). Payments can be made via direct Bank Transfer (HBL/Meezan), JazzCash, or EasyPaisa.\n[FAQ: What are your business working hours and locations?]: Q: What are your business working hours and locations? A: Our head office is located in Gulberg III, Lahore, and we serve clients across Karachi, Islamabad, Rawalpindi, and Faisalabad. Office hours are Monday to Saturday, 9:00 AM to 7:00 PM PKT. Our WhatsApp AI Bot is available 24/7!\n\nWould you like to schedule a free consultation or demo with our team?",
+      "timestamp": "2026-09-22T15:35:00.153Z"
+    },
+    {
+      "id": "log_1790091300163",
+      "customerPhone": "923023374789@s.whatsapp.net",
+      "messageText": "Great! I want to book an appointment tomorrow at 2:30 PM in Lahore.",
+      "intent": "BOOKING",
+      "aiReply": "Hello TahirAziz! 🌟 Your consultation appointment has been successfully booked for 2026-09-23 at 2:30 PKT. We look forward to meeting you at our Gulberg III office in Lahore! 📅✨",
+      "timestamp": "2026-09-22T15:35:00.163Z"
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "scope": "Actual post-migration catalog compared with reviewed Phase 3 foundational table definitions; existing Evolution catalog comparison is metadata only.",
+  "results": [
+    {
+      "name": "control_db exists on isolated PostgreSQL 15",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db exact foundational table set",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.businesses actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.businesses primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.businesses FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.instances actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.instances primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.instances FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.audit_events actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.audit_events primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.audit_events FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.configuration_outbox actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.configuration_outbox primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "control_db.platform.configuration_outbox FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db exists on isolated PostgreSQL 15",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db exact foundational table set",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.businesses actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.businesses primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.businesses FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.instances actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.instances primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.instances FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.audit_events actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.audit_events primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.audit_events FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.configuration_inbox actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.configuration_inbox primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "pos_db.platform.configuration_inbox FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db exists on isolated PostgreSQL 15",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db exact foundational table set",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.businesses actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.businesses primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.businesses FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.instances actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.instances primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.instances FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.audit_events actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.audit_events primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.audit_events FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.configuration_inbox actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.configuration_inbox primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "bise_db.platform.configuration_inbox FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db exists on isolated PostgreSQL 15",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db exact foundational table set",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.businesses actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.businesses primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.businesses FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.instances actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.instances primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.instances FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.audit_events actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.audit_events primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.audit_events FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.configuration_inbox actual columns/types/nullability",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.configuration_inbox primary and unique keys",
+      "status": "PASS"
+    },
+    {
+      "name": "hospital_db.platform.configuration_inbox FK locality and targets",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing evogo_auth catalog unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing evogo_users catalog unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing postgres catalog unchanged",
+      "status": "PASS"
+    }
+  ],
+  "passed": 59,
+  "failed": 0
+}

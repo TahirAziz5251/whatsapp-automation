@@ -1,0 +1,314 @@
+[
+  {
+    "database": "pos_db",
+    "name": "missing_context_hides_contacts"
+  },
+  {
+    "database": "pos_db",
+    "name": "missing_context_cannot_create"
+  },
+  {
+    "database": "pos_db",
+    "name": "actor_required"
+  },
+  {
+    "database": "pos_db",
+    "name": "three_contacts_only_in_authorized_business"
+  },
+  {
+    "database": "pos_db",
+    "name": "other_business_profile_hidden"
+  },
+  {
+    "database": "pos_db",
+    "name": "other_business_instance_rejected"
+  },
+  {
+    "database": "pos_db",
+    "name": "blocked_contact_rejected"
+  },
+  {
+    "database": "pos_db",
+    "name": "invalid_identity_kind_rejected"
+  },
+  {
+    "database": "pos_db",
+    "name": "contact_create_replay_audit_and_profile_preservation"
+  },
+  {
+    "database": "pos_db",
+    "name": "shared_identity_does_not_merge_businesses"
+  },
+  {
+    "database": "pos_db",
+    "name": "same_identity_in_business_B_stays_separate"
+  },
+  {
+    "database": "pos_db",
+    "name": "direct_contact_insert_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "direct_contact_update_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "direct_contact_delete_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "direct_identity_rebinding_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "runtime_cannot_assume_owner"
+  },
+  {
+    "database": "pos_db",
+    "name": "functions_have_fixed_path_and_no_public_execute"
+  },
+  {
+    "database": "pos_db",
+    "name": "two_seed_leads_visible_and_progressed_stage_preserved"
+  },
+  {
+    "database": "pos_db",
+    "name": "cross_tenant_lead_command_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "blocked_contact_cannot_create_lead"
+  },
+  {
+    "database": "pos_db",
+    "name": "lead_create_advance_replay_returns_original_outcome"
+  },
+  {
+    "database": "pos_db",
+    "name": "same_event_key_changed_payload_rejected"
+  },
+  {
+    "database": "pos_db",
+    "name": "stale_expected_version_rejected"
+  },
+  {
+    "database": "pos_db",
+    "name": "general_inquiry_cannot_reset_progressed_lead"
+  },
+  {
+    "database": "pos_db",
+    "name": "changed_actor_cannot_replay_event"
+  },
+  {
+    "database": "pos_db",
+    "name": "failed_outer_operation_rolls_back_lead_event_and_audit"
+  },
+  {
+    "database": "pos_db",
+    "name": "raw_lead_update_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "event_update_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "event_delete_denied"
+  },
+  {
+    "database": "pos_db",
+    "name": "owner_cross_tenant_identity_FK_rejected",
+    "role": "migrator"
+  },
+  {
+    "database": "pos_db",
+    "name": "duplicate_instance_identity_rejected",
+    "role": "migrator"
+  },
+  {
+    "database": "pos_db",
+    "name": "owner_force_RLS_rejects_cross_business_insert",
+    "role": "migrator"
+  },
+  {
+    "database": "pos_db",
+    "name": "failed_DDL_transaction_leaves_no_probe",
+    "role": "migrator"
+  },
+  {
+    "database": "bise_db",
+    "name": "missing_context_hides_contacts"
+  },
+  {
+    "database": "bise_db",
+    "name": "missing_context_cannot_create"
+  },
+  {
+    "database": "bise_db",
+    "name": "actor_required"
+  },
+  {
+    "database": "bise_db",
+    "name": "three_contacts_only_in_authorized_business"
+  },
+  {
+    "database": "bise_db",
+    "name": "other_business_profile_hidden"
+  },
+  {
+    "database": "bise_db",
+    "name": "other_business_instance_rejected"
+  },
+  {
+    "database": "bise_db",
+    "name": "blocked_contact_rejected"
+  },
+  {
+    "database": "bise_db",
+    "name": "invalid_identity_kind_rejected"
+  },
+  {
+    "database": "bise_db",
+    "name": "contact_create_replay_audit_and_profile_preservation"
+  },
+  {
+    "database": "bise_db",
+    "name": "shared_identity_does_not_merge_businesses"
+  },
+  {
+    "database": "bise_db",
+    "name": "same_identity_in_business_B_stays_separate"
+  },
+  {
+    "database": "bise_db",
+    "name": "direct_contact_insert_denied"
+  },
+  {
+    "database": "bise_db",
+    "name": "direct_contact_update_denied"
+  },
+  {
+    "database": "bise_db",
+    "name": "direct_contact_delete_denied"
+  },
+  {
+    "database": "bise_db",
+    "name": "direct_identity_rebinding_denied"
+  },
+  {
+    "database": "bise_db",
+    "name": "runtime_cannot_assume_owner"
+  },
+  {
+    "database": "bise_db",
+    "name": "functions_have_fixed_path_and_no_public_execute"
+  },
+  {
+    "database": "bise_db",
+    "name": "owner_cross_tenant_identity_FK_rejected",
+    "role": "migrator"
+  },
+  {
+    "database": "bise_db",
+    "name": "duplicate_instance_identity_rejected",
+    "role": "migrator"
+  },
+  {
+    "database": "bise_db",
+    "name": "owner_force_RLS_rejects_cross_business_insert",
+    "role": "migrator"
+  },
+  {
+    "database": "bise_db",
+    "name": "failed_DDL_transaction_leaves_no_probe",
+    "role": "migrator"
+  },
+  {
+    "database": "hospital_db",
+    "name": "missing_context_hides_contacts"
+  },
+  {
+    "database": "hospital_db",
+    "name": "missing_context_cannot_create"
+  },
+  {
+    "database": "hospital_db",
+    "name": "actor_required"
+  },
+  {
+    "database": "hospital_db",
+    "name": "three_contacts_only_in_authorized_business"
+  },
+  {
+    "database": "hospital_db",
+    "name": "other_business_profile_hidden"
+  },
+  {
+    "database": "hospital_db",
+    "name": "other_business_instance_rejected"
+  },
+  {
+    "database": "hospital_db",
+    "name": "blocked_contact_rejected"
+  },
+  {
+    "database": "hospital_db",
+    "name": "invalid_identity_kind_rejected"
+  },
+  {
+    "database": "hospital_db",
+    "name": "contact_create_replay_audit_and_profile_preservation"
+  },
+  {
+    "database": "hospital_db",
+    "name": "shared_identity_does_not_merge_businesses"
+  },
+  {
+    "database": "hospital_db",
+    "name": "same_identity_in_business_B_stays_separate"
+  },
+  {
+    "database": "hospital_db",
+    "name": "direct_contact_insert_denied"
+  },
+  {
+    "database": "hospital_db",
+    "name": "direct_contact_update_denied"
+  },
+  {
+    "database": "hospital_db",
+    "name": "direct_contact_delete_denied"
+  },
+  {
+    "database": "hospital_db",
+    "name": "direct_identity_rebinding_denied"
+  },
+  {
+    "database": "hospital_db",
+    "name": "runtime_cannot_assume_owner"
+  },
+  {
+    "database": "hospital_db",
+    "name": "functions_have_fixed_path_and_no_public_execute"
+  },
+  {
+    "database": "hospital_db",
+    "name": "owner_cross_tenant_identity_FK_rejected",
+    "role": "migrator"
+  },
+  {
+    "database": "hospital_db",
+    "name": "duplicate_instance_identity_rejected",
+    "role": "migrator"
+  },
+  {
+    "database": "hospital_db",
+    "name": "owner_force_RLS_rejects_cross_business_insert",
+    "role": "migrator"
+  },
+  {
+    "database": "hospital_db",
+    "name": "failed_DDL_transaction_leaves_no_probe",
+    "role": "migrator"
+  }
+]

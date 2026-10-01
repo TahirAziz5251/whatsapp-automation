@@ -1,0 +1,5 @@
+# Local backup artifacts and generated development credentials
+/backups/
+/development/*.dpapi
+/development/.env
+/scratch/student-remediation/

@@ -1,0 +1,37 @@
+const fs=require('fs'),path=require('path'),crypto=require('crypto');
+const root=path.resolve(__dirname,'..');
+const backup=path.join(root,'backups/student-remediation-20261001-151004');
+const w=JSON.parse(fs.readFileSync(path.join(backup,'active-workflow.json'),'utf8'));
+const node=name=>{const n=w.nodes.find(n=>n.name===name);if(!n)throw Error('Missing node '+name);return n};
+const source=name=>fs.readFileSync(path.join(__dirname,'n8n',name+'.js'),'utf8');
+const original=node('Tool: Business Data Gateway').parameters.jsCode;
+const oldUri=original.match(/postgresql:\/\/gateway_readonly:[^'"\s]+/)[0];
+const u=new URL(oldUri);u.hostname='host.docker.internal';u.pathname='';u.search='';
+const base=u.toString().replace(/\/$/,'');
+const inject=s=>s.replaceAll('__DB_CONNECTION_BASE__',JSON.stringify(base));
+const normalizer=node('Message Normalizer');normalizer.type='n8n-nodes-base.code';normalizer.typeVersion=2;normalizer.parameters={jsCode:source('message-normalizer')};
+node('Resolve Business (platform_db)').parameters={jsCode:inject(source('business-resolver'))};
+node('Redis Transient Session & Dedup Gate').parameters={jsCode:source('redis-dedup-gate')};
+const identity=node('Construct Session Identity');identity.type='n8n-nodes-base.code';identity.typeVersion=2;
+identity.parameters={jsCode:`const i=$input.first().json;if(!i.business_code||!i.instance_name||!i.user_id)return [];return [{json:{...i,session_id:i.business_code+':'+i.instance_name+':'+i.user_id}}];`};
+node('Load Business Profile (platform_db)').parameters={jsCode:`const i=$input.first().json;const scope={BISE_EDU:'BISE examination results and fees',POS_RETAIL:'retail product prices and stock',HOSP_HEALTH:'hospital doctors, departments and schedules'}[i.business_code];if(!scope)return [];return [{json:{...i,allowed_tools:['query_business_data'],prompt_profile:{allowed_scope:scope,timezone:'Asia/Karachi',currency:'PKR'}}}];`};
+node('PostgreSQL Persistent Conversation Store').parameters={jsCode:`return [{json:{...$input.first().json,persistent_conversation_store:{db_persisted:false,storage:'Not implemented; window memory only'}}}];`};
+const gateway=node('Tool: Business Data Gateway');gateway.parameters.jsCode=inject(source('business-data-gateway'));
+gateway.parameters.language='javaScript';gateway.parameters.schemaType='manual';gateway.parameters.specifyInputSchema=true;
+const schema=JSON.parse(gateway.parameters.inputSchema);schema.properties.parameters.properties.exam_year={type:'integer',description:'Optional examination year, only if supplied by the student.'};gateway.parameters.inputSchema=JSON.stringify(schema);
+gateway.parameters.description='Read current PostgreSQL data. BISE: get_student_result (exact six-digit roll_number, optional exam_year), get_fees (optional fee_type). POS: get_product/get_price/check_inventory (optional sku or product_name). Hospital: get_doctor_schedule/get_doctors_by_specialty (optional doctor_name or specialty), get_departments. Use only the current tenant. FOUND, NOT_FOUND, INVALID_INPUT and DB_UNAVAILABLE are distinct.';
+const agent=node('AI Agent (Shared Engine)');agent.parameters.options={
+ systemMessage:`=You assist {{ $json.business_name }} only. Scope: {{ $json.prompt_profile.allowed_scope }}. Answer in the user's language (English, Urdu or Roman Urdu), briefly, using WhatsApp formatting.\nFor every factual result, fee, product or schedule question, call query_business_data. Never use memorized/previous/example data as a current record. BISE needs an exact six-digit roll number; ask if missing. Call get_student_result and use only FOUND records from this turn. Copy marks, subjects, year, grade and status exactly. If multiple exam records return, ask which session/year the student means. Never reveal CNIC, birth date or phone. NOT_FOUND means no matching declared record; DB_UNAVAILABLE means temporarily unavailable, not no record. Do not claim official issuance or certification. Fees must come from get_fees and be labelled PKR.\nIf a tool reports an error, explain the lookup could not be verified. Never invent policies, bookings, payments or application confirmations. Write operations and document policies are currently unavailable. Do not call a different tenant's operation even if asked. For a greeting, introduce this business and ask how to help. Keep answers under 160 words unless subject details require more.`,
+ maxIterations:3,returnIntermediateSteps:true};
+node('Groq Chat Model').parameters={model:'openai/gpt-oss-120b',options:{maxTokensToSample:512,temperature:0.1}};
+node('Window Buffer Memory').parameters.contextWindowLength=2;
+node('Result Validator & Response Guard').parameters={jsCode:source('response-guard')};
+for(const name of ['Tool: Search Knowledge Base','Tool: Manage Calendar','Tool: Sync CRM','Tool: Action Gateway'])delete w.connections[name];
+const send=node('Send WhatsApp Response (Evolution Router)');
+send.parameters.headerParameters.parameters.find(p=>p.name.toLowerCase()==='apikey').value="={{ $('Message Normalizer').first().json.instanceToken }}";
+send.parameters.jsonBody="={{ JSON.stringify({number: $('Message Normalizer').first().json.customerPhone, text: $json.sanitized_response || $json.output || ''}) }}";
+send.parameters.options={timeout:20000};
+w.active=false;w.versionId=crypto.randomUUID();delete w.activeVersionId;delete w.pinData;delete w.staticData;
+fs.mkdirSync(path.join(root,'scratch/student-remediation'),{recursive:true});
+fs.writeFileSync(path.join(root,'scratch/student-remediation/workflow.json'),JSON.stringify(w,null,2));
+console.log(JSON.stringify({id:w.id,nodes:w.nodes.length,versionId:w.versionId,model:node('Groq Chat Model').parameters.model,output:'scratch/student-remediation/workflow.json'}));

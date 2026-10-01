@@ -1,0 +1,222 @@
+{
+  "scope": "Offline design lint and relational tuple witnesses only; no database migrations, real concurrency, RLS, restore, workflow or business E2E tests performed.",
+  "modelVersion": 2,
+  "databases": [
+    "control_db",
+    "pos_db",
+    "bise_db",
+    "hospital_db"
+  ],
+  "entities": 88,
+  "foreignKeys": 171,
+  "results": [
+    {
+      "name": "Catalog keys, FK types/targets, tenant scope, dependency phases and types",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject missing business ownership FK",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject ID-only cross-tenant FK",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject missing referenced entity",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject future-phase dependency",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject floating point money",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject unscoped business uniqueness",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject nullable tenant identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject timestamp without timezone",
+      "status": "PASS"
+    },
+    {
+      "name": "Tenant-scoped FK witness: same ID in another business cannot satisfy order FK",
+      "status": "PASS"
+    },
+    {
+      "name": "Session ownership tuple rejects different conversation actor",
+      "status": "PASS"
+    },
+    {
+      "name": "Verification grant ownership tuple rejects another session actor",
+      "status": "PASS"
+    },
+    {
+      "name": "Message tuple rejects request from another instance in the same tenant",
+      "status": "PASS"
+    },
+    {
+      "name": "Action tuple rejects verification grant from another session",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject cross-database FK even with compatible keys",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject shared runtime role",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject runtime BYPASSRLS",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject missing local reporting outbox",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject missing local idempotency action store",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject mutable authoritative domain tenant registry",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject domain credential reference copied from gateway",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject distributed transaction dependency",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject missing pgvector domain plan",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject broken logical central reference",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject external reference without recovery/sync contract",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject database/schema ownership mismatch",
+      "status": "PASS"
+    },
+    {
+      "name": "Each domain action idempotency key stays business scoped",
+      "status": "PASS"
+    },
+    {
+      "name": "Central reporting deduplication includes source domain and tenant",
+      "status": "PASS"
+    },
+    {
+      "name": "Phase 4 contains only sixteen foundational catalog tables",
+      "status": "PASS"
+    }
+  ],
+  "migrationOrder": [
+    "control_db.platform.businesses",
+    "control_db.platform.instances",
+    "control_db.platform.audit_events",
+    "control_db.platform.configuration_outbox",
+    "control_db.platform.reporting_events",
+    "control_db.platform.session_directory",
+    "pos_db.platform.businesses",
+    "pos_db.platform.instances",
+    "pos_db.platform.contacts",
+    "pos_db.platform.channel_identities",
+    "pos_db.platform.conversations",
+    "pos_db.platform.sessions",
+    "pos_db.platform.verification_grants",
+    "pos_db.platform.requests",
+    "pos_db.platform.messages",
+    "pos_db.platform.actions",
+    "pos_db.platform.approvals",
+    "pos_db.platform.outbox",
+    "pos_db.platform.audit_events",
+    "pos_db.platform.tool_runs",
+    "pos_db.platform.handoffs",
+    "pos_db.crm.leads",
+    "pos_db.crm.lead_events",
+    "pos_db.sales.products",
+    "pos_db.sales.skus",
+    "pos_db.sales.inventory",
+    "pos_db.sales.orders",
+    "pos_db.sales.order_items",
+    "pos_db.sales.payments",
+    "pos_db.knowledge.documents",
+    "pos_db.knowledge.versions",
+    "pos_db.knowledge.chunks",
+    "pos_db.knowledge.ingestion_jobs",
+    "pos_db.platform.configuration_inbox",
+    "pos_db.platform.reporting_outbox",
+    "bise_db.platform.businesses",
+    "bise_db.platform.instances",
+    "bise_db.platform.contacts",
+    "bise_db.platform.channel_identities",
+    "bise_db.platform.conversations",
+    "bise_db.platform.sessions",
+    "bise_db.platform.verification_grants",
+    "bise_db.platform.requests",
+    "bise_db.platform.messages",
+    "bise_db.platform.actions",
+    "bise_db.platform.approvals",
+    "bise_db.platform.outbox",
+    "bise_db.platform.audit_events",
+    "bise_db.platform.tool_runs",
+    "bise_db.platform.handoffs",
+    "bise_db.bise.students",
+    "bise_db.bise.exams",
+    "bise_db.bise.registrations",
+    "bise_db.bise.results",
+    "bise_db.bise.subject_marks",
+    "bise_db.knowledge.documents",
+    "bise_db.knowledge.versions",
+    "bise_db.knowledge.chunks",
+    "bise_db.knowledge.ingestion_jobs",
+    "bise_db.platform.configuration_inbox",
+    "bise_db.platform.reporting_outbox",
+    "hospital_db.platform.businesses",
+    "hospital_db.platform.instances",
+    "hospital_db.platform.contacts",
+    "hospital_db.platform.channel_identities",
+    "hospital_db.platform.conversations",
+    "hospital_db.platform.sessions",
+    "hospital_db.platform.verification_grants",
+    "hospital_db.platform.requests",
+    "hospital_db.platform.messages",
+    "hospital_db.platform.actions",
+    "hospital_db.platform.approvals",
+    "hospital_db.platform.outbox",
+    "hospital_db.platform.audit_events",
+    "hospital_db.platform.tool_runs",
+    "hospital_db.platform.handoffs",
+    "hospital_db.hospital.departments",
+    "hospital_db.hospital.doctors",
+    "hospital_db.hospital.slots",
+    "hospital_db.hospital.appointments",
+    "hospital_db.hospital.appointment_events",
+    "hospital_db.hospital.calendar_sync_jobs",
+    "hospital_db.knowledge.documents",
+    "hospital_db.knowledge.versions",
+    "hospital_db.knowledge.chunks",
+    "hospital_db.knowledge.ingestion_jobs",
+    "hospital_db.platform.configuration_inbox",
+    "hospital_db.platform.reporting_outbox"
+  ],
+  "passed": 29,
+  "failed": 0
+}

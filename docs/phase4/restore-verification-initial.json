@@ -1,0 +1,41 @@
+{
+  "duration_seconds": 463.8817484,
+  "failed": 2,
+  "started_at": "2026-09-23T15:38:37.8101624Z",
+  "passed": 2,
+  "scope": "Four individual synthetic dev database logical restore drills on the same server with existing cluster roles. Not off-machine/full-server recovery, coordinated live four-DB PITR, pgvector/BM25 rebuild or external-effect reconciliation.",
+  "results": [
+    {
+      "temporary_database": "phase4_restore_control_db",
+      "status": "FAIL",
+      "cleanup": "not_created",
+      "error": "Create isolated restore target failed (exit 124); SQLSTATE output: Docker command timeout; inspect operation state before retry.",
+      "database": "control_db"
+    },
+    {
+      "temporary_database": "phase4_restore_pos_db",
+      "status": "FAIL",
+      "cleanup": "not_created",
+      "error": "Create isolated restore target failed (exit 124); SQLSTATE output: Docker command timeout; inspect operation state before retry.",
+      "database": "pos_db"
+    },
+    {
+      "temporary_database": "phase4_restore_bise_db",
+      "database": "bise_db",
+      "runtime_rls_verified": true,
+      "cleanup": "removed",
+      "encrypted_backup": "D:\\AI-Automation\\backups\\phase4-restore-20260923-203837\\bise_db.sql.dpapi",
+      "tables_compared": 5,
+      "status": "PASS"
+    },
+    {
+      "temporary_database": "phase4_restore_hospital_db",
+      "database": "hospital_db",
+      "runtime_rls_verified": true,
+      "cleanup": "removed",
+      "encrypted_backup": "D:\\AI-Automation\\backups\\phase4-restore-20260923-203837\\hospital_db.sql.dpapi",
+      "tables_compared": 5,
+      "status": "PASS"
+    }
+  ]
+}

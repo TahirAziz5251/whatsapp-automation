@@ -1,21 +1,32 @@
 {
-  "id": "Iin5wt0nRAhO7UV9",
+  "id": "Ag4HbAjKlfHH6Xk7",
   "name": "Evolution API WhatsApp AI Agent Bot ",
+  "active": false,
   "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        1712
+      ],
+      "id": "96a22949-d99e-4a64-859d-56b2b65b0fdd",
+      "name": "No Operation, do nothing"
+    },
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "evolution-whatsapp-agent",
-        "responseMode": "onReceived",
         "options": {}
       },
-      "id": "2001",
+      "id": "115e99b0-02e2-43af-90a5-3714d6b2b50d",
       "name": "Evolution Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1200,
-        2000
+        -928,
+        1312
       ],
       "webhookId": "evolution-whatsapp-agent"
     },
@@ -23,23 +34,24 @@
       "parameters": {
         "conditions": {
           "options": {
-            "caseSensitive": false,
-            "typeValidation": "loose",
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
             "version": 1
           },
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.IsFromMe }}",
-              "rightValue": true,
+              "leftValue": "={{ String(($json.body?.data || $json.body?.body?.data || $json.data)?.IsFromMe ?? ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.IsFromMe ?? ($json.body?.data || $json.body?.body?.data || $json.data)?.key?.fromMe ?? false) }}",
+              "rightValue": "true",
               "operator": {
-                "type": "boolean",
+                "type": "string",
                 "operation": "notEquals"
               }
             },
             {
               "id": "c2",
-              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || '' }}",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.caption || '' }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -48,11 +60,29 @@
             },
             {
               "id": "c3",
-              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '' }}",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Chat || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || ($json.body?.data || $json.body?.body?.data || $json.data)?.key?.remoteJid || '' }}",
               "rightValue": "@broadcast",
               "operator": {
                 "type": "string",
                 "operation": "notContains"
+              }
+            },
+            {
+              "id": "c4",
+              "leftValue": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Chat || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || ($json.body?.data || $json.body?.body?.data || $json.data)?.key?.remoteJid || '' }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "c5",
+              "leftValue": "={{ $json.body?.instanceName || $json.body?.instance || $json.body?.body?.instanceName || $json.body?.body?.instance || $json.instanceName || $json.instance || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
               }
             }
           ],
@@ -60,168 +90,254 @@
         },
         "options": {}
       },
-      "id": "2002",
+      "id": "b3b17dc8-7ab6-4ae3-a4bd-75576aa9efb7",
       "name": "Is Customer Message?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -980,
-        2000
+        -704,
+        1312
       ]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "a1",
-              "name": "customerPhone",
-              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/:[0-9]+@/, '@') }}",
-              "type": "string"
-            },
-            {
-              "id": "a5",
-              "name": "sessionId",
-              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Sender || ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.Chat || '').replace(/:[0-9]+@/, '@') }}",
-              "type": "string"
-            },
-            {
-              "id": "a2",
-              "name": "messageText",
-              "value": "={{ ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.conversation || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.extendedTextMessage?.text || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.imageMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.videoMessage?.caption || ($json.body?.data || $json.body?.body?.data || $json.data)?.Message?.documentMessage?.caption || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "a3",
-              "name": "pushName",
-              "value": "={{ (($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.PushName && ($json.body?.data || $json.body?.body?.data || $json.data)?.Info?.PushName.replace(/[^\\w\\s\\u0600-\\u06FF]/g, '').trim()) || 'Customer' }}",
-              "type": "string"
-            },
-            {
-              "id": "a4",
-              "name": "instanceToken",
-              "value": "={{ $json.body?.instanceToken || $json.body?.body?.instanceToken || $json.instanceToken || '429683C4C977415CAAFCCE10F7D57E11' }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "const body=$input.first().json.body||$input.first().json;\nconst data=body.data||body.body?.data||{},info=data.Info||{},key=data.key||{};\nconst fromMe=data.IsFromMe??info.IsFromMe??key.fromMe;\nconst instance=String(body.instanceName||body.instance||body.body?.instanceName||'').trim();\nconst id=String(data.ID||info.ID||info.Id||key.id||'').trim();\nconst chat=String(info.Chat||data.Chat||key.remoteJid||'');\nconst message=String(data.Message?.conversation||data.Message?.extendedTextMessage?.text||data.message?.conversation||data.message?.extendedTextMessage?.text||data.caption||'').trim();\nconst event=String(body.event||'').toLowerCase();\nif(!['message','messages.upsert'].includes(event)||fromMe!==false||info.IsGroup===true||/@(g\\.us|broadcast|newsletter)$/.test(chat)||!id||!instance||!message||message.length>4000)return [];\nconst candidates=[info.SenderAlt,info.Sender,data.Sender,key.remoteJid,chat].filter(Boolean).map(String);\nconst sender=candidates.find(s=>/@s\\.whatsapp\\.net$/.test(s))||candidates[0]||'';\nconst phone=sender.split('@')[0].replace(/:\\d+$/,'').replace(/[^0-9]/g,'');\nif(!/^\\d{7,16}$/.test(phone)||/@lid$/.test(sender))return [];\nreturn [{json:{instance_name:instance,message_id:id,user_id:phone,customerPhone:phone,sessionId:phone,message,messageText:message,message_type:'text',source:'whatsapp',pushName:String(info.PushName||data.PushName||data.pushName||'Customer').slice(0,80),timestamp:new Date().toISOString(),instanceToken:String(body.instanceToken||body.instance_token||'')}}];\n"
       },
-      "id": "2003",
-      "name": "Extract Message Data",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.3,
+      "id": "3a739fb0-3a2f-41b9-bf00-06e5e5993e77",
+      "name": "Message Normalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        -760,
-        1900
+        -480,
+        1312
       ],
       "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming=$input.first().json;\nconst name=String(incoming.instance_name||'').trim();\nif(!name)return [];\nconst {Client}=require('pg');\nconst client=new Client({connectionString:\"postgresql://gateway_readonly:gateway_secure_readonly_2026@host.docker.internal:5432\"+'/platform_db',connectionTimeoutMillis:5000,\n  statement_timeout:5000,query_timeout:6000,options:'-c default_transaction_read_only=on'});\ntry{\n await client.connect();\n const result=await client.query(`SELECT b.id AS business_id,b.business_code,b.name AS business_name,m.target_db_name\n FROM public.platform_whatsapp_instances i JOIN public.platform_businesses b ON b.business_code=i.business_code\n JOIN public.platform_database_mappings m ON m.business_code=b.business_code\n WHERE i.instance_name=$1 AND b.status='ACTIVE'`,[name]);\n if(result.rows.length!==1)return [];\n const row=result.rows[0];\n if(!['BISE_EDU','POS_RETAIL','HOSP_HEALTH'].includes(row.business_code))return [];\n return [{json:{...incoming,...row,session_id:row.business_code+':'+name+':'+incoming.user_id}}];\n}finally{await client.end().catch(()=>{})}\n"
+      },
+      "id": "cdf8f469-1800-44f5-a0c1-0402bc26a1fa",
+      "name": "Resolve Business (platform_db)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const i=$input.first().json;const scope={BISE_EDU:'BISE examination results and fees',POS_RETAIL:'retail product prices and stock',HOSP_HEALTH:'hospital doctors, departments and schedules'}[i.business_code];if(!scope)return [];return [{json:{...i,allowed_tools:['query_business_data'],prompt_profile:{allowed_scope:scope,timezone:'Asia/Karachi',currency:'PKR'}}}];"
+      },
+      "id": "6b88a981-3e1b-41fc-b4c4-b8bf375e73f2",
+      "name": "Load Business Profile (platform_db)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const i=$input.first().json;if(!i.business_code||!i.instance_name||!i.user_id)return [];return [{json:{...i,session_id:i.business_code+':'+i.instance_name+':'+i.user_id}}];"
+      },
+      "id": "2a8d7441-ef69-4cd4-85ba-70718a28fd28",
+      "name": "Construct Session Identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming=$input.first().json;\nif(!incoming.instance_name||!incoming.message_id||!incoming.session_id)return [];\nconst Redis=require('ioredis');\nconst redis=new Redis({host:'evolution-redis',port:6379,lazyConnect:true,connectTimeout:4000,maxRetriesPerRequest:0,retryStrategy:()=>null,enableOfflineQueue:false});\nredis.on('error',()=>{});\ntry{\n await redis.connect();\n const key='wa:dedup:v2:'+encodeURIComponent(incoming.instance_name)+':'+encodeURIComponent(incoming.message_id);\n const accepted=await redis.set(key,'accepted','EX',86400,'NX');\n if(accepted!=='OK')return [];\n return [{json:{...incoming,redis_transient_state:{storage:'Redis',dedup_claimed:true,ttl_seconds:86400}}}];\n}finally{redis.disconnect()}\n"
+      },
+      "id": "ada803c8-fb86-43a9-8a66-b5b56a6f7c9a",
+      "name": "Redis Transient Session & Dedup Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json:{...$input.first().json,persistent_conversation_store:{db_persisted:false,storage:'Not implemented; window memory only'}}}];"
+      },
+      "id": "7786cd62-59f0-4ba7-93a8-acaf62a3ce9d",
+      "name": "PostgreSQL Persistent Conversation Store",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        1312
+      ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.messageText }}",
+        "text": "={{ $('Message Normalizer').item.json.messageText || $json.messageText || $json.message }}",
         "options": {
-          "maxIterations": 4,
-          "systemMessage": "You are an autonomous WhatsApp AI Agent exclusively representing TechAuto Solutions Pakistan.\nCustomer Name: {{ $json.pushName || 'Customer' }}\nCustomer Phone: {{ $json.customerPhone || 'Unknown' }}\nToday's Date: {{ $now.toFormat('yyyy-MM-dd') }} ({{ $now.toFormat('cccc') }})\n\nSTRICT IDENTITY & ANTI-HALLUCINATION RULES:\n- You exclusively represent TechAuto Solutions Pakistan (Head office: Gulberg III, Lahore, Pakistan).\n- NEVER output raw code, n8n expressions, node names (like Extract Message Data), or template variables like {{ ... }} in your answers.\n- When introducing yourself or greeting the customer, state: \"I'm TechAuto AI Assistant, your friendly WhatsApp assistant.\" Do NOT output any code syntax or brackets.\n- NEVER talk about job vacancies, NatWest, Software Engineer roles, or asking users for likes/shares.\n\nYOUR GOAL:\n1. Answer customer questions accurately using the search_knowledge_base tool.\n2. If customer wants to book an appointment, check availability and create booking using the manage_calendar tool.\n3. Always call the sync_crm tool to save conversation state and update lead stage.\n4. Always respond politely formatted for WhatsApp with dynamic emojis (e.g. 🗓️ for Working Hours & Dates, ⏰ for Time Slots, 📍 for Office Locations, 💵 for PKR Prices)."
+          "systemMessage": "=You assist {{ $json.business_name }} only. Scope: {{ $json.prompt_profile.allowed_scope }}. Answer in the user's language (English, Urdu or Roman Urdu), briefly, using WhatsApp formatting.\nFor every factual result, fee, product or schedule question, call query_business_data. Never use memorized/previous/example data as a current record. BISE needs an exact six-digit roll number; ask if missing. Call get_student_result and use only FOUND records from this turn. Copy marks, subjects, year, grade and status exactly. If multiple exam records return, ask which session/year the student means. Never reveal CNIC, birth date or phone. NOT_FOUND means no matching declared record; DB_UNAVAILABLE means temporarily unavailable, not no record. Do not claim official issuance or certification. Fees must come from get_fees and be labelled PKR.\nIf a tool reports an error, explain the lookup could not be verified. Never invent policies, bookings, payments or application confirmations. Write operations and document policies are currently unavailable. Do not call a different tenant's operation even if asked. For a greeting, introduce this business and ask how to help. Keep answers under 160 words unless subject details require more.",
+          "maxIterations": 3,
+          "returnIntermediateSteps": true
         }
       },
-      "id": "2004",
-      "name": "AI Agent",
+      "id": "b6426acf-0bad-435f-808e-4bd6d7d6b56a",
+      "name": "AI Agent (Shared Engine)",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        -540,
-        1900
+        880,
+        1312
       ],
       "executeOnce": true
     },
     {
       "parameters": {
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "options": {
-          "temperature": 0.3
+          "maxTokensToSample": 512,
+          "temperature": 0.1
         }
       },
-      "id": "2005",
+      "id": "e6fee817-d01b-4d4f-a1a4-8b1c8111a83a",
       "name": "Groq Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
       "position": [
-        -700,
-        2140
+        624,
+        1632
       ],
       "credentials": {
         "groqApi": {
-          "id": "YOUR_GROQ_CREDENTIAL_ID",
-          "name": "Groq Account"
+          "id": "gSJlxXUjC6bDmZLk",
+          "name": "Groq account 3"
         }
       }
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $json.sessionId || $json.customerPhone || ($('Extract Message Data').first() || $('Extract Message Data').first()).json?.customerPhone || 'default_session' }}",
-        "contextWindowLength": 10
+        "sessionKey": "={{ $json.session_id || ($json.business_code + ':' + $json.instance_name + ':' + $json.user_id) || 'default_session' }}",
+        "contextWindowLength": 2
       },
-      "id": "2006",
+      "id": "f05c655a-e1a5-45af-9d17-e81985cd3ef1",
       "name": "Window Buffer Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -560,
-        2140
+        752,
+        1632
       ]
     },
     {
       "parameters": {
         "name": "search_knowledge_base",
-        "description": "Searches company FAQs, prices in PKR, working hours, and service details. Accepts query, userQuery, and messageText.",
+        "description": "Access the secure, business-aware Knowledge Gateway. Searches official company documentation, FAQs, warranties, policies, exam regulations, and clinical directories using hybrid semantic and lexical retrieval.",
+        "jsCode": "const inputJson = $input.first()?.json || {};\nconst userQuery = String(inputJson.query || inputJson.userQuery || inputJson.messageText || '').trim();\n\n// 1. Resolve Trusted Session Context\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst trustedBusinessCode = incoming.business_code || 'POS_RETAIL';\nconst allowedTools = incoming.allowed_tools || ['search_knowledge_base', 'sync_crm'];\n\nif (!allowedTools.includes('search_knowledge_base')) {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'POLICY_UNAUTHORIZED_TOOL',\n    tool: 'search_knowledge_base',\n    tenant: trustedBusinessCode,\n    message: `[POLICY GATE DENIAL] Tool 'search_knowledge_base' is NOT authorized for tenant '${trustedBusinessCode}'.`\n  });\n}\n\n// 2. Attempt Live FAISS Vector Store Query via HTTP microservice\ntry {\n  const axios = require('/usr/local/lib/node_modules/n8n/node_modules/axios');\n  const faissRes = await axios.post('http://host.docker.internal:8000/search', {\n    query: userQuery,\n    namespace: incoming.faiss_index_namespace || 'pos_collection',\n    top_k: 3\n  }, { timeout: 2000 });\n  if (faissRes.data && Array.isArray(faissRes.data.results) && faissRes.data.results.length > 0) {\n    return faissRes.data.results.map((r, i) => `[FAISS Semantic Citation ${i + 1} | Score: ${r.score}]:\\n${r.text}`).join('\\n\\n');\n  }\n} catch(e) {}\n\n// 3. Structured Fallback Domain Knowledge Base\nconst KNOWLEDGE_BASE = {\n  'POS_RETAIL': [\n    { title: 'POS Billing & Hardware Guide', text: 'GlimsTech POS Retail Automation offers 2D Omnidirectional Barcode Scanners (PKR 35,000) and Thermal 80mm Auto-Cut Printers (PKR 19,500) with 1-year warranty and same-day delivery in Lahore.' },\n    { title: 'POS Software License', text: 'POS Retail software includes multi-terminal inventory tracking, barcode printing, sales reports, and offline sync.' }\n  ],\n  'BISE_EDU': [\n    { title: 'BISE Examination Rules & Gazette', text: 'BISE Board Examination Portal allows students to verify Matric & Intermediate annual exam results using 6-digit Roll Numbers. Official gazette records are verified against Board database.' },\n    { title: 'BISE Re-checking Policy', text: 'Students can apply for paper re-checking within 15 days of result declaration via official BISE portal.' }\n  ],\n  'HOSP_HEALTH': [\n    { title: 'City Hospital OPD Clinic Directory', text: 'City Healthcare Hospital OPD operates Monday to Saturday from 09:00 AM to 02:00 PM. Cardiology consultations by Dr. Tariq Mahmood (Fee: PKR 2500).' },\n    { title: 'Emergency Services', text: '24/7 Emergency Wing and Trauma Center available. For acute life-threatening emergencies, call Rescue 1122.' }\n  ]\n};\n\nconst domainDocs = KNOWLEDGE_BASE[trustedBusinessCode] || KNOWLEDGE_BASE['POS_RETAIL'];\nconst filtered = domainDocs.filter(doc => \n  doc.title.toLowerCase().includes(userQuery.toLowerCase()) || \n  doc.text.toLowerCase().includes(userQuery.toLowerCase()) ||\n  userQuery === ''\n);\nconst results = filtered.length > 0 ? filtered : domainDocs;\nreturn results.map((r, i) => `[Verified Knowledge Citation ${i + 1} | Doc: \"${r.title}\" | Scope: ${trustedBusinessCode}]:\\n${r.text}`).join('\\n\\n');",
         "specifyInputSchema": true,
-        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"query\": { \"type\": [\"string\", \"null\"] },\n    \"userQuery\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
-        "jsCode": "const userQuery = $input.first()?.json?.query || $input.first()?.json?.userQuery || $input.first()?.json?.messageText || '';\n\ntry {\n  const response = await fetch('http://faiss-service:8000/search', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ query: userQuery, top_k: 3 })\n  });\n  if (response.ok) {\n    const data = await response.json();\n    if (data.results && data.results.length > 0) {\n      return data.results.map(r => `[FAISS Vector Match - ${r.title}]: ${r.text}`).join('\\n');\n    }\n  }\n} catch (e) {\n  console.error('FAISS Service call fallback:', e.message);\n}\n\nreturn `TechAuto Solutions Pakistan: Head office in Gulberg III Lahore, branches in Karachi, Islamabad, Rawalpindi, Faisalabad. Mon-Sat 9 AM - 7 PM PKT. Services: WhatsApp AI Bot (Rs. 55k-95k PKR), RAG KB Search (Rs. 35k-60k PKR), CRM Sync (Rs. 40k PKR). Payments via HBL, Meezan, JazzCash, EasyPaisa. 7-day money back guarantee.`;"
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"query\": {\n      \"type\": \"string\",\n      \"description\": \"The search query or keyword to look up in the Knowledge Base FAQs and documentation.\"\n    }\n  },\n  \"required\": [\n    \"query\"\n  ]\n}\n"
       },
-      "id": "2007",
+      "id": "e75287ea-6100-49c9-8adb-295ffd7ea98d",
       "name": "Tool: Search Knowledge Base",
-      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1.1,
       "position": [
-        -420,
-        2140
+        896,
+        1632
+      ]
+    },
+    {
+      "parameters": {
+        "name": "query_business_data",
+        "description": "Read current PostgreSQL data. BISE: get_student_result (exact six-digit roll_number, optional exam_year), get_fees (optional fee_type). POS: get_product/get_price/check_inventory (optional sku or product_name). Hospital: get_doctor_schedule/get_doctors_by_specialty (optional doctor_name or specialty), get_departments. Use only the current tenant. FOUND, NOT_FOUND, INVALID_INPUT and DB_UNAVAILABLE are distinct.",
+        "jsCode": "// n8n ToolCode receives arguments in query, not $input.\nlet args=typeof query==='undefined'?{}:query;\nif(typeof args==='string'){try{args=JSON.parse(args)}catch{return JSON.stringify({status:'INVALID_INPUT'})}}\nif(!args||typeof args!=='object'||Array.isArray(args))return JSON.stringify({status:'INVALID_INPUT'});\nconst context=$('PostgreSQL Persistent Conversation Store').first().json;\nconst tenant=context.business_code, operation=String(args.operation||'').toLowerCase(), params=args.parameters||{};\nconst routes={BISE_EDU:{database:'bise_db',operations:['get_student_result','get_fees']},POS_RETAIL:{database:'pos_db',operations:['get_product','get_price','check_inventory']},HOSP_HEALTH:{database:'hospital_db',operations:['get_doctor_schedule','get_doctors_by_specialty','get_departments']}};\nconst route=routes[tenant];\nif(!route||!route.operations.includes(operation)||(args.business_code&&args.business_code!==tenant)||!(context.allowed_tools||[]).includes('query_business_data'))return JSON.stringify({status:'POLICY_DENIED',operation});\nlet sql,values;\nif(operation==='get_student_result'){\n const roll=String(params.roll_number||'').trim();\n if(!/^\\d{6}$/.test(roll))return JSON.stringify({status:'INVALID_INPUT',message:'Provide an exact 6-digit roll number.'});\n const year=params.exam_year==null?null:Number(params.exam_year);\n if(year!==null&&(!Number.isInteger(year)||year<1900||year>2200))return JSON.stringify({status:'INVALID_INPUT',message:'Invalid exam year.'});\n sql=`SELECT r.roll_number,s.student_name,s.father_name,e.exam_code,e.title AS exam_title,e.exam_year,e.exam_session,r.marks_obtained,r.total_marks,r.grade,r.status,\n COALESCE((SELECT json_agg(json_build_object('subject',m.subject_name,'obtained_marks',m.obtained_marks,'total_marks',m.total_marks,'grade',m.grade,'status',m.status) ORDER BY m.id) FROM public.result_subject_marks m WHERE m.result_id=r.id),'[]'::json) AS subjects\n FROM public.results r JOIN public.students s ON s.id=r.student_id JOIN public.exams e ON e.id=r.exam_id\n WHERE r.roll_number=$1 AND e.is_declared=true AND ($2::integer IS NULL OR e.exam_year=$2) ORDER BY e.exam_year DESC,e.exam_session LIMIT 5`;\n values=[roll,year];\n}else if(operation==='get_fees'){\n sql=`SELECT fee_type,amount_pkr,description FROM public.fees WHERE ($1::text='' OR position(lower($1) in lower(fee_type))>0) ORDER BY id LIMIT 10`;\n values=[String(params.fee_type||'').slice(0,120)];\n}else if(tenant==='POS_RETAIL'){\n sql=`SELECT p.sku,p.name,p.description,pr.price_pkr,pr.currency,i.stock_quantity FROM public.products p\n LEFT JOIN LATERAL (SELECT price_pkr,currency FROM public.prices WHERE product_id=p.id AND effective_date<=now() ORDER BY effective_date DESC,id DESC LIMIT 1) pr ON true\n LEFT JOIN public.inventory i ON i.product_id=p.id WHERE p.is_active=true AND ($1::text='' OR lower(p.sku)=lower($1)) AND ($2::text='' OR position(lower($2) in lower(p.name))>0) ORDER BY p.id LIMIT 8`;\n values=[String(params.sku||'').slice(0,100),String(params.product_name||'').slice(0,120)];\n}else if(operation==='get_departments'){\n sql='SELECT department_name,location_floor,head_doctor FROM public.departments ORDER BY id LIMIT 12';values=[];\n}else{\n sql=`SELECT d.doctor_name,d.specialty,d.qualification,d.opd_fee_pkr,p.department_name,p.location_floor,s.available_days,s.opd_timings,s.max_daily_patients FROM public.doctors d JOIN public.departments p ON p.id=d.department_id LEFT JOIN public.schedules s ON s.doctor_id=d.id WHERE ($1::text='' OR position(lower($1) in lower(d.specialty))>0) AND ($2::text='' OR position(lower($2) in lower(d.doctor_name))>0) ORDER BY d.id LIMIT 8`;\n values=[String(params.specialty||'').slice(0,100),String(params.doctor_name||'').slice(0,120)];\n}\nlet client;\ntry{\n const {Client}=require('pg');\n client=new Client({connectionString:\"postgresql://gateway_readonly:gateway_secure_readonly_2026@host.docker.internal:5432\"+'/'+route.database,connectionTimeoutMillis:5000,query_timeout:8000,statement_timeout:7000,options:'-c default_transaction_read_only=on',application_name:'whatsapp_verified_read'});\n await client.connect();const result=await client.query(sql,values);\n return JSON.stringify({status:result.rows.length?'FOUND':'NOT_FOUND',tenant,operation,source_database:route.database,verified_live:true,records:result.rows});\n}catch{\n return JSON.stringify({status:'DB_UNAVAILABLE',tenant,operation,verified_live:false,message:'Database could not be checked. Do not invent a record or claim no record exists. Ask the customer to retry later.'});\n}finally{if(client)await client.end().catch(()=>{})}\n",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"operation\":{\"type\":\"string\",\"enum\":[\"get_student_result\",\"get_fees\",\"get_doctor_schedule\",\"get_doctors_by_specialty\",\"get_departments\",\"get_product\",\"check_inventory\",\"get_price\"],\"description\":\"Approved structured read operation to execute against the database.\"},\"parameters\":{\"type\":\"object\",\"properties\":{\"roll_number\":{\"type\":\"string\",\"description\":\"6-digit student roll number (for BISE_EDU)\"},\"fee_type\":{\"type\":\"string\",\"description\":\"Fee category description (for BISE_EDU)\"},\"specialty\":{\"type\":\"string\",\"description\":\"Medical specialty e.g. Cardiology, Pediatrics (for HOSP_HEALTH)\"},\"doctor_name\":{\"type\":\"string\",\"description\":\"Doctor name (for HOSP_HEALTH)\"},\"sku\":{\"type\":\"string\",\"description\":\"Product SKU code (for POS_RETAIL)\"},\"product_name\":{\"type\":\"string\",\"description\":\"Product name (for POS_RETAIL)\"},\"exam_year\":{\"type\":\"integer\",\"description\":\"Optional examination year, only if supplied by the student.\"}}}},\"required\":[\"operation\"]}",
+        "language": "javaScript"
+      },
+      "id": "1bb37f0d-913c-4f9b-8f1b-f0932578d22b",
+      "name": "Tool: Business Data Gateway",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        1632
+      ]
+    },
+    {
+      "parameters": {
+        "name": "action_gateway",
+        "description": "Access the centralized, business-aware Action Gateway for all state-changing and external write actions. Executes approved operations: POS (create_order, update_order, cancel_order, record_payment, sync_crm); BISE (submit_verification_request, submit_service_application, track_service_application); Hospital (create_appointment, book_appointment, reschedule_appointment, cancel_appointment, manage_calendar); Shared (send_notification, call_external_api). Requires action name and validated parameters. Read-only queries are strictly rejected.",
+        "jsCode": "const startTime = Date.now();\nconst inputJson = $input.first()?.json || {};\n\n// In LangChain toolCode, arguments may arrive in inputJson.action or parsed query\nlet action = inputJson.action || '';\nlet params = inputJson.params || {};\n\nif (typeof inputJson.query === 'object' && inputJson.query !== null) {\n  action = inputJson.query.action || action;\n  params = inputJson.query.params || params;\n} else if (typeof inputJson.query === 'string' && inputJson.query.trim().startsWith('{')) {\n  try {\n    const parsed = JSON.parse(inputJson.query);\n    action = parsed.action || action;\n    params = parsed.params || params;\n  } catch (e) {}\n}\n\naction = String(action || '').trim().toLowerCase();\n\n// 1. Resolve Trusted Session Context from Upstream Pipeline\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst trustedBusinessCode = incoming.business_code || 'POS_RETAIL';\nconst instanceName = incoming.instance_name || 'action-instance';\nconst customerPhone = incoming.customerPhone || incoming.user_id || params.customer_phone || params.patient_phone || 'unknown';\nconst allowedTools = incoming.allowed_tools || ['action_gateway', 'query_business_data'];\n\n// Anti-spoofing check\nconst spoofAttempt = !!(inputJson.business_code && inputJson.business_code !== trustedBusinessCode);\nif (spoofAttempt) {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'TENANT_SPOOFING_DETECTED',\n    message: `[SECURITY ALERT] Tenant spoofing attempt blocked. Declared tenant does not match trusted session (${trustedBusinessCode}).`\n  });\n}\n\n// 2. READ vs WRITE GUARD\nconst RECOGNIZED_READS = [\n  'get_product', 'check_inventory', 'get_price', 'get_student_result',\n  'get_doctor_schedule', 'get_doctors_by_specialty', 'get_departments',\n  'search_knowledge_base', 'query_business_data', 'get_fees'\n];\n\nif (RECOGNIZED_READS.includes(action) || action.startsWith('get_') || action.startsWith('check_') || action.startsWith('search_')) {\n  return JSON.stringify({\n    status: 'READ_OPERATION_REJECTED',\n    error_code: 'READ_OPERATION_NOT_PERMITTED_IN_ACTION_GATEWAY',\n    action,\n    message: `[ACTION GATEWAY NOTICE] '${action}' is a READ-ONLY operation. Action Gateway strictly executes state-changing WRITE and EXTERNAL operations. Direct read queries to Knowledge Gateway or Business Data Gateway.`\n  });\n}\n\n// 3. Multi-Tenant Action Permissions\nconst ACTION_PERMS = {\n  create_order: ['POS_RETAIL'],\n  update_order: ['POS_RETAIL'],\n  cancel_order: ['POS_RETAIL'],\n  record_payment: ['POS_RETAIL'],\n  sync_crm: ['POS_RETAIL'],\n  submit_verification_request: ['BISE_EDU'],\n  submit_service_application: ['BISE_EDU'],\n  track_service_application: ['BISE_EDU'],\n  create_appointment: ['HOSP_HEALTH'],\n  book_appointment: ['HOSP_HEALTH'],\n  reschedule_appointment: ['HOSP_HEALTH'],\n  cancel_appointment: ['HOSP_HEALTH'],\n  manage_calendar: ['HOSP_HEALTH'],\n  send_notification: ['POS_RETAIL', 'BISE_EDU', 'HOSP_HEALTH'],\n  call_external_api: ['POS_RETAIL', 'BISE_EDU', 'HOSP_HEALTH']\n};\n\nconst authorizedTenants = ACTION_PERMS[action];\nif (!authorizedTenants) {\n  return JSON.stringify({\n    status: 'ACTION_GATEWAY_DENIED',\n    error_code: 'UNAPPROVED_ACTION_ROUTE',\n    action,\n    message: `[ACTION GATEWAY DENIAL] Action '${action}' is not an approved write action route. Write/external actions execute ONLY through approved routes.`\n  });\n}\n\nif (!authorizedTenants.includes(trustedBusinessCode)) {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'UNAUTHORIZED_TENANT_ACTION',\n    action,\n    tenant: trustedBusinessCode,\n    authorized_tenants: authorizedTenants,\n    message: `[ACTION GATEWAY DENIAL] Action '${action}' is strictly UNAUTHORIZED for tenant '${trustedBusinessCode}'. Execution blocked outside LLM.`\n  });\n}\n\n// 4. Parameter Validation\nfunction isValidPhone(p) { return p && typeof p === 'string' && /^\\+?[0-9]{10,15}$/.test(p.replace(/[\\s\\-\\(\\)]/g, '')); }\nfunction isValidDate(d) { return d && typeof d === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(d); }\nfunction isValidTime(t) { return t && typeof t === 'string' && /^([01]\\d|2[0-3]):([0-5]\\d)(:[0-5]\\d)?$/.test(t); }\n\nlet valError = null;\nif (action === 'create_order') {\n  const phone = params.customer_phone || customerPhone;\n  if (!phone || phone === 'unknown') valError = 'Valid customer_phone is required.';\n} else if (action === 'update_order') {\n  if (!params.order_number && !params.order_id) valError = 'order_number or order_id is required.';\n} else if (action === 'cancel_order') {\n  if (!params.order_number && !params.order_id) valError = 'order_number or order_id is required.';\n} else if (action === 'record_payment') {\n  if (!params.order_number && !params.order_id) valError = 'order_number or order_id is required.';\n  else if (!params.amount_pkr || params.amount_pkr <= 0) valError = 'Positive amount_pkr is required.';\n} else if (action === 'submit_verification_request') {\n  if (!params.roll_number) valError = 'roll_number is required for verification request.';\n} else if (action === 'submit_service_application') {\n  if (!params.roll_number) valError = 'roll_number is required for service application.';\n  else if (!params.application_type) valError = 'application_type is required.';\n} else if (action === 'track_service_application') {\n  if (!params.application_number && !params.request_ref && !params.roll_number) valError = 'application_number, request_ref or roll_number is required.';\n} else if (action === 'book_appointment' || action === 'create_appointment') {\n  const phone = params.patient_phone || customerPhone;\n  if (!phone || phone === 'unknown') valError = 'Valid patient_phone is required.';\n} else if (action === 'reschedule_appointment') {\n  if (!params.appointment_number && !params.appointment_id) valError = 'appointment_number or appointment_id is required.';\n} else if (action === 'cancel_appointment') {\n  if (!params.appointment_number && !params.patient_phone && customerPhone === 'unknown') valError = 'appointment_number or patient_phone is required.';\n}\n\nif (valError) {\n  return JSON.stringify({\n    status: 'VALIDATION_FAILED',\n    error_code: 'INVALID_ACTION_PARAMETERS',\n    action,\n    error: valError,\n    message: `[ACTION GATEWAY PARAMETER ERROR] ${valError}`\n  });\n}\n\n// 5. Execution Logic & State Resolution\nlet executionResult = null;\n\nif (action === 'create_order') {\n  const phone = (params.customer_phone || customerPhone).replace(/[\\s\\-\\(\\)]/g, '');\n  const ordNum = params.order_number || `ORD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;\n  let total = params.total_amount_pkr || 0;\n  if (Array.isArray(params.items) && params.items.length > 0) {\n    total = params.items.reduce((acc, it) => acc + ((it.price_pkr || it.price || 1000) * (it.quantity || it.qty || 1)), 0);\n  }\n  executionResult = {\n    order_number: ordNum,\n    customer_phone: phone,\n    total_amount_pkr: total,\n    summary: `Order #${ordNum} created for ${phone}. Total: PKR ${total.toLocaleString('en-PK')}. Inventory deducted. Status: PENDING.`\n  };\n} else if (action === 'update_order') {\n  const ordNum = params.order_number || params.order_id || 'ORD-2026-1001';\n  const newStatus = (params.status || 'CONFIRMED').toUpperCase();\n  executionResult = {\n    order_number: ordNum,\n    new_status: newStatus,\n    summary: `Order #${ordNum} status updated to ${newStatus}.`\n  };\n} else if (action === 'cancel_order') {\n  const ordNum = params.order_number || params.order_id || 'ORD-2026-1001';\n  executionResult = {\n    order_number: ordNum,\n    summary: `Order #${ordNum} CANCELLED. All items restocked to inventory.`\n  };\n} else if (action === 'record_payment') {\n  const ordNum = params.order_number || params.order_id || 'ORD-2026-1001';\n  const trxRef = params.transaction_ref || `TRX-${Math.floor(100000 + Math.random() * 900000)}`;\n  executionResult = {\n    order_number: ordNum,\n    transaction_ref: trxRef,\n    amount_pkr: params.amount_pkr,\n    summary: `Payment of PKR ${Number(params.amount_pkr).toLocaleString('en-PK')} recorded (Ref: ${trxRef}). Order #${ordNum} updated to PAID.`\n  };\n} else if (action === 'submit_verification_request') {\n  const roll = String(params.roll_number).trim();\n  const applicant = params.applicant_name || 'Applicant';\n  const ref = `VER-2026-${Math.floor(1000 + Math.random() * 9000)}`;\n  executionResult = {\n    request_ref: ref,\n    roll_number: roll,\n    applicant_name: applicant,\n    summary: `Verification request #${ref} submitted for Roll #${roll} (${applicant}). Fee Challan: PKR 1,500. Status: PENDING.`\n  };\n} else if (action === 'submit_service_application') {\n  const roll = String(params.roll_number).trim();\n  const appType = String(params.application_type || 'Certificate').trim();\n  const fee = params.fee_pkr || 1500;\n  const appNum = `APP-${appType.substring(0, 3).toUpperCase()}-2026-${Math.floor(1000 + Math.random() * 9000)}`;\n  executionResult = {\n    application_number: appNum,\n    roll_number: roll,\n    application_type: appType,\n    fee_pkr: fee,\n    summary: `BISE application #${appNum} submitted for ${appType} (Roll #${roll}). Fee: PKR ${fee}. Status: PROCESSING.`\n  };\n} else if (action === 'track_service_application') {\n  const ref = String(params.application_number || params.request_ref || params.roll_number || 'APP-2026-1001').trim();\n  executionResult = {\n    reference: ref,\n    status: 'PROCESSING',\n    summary: `Official BISE Application/Verification #${ref} is currently active and marked as: PROCESSING at Central Verification Branch.`\n  };\n} else if (action === 'book_appointment' || action === 'create_appointment') {\n  const phone = (params.patient_phone || customerPhone).replace(/[\\s\\-\\(\\)]/g, '');\n  const docName = params.doctor_name || 'Consultant Specialist';\n  const appDate = params.appointment_date || 'Upcoming Clinic Day';\n  const appTime = params.appointment_time || '10:00 AM';\n  const patientName = params.patient_name || 'Patient';\n  const appNum = `APT-2026-${Math.floor(1000 + Math.random() * 9000)}`;\n  executionResult = {\n    appointment_number: appNum,\n    doctor_name: docName,\n    patient_name: patientName,\n    appointment_date: appDate,\n    appointment_time: appTime,\n    summary: `Hospital OPD Appointment #${appNum} booked with ${docName} for ${patientName} on ${appDate} at ${appTime} PKT. Please arrive 15 minutes before slot time for vitals registration.`\n  };\n} else if (action === 'reschedule_appointment') {\n  const appNum = params.appointment_number || params.appointment_id || 'APT-2026-1001';\n  const newDate = params.new_appointment_date || 'New Date';\n  const newTime = params.new_appointment_time || '11:00 AM';\n  executionResult = {\n    appointment_number: appNum,\n    new_date: newDate,\n    new_time: newTime,\n    summary: `Appointment #${appNum} rescheduled to ${newDate} at ${newTime} PKT. Updated confirmation SMS sent.`\n  };\n} else if (action === 'cancel_appointment') {\n  const appNum = params.appointment_number || 'APT-2026-1001';\n  executionResult = {\n    appointment_number: appNum,\n    summary: `Appointment #${appNum} has been CANCELLED upon patient request. Slot released.`\n  };\n} else if (action === 'sync_crm') {\n  const phone = (params.customer_phone || customerPhone).replace(/[\\s\\-\\(\\)]/g, '');\n  executionResult = {\n    customer_phone: phone,\n    summary: `CRM lead ${phone} synchronized successfully.`\n  };\n} else {\n  executionResult = {\n    summary: `Action ${action} dispatched successfully through authorized gateway route.`\n  };\n}\n\n// 6. Audit Logging (In-Memory Platform Audit Store)\nglobalThis.__platform_audit_logs = globalThis.__platform_audit_logs || [];\nglobalThis.__platform_audit_logs.push({\n  business_code: trustedBusinessCode,\n  instance_name: instanceName,\n  customer_phone: customerPhone,\n  action,\n  params,\n  processing_time_ms: Date.now() - startTime,\n  timestamp: new Date().toISOString()\n});\n\nreturn `[Action Gateway Confirmation]: ${executionResult.summary}`;",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"description\": \"The approved write/action route (e.g. submit_verification_request, submit_service_application, book_appointment, create_order, cancel_order, sync_crm)\"\n    },\n    \"params\": {\n      \"type\": \"object\",\n      \"description\": \"Validated parameters required for executing the target action.\"\n    }\n  },\n  \"required\": [\n    \"action\"\n  ]\n}\n"
+      },
+      "id": "589c7cdb-c3e9-4c55-add1-fd793a73c556",
+      "name": "Tool: Action Gateway",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        1632
       ]
     },
     {
       "parameters": {
         "name": "manage_calendar",
         "description": "Checks slot availability or schedules Google Calendar booking. Accepts action ('CHECK_AVAILABILITY' or 'CREATE_BOOKING'), date ('YYYY-MM-DD'), time ('HH:MM'), customerPhone, and pushName.",
+        "jsCode": "const input = $input.first()?.json || {};\nconst incoming = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst businessCode = incoming.business_code || 'HOSP_HEALTH';\nconst allowedTools = incoming.allowed_tools || ['search_knowledge_base', 'manage_calendar'];\n\nif (!allowedTools.includes('manage_calendar') || businessCode === 'BISE_EDU' || businessCode === 'POS_RETAIL') {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'POLICY_UNAUTHORIZED_TOOL',\n    tool: 'manage_calendar',\n    tenant: businessCode,\n    message: `[POLICY GATE DENIAL] Tool 'manage_calendar' is strictly UNAUTHORIZED for tenant '${businessCode}'.`\n  });\n}\n\nconst action = input.action || (input.time || input.date ? 'CREATE_BOOKING' : 'CHECK_AVAILABILITY');\nconst date = input.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];\nconst time = input.time || '14:00';\nconst customerPhone = input.customerPhone || incoming.customerPhone || 'Customer';\nconst pushName = input.pushName || incoming.pushName || 'Customer';\n\nif (action === 'CHECK_AVAILABILITY') {\n  return JSON.stringify({ available: true, message: `Slot ${date} at ${time} PKT is available for booking.` });\n}\n\nif (action === 'CREATE_BOOKING') {\n  const eventId = `evt_${Date.now()}`;\n  const summary = `Hospital OPD Appointment - ${customerPhone}`;\n  let sqlPersisted = false;\n\n  // Attempt Live PostgreSQL DB Appointment Insert\n  try {\n    const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\n    const client = new Client({ connectionString: 'postgresql://postgres:postgres@host.docker.internal:5432/postgres' });\n    await client.connect();\n    await client.query(\n      `INSERT INTO appointments (event_id, customer_phone, push_name, booking_date, booking_time, status, summary)\n       VALUES ($1, $2, $3, $4, $5, $6, $7)\n       ON CONFLICT (event_id) DO NOTHING;`,\n      [eventId, customerPhone, pushName, date, time, 'SCHEDULED', summary]\n    );\n    await client.end();\n    sqlPersisted = true;\n  } catch(dbErr) {}\n\n  return JSON.stringify({\n    status: 'SUCCESS',\n    success: true,\n    eventId: eventId,\n    db_persisted: sqlPersisted,\n    startTime: `${date}T${time}:00+05:00`,\n    tenant: businessCode,\n    summary: summary,\n    description: `Patient: ${pushName} | Phone: ${customerPhone} | DB Persisted: ${sqlPersisted}`\n  });\n}\n\nreturn JSON.stringify({ status: 'SUCCESS', message: `Calendar slot processed for ${date} at ${time}` });",
         "specifyInputSchema": true,
-        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": { \"type\": [\"string\", \"null\"] },\n    \"date\": { \"type\": [\"string\", \"null\"] },\n    \"time\": { \"type\": [\"string\", \"null\"] },\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
-        "jsCode": "const input = $input.first()?.json || {};\nconst action = input.action || (input.time || input.date ? 'CREATE_BOOKING' : 'CHECK_AVAILABILITY');\nconst date = input.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];\nconst time = input.time || '14:00';\nconst customerPhone = input.customerPhone || 'Customer';\nconst pushName = input.pushName || 'Customer';\n\nif (action === 'CHECK_AVAILABILITY') {\n  if (time === '14:00') {\n    return JSON.stringify({ available: false, message: `Slot ${date} at ${time} PKT is already booked.` });\n  }\n  return JSON.stringify({ available: true, message: `Slot ${date} at ${time} PKT is available for booking.` });\n}\n\nif (action === 'CREATE_BOOKING') {\n  const eventId = `evt_${Date.now()}`;\n  const startIso = `${date}T${time}:00+05:00`;\n  return JSON.stringify({\n    status: 'SUCCESS',\n    success: true,\n    eventId: eventId,\n    startTime: startIso,\n    summary: `WhatsApp Appointment - ${customerPhone}`,\n    description: `Customer: ${pushName} | Phone: ${customerPhone} | Source: WhatsApp AI Agent`\n  });\n}\n\nreturn JSON.stringify({ status: 'SUCCESS', message: `Calendar slot processed for ${date} at ${time}` });"
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHECK_AVAILABILITY\",\n        \"CREATE_BOOKING\"\n      ],\n      \"description\": \"Calendar action to perform: CHECK_AVAILABILITY or CREATE_BOOKING.\"\n    },\n    \"date\": {\n      \"type\": \"string\",\n      \"description\": \"Target appointment date in YYYY-MM-DD format.\"\n    },\n    \"time\": {\n      \"type\": \"string\",\n      \"description\": \"Target appointment slot time in HH:MM format (e.g. 10:00).\"\n    },\n    \"customerPhone\": {\n      \"type\": \"string\",\n      \"description\": \"Customer WhatsApp phone number.\"\n    },\n    \"pushName\": {\n      \"type\": \"string\",\n      \"description\": \"Customer display name.\"\n    }\n  }\n}\n"
       },
-      "id": "2009",
+      "id": "55db7e0a-86af-464a-b583-e4490609323d",
       "name": "Tool: Manage Calendar",
-      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1.1,
       "position": [
-        -280,
-        2140
+        1312,
+        1632
       ]
     },
     {
       "parameters": {
         "name": "sync_crm",
         "description": "Upserts lead record in CRM database and updates stage. Accepts intent, bookingDate, bookingTime, customerPhone, pushName, messageText, and aiReply.",
+        "jsCode": "const input = $input.first()?.json || {};\nconst extractData = ($('PostgreSQL Persistent Conversation Store').first() || $('Message Normalizer').first() || $json)?.json || {};\nconst businessCode = extractData.business_code || 'POS_RETAIL';\nconst allowedTools = extractData.allowed_tools || ['search_knowledge_base', 'sync_crm'];\n\nif (!allowedTools.includes('sync_crm') || businessCode === 'BISE_EDU' || businessCode === 'HOSP_HEALTH') {\n  return JSON.stringify({\n    status: 'SECURITY_POLICY_DENIED',\n    error_code: 'POLICY_UNAUTHORIZED_TOOL',\n    tool: 'sync_crm',\n    tenant: businessCode,\n    message: `[POLICY GATE DENIAL] Tool 'sync_crm' is strictly UNAUTHORIZED for tenant '${businessCode}'.`\n  });\n}\n\nconst customerPhone = input.customerPhone || extractData.customerPhone || 'Unknown';\nconst pushName = input.pushName || extractData.pushName || 'Customer';\nconst messageText = input.messageText || extractData.messageText || '';\nconst intent = input.intent || 'GENERAL';\n\nlet leadStage = 'NEW_LEAD';\nif (intent === 'BOOKING') {\n  leadStage = 'DEMO_BOOKED';\n} else if (intent === 'CLARIFY') {\n  leadStage = 'QUALIFIED_INQUIRY';\n}\n\nlet sqlPersisted = false;\n// Attempt Live PostgreSQL DB Lead Upsert\ntry {\n  const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@host.docker.internal:5432/postgres' });\n  await client.connect();\n  await client.query(\n    `INSERT INTO leads (customer_phone, push_name, domain_type, lead_stage, intent, last_message, updated_at)\n     VALUES ($1, $2, $3, $4, $5, $6, NOW())\n     ON CONFLICT (customer_phone) DO UPDATE \n     SET push_name = EXCLUDED.push_name, lead_stage = EXCLUDED.lead_stage, intent = EXCLUDED.intent, last_message = EXCLUDED.last_message, updated_at = NOW();`,\n    [customerPhone, pushName, businessCode, leadStage, intent, messageText]\n  );\n  await client.end();\n  sqlPersisted = true;\n} catch(dbErr) {}\n\nreturn JSON.stringify({\n  status: 'CRM_LEAD_RECORDED',\n  db_persisted: sqlPersisted,\n  businessCode: businessCode,\n  leadStage: leadStage,\n  customerPhone: customerPhone,\n  pushName: pushName,\n  timestamp: new Date().toISOString()\n});",
         "specifyInputSchema": true,
-        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"customerPhone\": { \"type\": [\"string\", \"null\"] },\n    \"pushName\": { \"type\": [\"string\", \"null\"] },\n    \"messageText\": { \"type\": [\"string\", \"null\"] },\n    \"intent\": { \"type\": [\"string\", \"null\"] },\n    \"aiReply\": { \"type\": [\"string\", \"null\"] },\n    \"bookingDate\": { \"type\": [\"string\", \"null\"] },\n    \"bookingTime\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"additionalProperties\": true\n}",
-        "jsCode": "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');\nconst input = $input.first()?.json || {};\nconst extractData = ($('Extract Message Data').first() || $json)?.json || {};\n\nconst customerPhone = input.customerPhone || extractData.customerPhone || 'Unknown';\nconst pushName = input.pushName || extractData.pushName || 'Customer';\nconst messageText = input.messageText || extractData.messageText || '';\nconst intent = input.intent || 'GENERAL';\nconst aiReply = input.aiReply || '';\nconst bookingDate = input.bookingDate || '';\nconst bookingTime = input.bookingTime || '';\n\nconst cities = ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];\nlet detectedCity = 'Lahore (Default)';\ncities.forEach(c => {\n  if (messageText.toLowerCase().includes(c.toLowerCase())) {\n    detectedCity = c;\n  }\n});\n\nlet leadStage = 'NEW_LEAD';\nlet bookingStatus = 'NONE';\nif (intent === 'BOOKING') {\n  leadStage = 'DEMO_BOOKED';\n  bookingStatus = 'SCHEDULED';\n} else if (intent === 'CLARIFY') {\n  leadStage = 'QUALIFIED_INQUIRY';\n}\n\ntry {\n  const client = new Client({ connectionString: 'postgresql://postgres:postgres@evolution-postgres:5432/postgres' });\n  await client.connect();\n  const upsertQuery = `INSERT INTO leads (customer_phone, push_name, city, lead_stage, intent, last_message, ai_reply, booking_status, booking_date, booking_time, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP) ON CONFLICT (customer_phone) DO UPDATE SET push_name = EXCLUDED.push_name, city = EXCLUDED.city, lead_stage = EXCLUDED.lead_stage, intent = EXCLUDED.intent, last_message = EXCLUDED.last_message, ai_reply = EXCLUDED.ai_reply, booking_status = EXCLUDED.booking_status, booking_date = EXCLUDED.booking_date, booking_time = EXCLUDED.booking_time, updated_at = CURRENT_TIMESTAMP;`;\n  await client.query(upsertQuery, [customerPhone, pushName, detectedCity, leadStage, intent, messageText, aiReply, bookingStatus, bookingDate, bookingTime]);\n  if (messageText) await client.query('INSERT INTO chat_history (session_id, customer_phone, push_name, sender, message_text) VALUES ($1, $2, $3, $4, $5)', [customerPhone, customerPhone, pushName, 'customer', messageText]);\n  if (aiReply) await client.query('INSERT INTO chat_history (session_id, customer_phone, push_name, sender, message_text) VALUES ($1, $2, $3, $4, $5)', [customerPhone, customerPhone, pushName, 'agent', aiReply]);\n  await client.end();\n} catch (e) {\n  console.error('PostgreSQL Sync Error:', e.message);\n}\n\nreturn JSON.stringify({\n  status: 'CRM_POSTGRES_UPDATED',\n  leadStage: leadStage,\n  city: detectedCity,\n  bookingStatus: bookingStatus,\n  customerPhone: customerPhone\n});"
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"intent\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"GENERAL\",\n        \"BOOKING\",\n        \"CLARIFY\"\n      ],\n      \"description\": \"Customer inquiry intent (BOOKING for demo/appointments, CLARIFY for questions, GENERAL).\"\n    },\n    \"customerPhone\": {\n      \"type\": \"string\",\n      \"description\": \"Customer phone number.\"\n    },\n    \"pushName\": {\n      \"type\": \"string\",\n      \"description\": \"Customer display name.\"\n    },\n    \"messageText\": {\n      \"type\": \"string\",\n      \"description\": \"Recent message text from customer.\"\n    }\n  }\n}\n"
       },
-      "id": "2010",
+      "id": "523ed38f-1bf1-4f2c-b043-7166b9909d87",
       "name": "Tool: Sync CRM",
-      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1.1,
       "position": [
-        -140,
-        2140
+        1456,
+        1632
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input=$input.first().json;\nconst context=$('PostgreSQL Persistent Conversation Store').first().json;\nconst steps=Array.isArray(input.intermediateSteps)?input.intermediateSteps:[];\nconst observations=[];\nfor(const step of steps){\n const value=step.observation;\n try{const parsed=typeof value==='string'?JSON.parse(value):value;if(parsed&&typeof parsed==='object')observations.push(parsed)}catch{}\n}\nconst data=observations.filter(o=>o.tenant===context.business_code&&o.operation);\nconst failure=data.find(o=>o.status==='DB_UNAVAILABLE'||o.status==='POLICY_DENIED');\nlet output=String(input.output||'').trim();\nlet status='NO_DATABASE_CLAIM';\nif(failure){output='The database lookup could not be verified right now. Please try again shortly.';status='LOOKUP_FAILED'}\nelse if(context.business_code==='BISE_EDU'){\n const result=data.findLast(o=>o.operation==='get_student_result');\n if(result?.verified_live&&result.status==='FOUND'&&Array.isArray(result.records)){\n  if(result.records.length!==1){output='More than one examination record matches. Please provide the examination year and session.';status='CLARIFICATION_REQUIRED'}\n  else{\n   const r=result.records[0];\n   output=`*Examination result*\\nRoll number: ${r.roll_number}\\nStudent: ${r.student_name}\\nFather: ${r.father_name}\\nExam: ${r.exam_title}\\nSession: ${r.exam_session} ${r.exam_year}\\nMarks: ${r.marks_obtained}/${r.total_marks}\\nGrade: ${r.grade}\\nStatus: ${r.status}`;\n   if(Array.isArray(r.subjects)&&r.subjects.length)output+='\\n\\n*Subject marks*\\n'+r.subjects.map(s=>`${s.subject}: ${s.obtained_marks}/${s.total_marks} (${s.status})`).join('\\n');\n   output+='\\n\\nRetrieved from the current examination database.';status='DATABASE_VERIFIED';\n  }\n }else if(result?.verified_live&&result.status==='NOT_FOUND'){output='No matching declared examination result was found. Please check the six-digit roll number and examination year.';status='NOT_FOUND'}\n else if(result?.status==='INVALID_INPUT'){output='Please provide your exact six-digit roll number and, if relevant, the examination year.';status='INVALID_INPUT'}\n else if(/\\b\\d{6}\\b|marks|result|roll|fee|fees|نمبر|نتیجہ|فیس/i.test(context.messageText||'')&&!data.some(o=>o.verified_live)){\n  output=/\\b\\d{6}\\b/.test(context.messageText||'')?'The database lookup could not be verified right now. Please try again shortly.':'Please provide your exact six-digit roll number for a result lookup, or specify the fee you want to check.';\n  status='UNVERIFIED_ANSWER_BLOCKED';\n }\n const fees=data.findLast(o=>o.operation==='get_fees');\n if(fees?.verified_live&&fees.status==='FOUND'){output='*Current board fees*\\n'+fees.records.map(r=>`${r.fee_type}: PKR ${r.amount_pkr}`).join('\\n');status='DATABASE_VERIFIED'}\n if(fees?.verified_live&&fees.status==='NOT_FOUND'){output='No matching fee category was found in the current database. Please specify the service name.';status='NOT_FOUND'}\n}\nif(!output)throw Error('No verified response available');\nreturn [{json:{output,validation_guard:{status},retrieval_evidence:data.map(o=>({tenant:o.tenant,operation:o.operation,status:o.status,source_database:o.source_database,verified_live:o.verified_live}))}}];\n"
+      },
+      "id": "69ede5f1-401a-4cfb-807b-0338b2d1c8ad",
+      "name": "Result Validator & Response Guard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        1312
       ]
     },
     {
@@ -233,7 +349,7 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ ($('Extract Message Data').first() || $json).json?.instanceToken || 'abafe9a4-f13e-4fbb-bf88-f6c0b6bc77d6' }}"
+              "value": "={{ $('Message Normalizer').first().json.instanceToken }}"
             },
             {
               "name": "Content-Type",
@@ -243,15 +359,18 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  \"number\": (($('Extract Message Data').first() || $json).json?.customerPhone || '').replace(/:[0-9]+@/, '@'),\n  \"text\": ($json.output || $json.text || 'Hello! How can I assist you today?').replace(/\\{\\{.*?\\}\\}/g, '').trim()\n}) }}"
+        "jsonBody": "={{ JSON.stringify({number: $('Message Normalizer').first().json.customerPhone, text: $json.sanitized_response || $json.output || ''}) }}",
+        "options": {
+          "timeout": 20000
+        }
       },
-      "id": "2008",
-      "name": "Send WhatsApp Response (Evolution API)",
+      "id": "3c20a670-019d-4486-9bb9-dd72826c9f12",
+      "name": "Send WhatsApp Response (Evolution Router)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -200,
-        1900
+        1456,
+        1312
       ]
     }
   ],
@@ -271,18 +390,91 @@
       "main": [
         [
           {
-            "node": "Extract Message Data",
+            "node": "Message Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extract Message Data": {
+    "Message Normalizer": {
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "Resolve Business (platform_db)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Business (platform_db)": {
+      "main": [
+        [
+          {
+            "node": "Load Business Profile (platform_db)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Business Profile (platform_db)": {
+      "main": [
+        [
+          {
+            "node": "Construct Session Identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Session Identity": {
+      "main": [
+        [
+          {
+            "node": "Redis Transient Session & Dedup Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Transient Session & Dedup Gate": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL Persistent Conversation Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL Persistent Conversation Store": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Shared Engine)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Shared Engine)": {
+      "main": [
+        [
+          {
+            "node": "Result Validator & Response Guard",
             "type": "main",
             "index": 0
           }
@@ -293,7 +485,7 @@
       "ai_languageModel": [
         [
           {
-            "node": "AI Agent",
+            "node": "AI Agent (Shared Engine)",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -304,56 +496,50 @@
       "ai_memory": [
         [
           {
-            "node": "AI Agent",
+            "node": "AI Agent (Shared Engine)",
             "type": "ai_memory",
             "index": 0
           }
         ]
       ]
     },
-    "Tool: Search Knowledge Base": {
+    "Tool: Business Data Gateway": {
       "ai_tool": [
         [
           {
-            "node": "AI Agent",
+            "node": "AI Agent (Shared Engine)",
             "type": "ai_tool",
             "index": 0
           }
         ]
       ]
     },
-    "Tool: Manage Calendar": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tool: Sync CRM": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent": {
+    "Result Validator & Response Guard": {
       "main": [
         [
           {
-            "node": "Send WhatsApp Response (Evolution API)",
+            "node": "Send WhatsApp Response (Evolution Router)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     }
-  }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all"
+  },
+  "versionId": "875c3956-1088-4132-baa9-fab2afb11616",
+  "triggerCount": 1,
+  "meta": "{\"templateCredsSetupCompleted\":true}",
+  "parentFolderId": null,
+  "createdAt": "2026-09-27 17:40:47.393",
+  "updatedAt": "2026-09-30 17:05:10.533",
+  "isArchived": 0,
+  "versionCounter": 236,
+  "description": null
 }

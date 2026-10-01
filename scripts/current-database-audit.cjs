@@ -1,0 +1,16 @@
+const fs=require('fs'),cp=require('child_process'),path=require('path');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'docs/current-system-audit');
+const source=fs.readFileSync(path.join(root,'.env.example'),'utf8');
+const match=source.match(/GATEWAY_READONLY_PLATFORM_URL=postgresql:\/\/([^:]+):([^@]+)@/);
+function sql(db,q){const r=cp.spawnSync('C:/Program Files/PostgreSQL/18/bin/psql.exe',['-X','-w','-h','127.0.0.1','-d',db,'-At','-v','ON_ERROR_STOP=1'],{input:q,encoding:'utf8',windowsHide:true,timeout:15000,env:{...process.env,PGUSER:match[1],PGPASSWORD:match[2],PGCONNECT_TIMEOUT:'5',PGOPTIONS:'-c default_transaction_read_only=on -c statement_timeout=8000'}});if(r.status!==0)return {error:(r.stderr||'timeout').trim()};return r.stdout.trim().split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l)}catch{return l}});}
+const data={at:new Date().toISOString(),databases:{}};
+for(const db of ['platform_db','bise_db','pos_db','hospital_db','evogo_users']){
+ data.databases[db]={metadata:sql(db,`SELECT json_build_object('version',version(),'database',current_database(),'user',current_user);SELECT jsonb_agg(t) FROM (SELECT extname,extversion FROM pg_extension) t;SELECT jsonb_agg(t) FROM (SELECT table_name,column_name,data_type FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name,ordinal_position) t;SELECT jsonb_agg(t) FROM (SELECT relname,n_live_tup FROM pg_stat_user_tables ORDER BY relname) t;`)};
+}
+for(const [db,v] of Object.entries(data.databases)){const cols=v.metadata[2];if(Array.isArray(cols)){v.exactCounts=sql(db,cols.filter((c,i,a)=>a.findIndex(x=>x.table_name===c.table_name)===i).map(c=>"SELECT jsonb_build_object('table','"+c.table_name+"','count',(SELECT count(*) FROM public.\""+c.table_name+"\"));").join(''));}}
+data.safeguards=sql('platform_db',`SELECT jsonb_agg(t) FROM (SELECT rolname,rolsuper,rolconfig FROM pg_roles WHERE rolname IN ('platform_app','pos_app','bise_app','hospital_app','gateway_readonly','gateway_action_writer')) t; SELECT jsonb_agg(t) FROM (SELECT d.datname,s.setconfig FROM pg_db_role_setting s JOIN pg_database d ON d.oid=s.setdatabase) t;`);
+data.registry=sql('platform_db',`SELECT jsonb_agg(to_jsonb(t)-'instance_token'-'api_key'-'token'-'credentials') FROM platform_whatsapp_instances t; SELECT jsonb_agg(to_jsonb(t)-'credentials'-'password'-'connection_string') FROM platform_businesses t;`);
+data.biseResults=sql('bise_db',`SELECT jsonb_agg(t) FROM (SELECT r.roll_number,r.marks_obtained,r.total_marks,r.grade,r.status,e.title,e.exam_year,e.exam_session FROM results r JOIN exams e ON e.id=r.exam_id ORDER BY r.roll_number LIMIT 10) t;`);
+data.backups=fs.readdirSync(path.join(root,'backups'),{withFileTypes:true}).filter(d=>d.isDirectory()).slice(-12).map(d=>({name:d.name,files:fs.readdirSync(path.join(root,'backups',d.name)).map(n=>({name:n,bytes:fs.statSync(path.join(root,'backups',d.name,n)).size}))}));
+fs.writeFileSync(path.join(out,'database.json'),JSON.stringify(data,null,2));
+console.log(JSON.stringify({databases:Object.fromEntries(Object.entries(data.databases).map(([k,v])=>[k,v.metadata.error||v.metadata.slice(0,2)])),biseResults:data.biseResults,registry:data.registry,safeguards:data.safeguards},null,2));

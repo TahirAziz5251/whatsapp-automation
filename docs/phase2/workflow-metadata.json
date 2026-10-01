@@ -1,0 +1,141 @@
+{
+  "id": "Iin5wt0nRAhO7UV9",
+  "active": true,
+  "versionId": "518ecea3-fa95-4ab9-89f8-07d4cfd005d9",
+  "activeVersionId": "75cf62fc-c6f0-4cce-8740-23b3324beaeb",
+  "storedDefinition": {
+    "nodes": [
+      {
+        "name": "Tool: Search Knowledge Base",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "Tool: Manage Calendar",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "Send WhatsApp Response (Evolution API)1",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2
+      },
+      {
+        "name": "Groq Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+        "typeVersion": 1
+      },
+      {
+        "name": "No Operation, do nothing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1
+      },
+      {
+        "name": "Window Buffer Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "Tool: Sync CRM",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "AI Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.7
+      },
+      {
+        "name": "Is Customer Message?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2
+      },
+      {
+        "name": "Limit",
+        "type": "n8n-nodes-base.limit",
+        "typeVersion": 1
+      },
+      {
+        "name": "Evolution Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2
+      },
+      {
+        "name": "Extract Message Data",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3
+      }
+    ],
+    "definitionHash": "bf1b1991ea8d1edbff3ca43d9b0759ac0076a8727dea26f4874cd0ab4dfaaa43",
+    "faissReferenced": false,
+    "oldNodeReference": false
+  },
+  "publishedDefinitionVerified": true,
+  "publishedDefinition": {
+    "nodes": [
+      {
+        "name": "Tool: Search Knowledge Base",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "Tool: Manage Calendar",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "Send WhatsApp Response (Evolution API)1",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2
+      },
+      {
+        "name": "Groq Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+        "typeVersion": 1
+      },
+      {
+        "name": "No Operation, do nothing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1
+      },
+      {
+        "name": "Window Buffer Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "Tool: Sync CRM",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3
+      },
+      {
+        "name": "AI Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.7
+      },
+      {
+        "name": "Is Customer Message?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2
+      },
+      {
+        "name": "Limit",
+        "type": "n8n-nodes-base.limit",
+        "typeVersion": 1
+      },
+      {
+        "name": "Evolution Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2
+      },
+      {
+        "name": "Extract Message Data",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3
+      }
+    ],
+    "definitionHash": "a25c02c7ee6214852878b09df2abbefdce65393a00ec9b7e1d3029af7b1ea047",
+    "faissReferenced": false,
+    "oldNodeReference": false
+  }
+}

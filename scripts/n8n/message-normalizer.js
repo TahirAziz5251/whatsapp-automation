@@ -1,0 +1,14 @@
+const body=$input.first().json.body||$input.first().json;
+const data=body.data||body.body?.data||{},info=data.Info||{},key=data.key||{};
+const fromMe=data.IsFromMe??info.IsFromMe??key.fromMe;
+const instance=String(body.instanceName||body.instance||body.body?.instanceName||'').trim();
+const id=String(data.ID||info.ID||info.Id||key.id||'').trim();
+const chat=String(info.Chat||data.Chat||key.remoteJid||'');
+const message=String(data.Message?.conversation||data.Message?.extendedTextMessage?.text||data.message?.conversation||data.message?.extendedTextMessage?.text||data.caption||'').trim();
+const event=String(body.event||'').toLowerCase();
+if(!['message','messages.upsert'].includes(event)||fromMe!==false||info.IsGroup===true||/@(g\.us|broadcast|newsletter)$/.test(chat)||!id||!instance||!message||message.length>4000)return [];
+const candidates=[info.SenderAlt,info.Sender,data.Sender,key.remoteJid,chat].filter(Boolean).map(String);
+const sender=candidates.find(s=>/@s\.whatsapp\.net$/.test(s))||candidates[0]||'';
+const phone=sender.split('@')[0].replace(/:\d+$/,'').replace(/[^0-9]/g,'');
+if(!/^\d{7,16}$/.test(phone)||/@lid$/.test(sender))return [];
+return [{json:{instance_name:instance,message_id:id,user_id:phone,customerPhone:phone,sessionId:phone,message,messageText:message,message_type:'text',source:'whatsapp',pushName:String(info.PushName||data.PushName||data.pushName||'Customer').slice(0,80),timestamp:new Date().toISOString(),instanceToken:String(body.instanceToken||body.instance_token||'')}}];

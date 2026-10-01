@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-01T10:49:51.081Z",
+  "model": "openai/gpt-oss-120b",
+  "httpStatus": 200,
+  "finishReason": "tool_calls",
+  "usage": {
+    "queue_time": 0.397739361,
+    "prompt_tokens": 656,
+    "prompt_time": 0.430563745,
+    "completion_tokens": 82,
+    "completion_time": 0.173102055,
+    "total_tokens": 738,
+    "total_time": 0.6036658,
+    "prompt_tokens_details": {
+      "cached_tokens": 512
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 36
+    }
+  },
+  "rateLimits": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "7033",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "7.252s"
+  },
+  "tool": "query_business_data",
+  "arguments": {
+    "operation": "get_student_result",
+    "parameters": {
+      "roll_number": "102450"
+    }
+  },
+  "pass": true,
+  "roundTrip": {
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "usage": {
+      "queue_time": 0.317899274,
+      "prompt_tokens": 1056,
+      "prompt_time": 0.07437996,
+      "completion_tokens": 178,
+      "completion_time": 0.37406792,
+      "total_tokens": 1234,
+      "total_time": 0.44844788
+    },
+    "guard": "DATABASE_VERIFIED",
+    "marksMatch": true,
+    "subjectCount": 8
+  }
+}

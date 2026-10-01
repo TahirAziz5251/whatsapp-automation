@@ -1,0 +1,15 @@
+{
+  "suite": "Phase 38: Backup / Restore Validation",
+  "timestamp": "2026-09-29T15:00:44.757Z",
+  "tests": [
+    {
+      "description": "Disaster recovery verification completed without exception",
+      "status": "FAIL",
+      "details": "Command failed: docker exec evolution-postgres pg_dump -U postgres platform_db\nError response from daemon: container 6f98a4a2de059d2c8b2d6e8d1d7ff6be2321026422cfd8319ef07275b93c5aa9 is not running\n"
+    }
+  ],
+  "rto_seconds": 0,
+  "rpo_status": "PASS",
+  "passed": 0,
+  "failed": 1
+}

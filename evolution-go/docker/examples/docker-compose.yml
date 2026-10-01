@@ -13,11 +13,11 @@ services:
       CLIENT_NAME: "evolution"
 
       # Segurança (OBRIGATÓRIO)
-      GLOBAL_API_KEY: "sua-chave-api-segura-aqui"
+      GLOBAL_API_KEY: "429683C4C977415CAAFCCE10F7D57E11"
 
-      # Banco de Dados PostgreSQL (RECOMENDADO)
-      POSTGRES_AUTH_DB: "postgresql://postgres:postgres@postgres:5432/evogo_auth?sslmode=disable"
-      POSTGRES_USERS_DB: "postgresql://postgres:postgres@postgres:5432/evogo_users?sslmode=disable"
+      # Banco de Dados PostgreSQL (Windows Host PostgreSQL 18 - Option A Unified)
+      POSTGRES_AUTH_DB: "postgresql://postgres:Tahir%404321@host.docker.internal:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://postgres:Tahir%404321@host.docker.internal:5432/evogo_users?sslmode=disable"
       DATABASE_SAVE_MESSAGES: "false"
 
       # Logs e Debug
@@ -30,14 +30,16 @@ services:
       LOG_COMPRESS: "true"
 
       # Conexão
-      CONNECT_ON_STARTUP: "false"
+      CONNECT_ON_STARTUP: "true"
+
       WEBHOOK_FILES: "true"
 
       # Sistema
       OS_NAME: "Linux"
 
       # Eventos (Opcionais)
-      WEBHOOK_URL: ""
+      WEBHOOK_URL: "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent"
+
       AMQP_URL: ""
       AMQP_GLOBAL_ENABLED: "false"
       NATS_URL: ""
@@ -59,16 +61,16 @@ services:
       # QR Code
       QRCODE_MAX_COUNT: "5"
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - evolution_data:/app/dbdata
       - evolution_logs:/app/logs
     networks:
       - evolution_network
-    depends_on:
-      - postgres
 
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: evolution-postgres
     restart: unless-stopped
     environment:
@@ -76,12 +78,32 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - evolution_network
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_ENCRYPTION_KEY=8Wd6Xt/WLqsb8lQkFZA0DLahbPfn6VbI
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - evolution_network
+    depends_on:
+      - postgres
 
 volumes:
   evolution_data:
@@ -90,7 +112,11 @@ volumes:
     driver: local
   postgres_data:
     driver: local
+  n8n_data:
+    external: true
+    name: n8n_data
 
 networks:
   evolution_network:
     driver: bridge
+ 

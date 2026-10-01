@@ -1,0 +1,38 @@
+name: business-agent-dev
+services:
+  postgres:
+    image: postgres:15-alpine@sha256:fe0737ba566a2c5b2a28f34433c0a423261900ec17b9bf7ad115e1aae7e57f1b
+    environment:
+      POSTGRES_USER: agent_dev
+      POSTGRES_DB: agent_dev
+      POSTGRES_PASSWORD: ${AGENT_DEV_DB_PASSWORD:?Run the phase1 dev startup script}
+    volumes:
+      - dev_postgres:/var/lib/postgresql/data
+    networks: [dev]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U agent_dev -d agent_dev']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  n8n:
+    image: docker.n8n.io/n8nio/n8n@sha256:c628aa44f1cc3de51f81b3a2b31ca1fa95de20638379e257330e575388964faf
+    ports: ['127.0.0.1:15678:5678']
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: '5678'
+      N8N_PROTOCOL: http
+      N8N_SECURE_COOKIE: 'false'
+      N8N_ENCRYPTION_KEY: ${AGENT_DEV_N8N_KEY:?Run the phase1 dev startup script}
+      N8N_DIAGNOSTICS_ENABLED: 'false'
+      N8N_VERSION_NOTIFICATIONS_ENABLED: 'false'
+      WEBHOOK_URL: http://localhost:15678/
+    volumes:
+      - dev_n8n:/home/node/.n8n
+    networks: [dev, ui]
+networks:
+  dev:
+    internal: true
+  ui: {}
+volumes:
+  dev_postgres:
+  dev_n8n:
