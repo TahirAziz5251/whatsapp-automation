@@ -1,0 +1,125 @@
+# Coolify backend for the existing hosted n8n instance.
+# Read docs/COOLIFY_FIRST_DEPLOY.md before deployment or restoring data.
+# Set the three IMAGE variables to reviewed Linux AMD64 image references.
+# EVOLUTION_DB_PASSWORD must be URL-safe (use a randomly generated hex value).
+services:
+  wa-postgres:
+    image: ${POSTGRES_IMAGE:?Set a PostgreSQL 18 image with pgvector}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a new database administrator password}
+      POSTGRES_DB: postgres
+      TZ: Asia/Karachi
+    volumes:
+      - wa_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  # Exits successfully after creating the initial Evolution role/databases.
+  # Existing role passwords and existing databases are intentionally untouched.
+  wa-db-init:
+    image: ${POSTGRES_IMAGE:?Set a PostgreSQL 18 image with pgvector}
+    restart: 'no'
+    depends_on:
+      wa-postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: wa-postgres
+      PGUSER: postgres
+      PGDATABASE: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set a new database administrator password}
+      EVOLUTION_DB_PASSWORD: ${EVOLUTION_DB_PASSWORD:?Set a random hex database password}
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        psql -X -v ON_ERROR_STOP=1 -v evo_password="$$EVOLUTION_DB_PASSWORD" <<'SQL'
+        SELECT format('CREATE ROLE evolution_app LOGIN PASSWORD %L', :'evo_password')
+        WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'evolution_app')
+        \gexec
+        SELECT 'CREATE DATABASE evogo_auth OWNER evolution_app'
+        WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'evogo_auth')
+        \gexec
+        SELECT 'CREATE DATABASE evogo_users OWNER evolution_app'
+        WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'evogo_users')
+        \gexec
+        SQL
+
+  evolution-go:
+    image: ${EVOLUTION_IMAGE:?Set the tested Evolution GO image reference}
+    restart: unless-stopped
+    depends_on:
+      wa-db-init:
+        condition: service_completed_successfully
+    expose:
+      - '4000'
+    environment:
+      SERVER_PORT: '4000'
+      CLIENT_NAME: evolution
+      GLOBAL_API_KEY: ${EVOLUTION_API_KEY:?Set the Evolution API key}
+      POSTGRES_AUTH_DB: postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:?Set a random hex database password}@wa-postgres:5432/evogo_auth?sslmode=disable
+      POSTGRES_USERS_DB: postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:?Set a random hex database password}@wa-postgres:5432/evogo_users?sslmode=disable
+      DATABASE_SAVE_MESSAGES: 'false'
+      CONNECT_ON_STARTUP: ${EVOLUTION_CONNECT_ON_STARTUP:-false}
+      WEBHOOK_URL: ''
+      WEBHOOK_FILES: 'true'
+      EVENT_IGNORE_GROUP: 'false'
+      EVENT_IGNORE_STATUS: 'true'
+      QRCODE_MAX_COUNT: '5'
+      WADEBUG: INFO
+      LOGTYPE: console
+      LOG_DIRECTORY: /app/logs
+      OS_NAME: Linux
+      TZ: Asia/Karachi
+    volumes:
+      - wa_evolution_data:/app/dbdata
+      - wa_evolution_logs:/app/logs
+    healthcheck:
+      test: [CMD, wget, -q, -T, '4', -O, /dev/null, 'http://127.0.0.1:4000/server/ok']
+      interval: 30s
+      timeout: 6s
+      retries: 5
+      start_period: 120s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  wa-redis:
+    image: ${REDIS_IMAGE:?Set the tested Redis image reference}
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set a Redis password}
+    command:
+      - /bin/sh
+      - -ec
+      - exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"
+    volumes:
+      - wa_redis_data:/data
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+volumes:
+  wa_postgres_data:
+  wa_evolution_data:
+  wa_evolution_logs:
+  wa_redis_data:
