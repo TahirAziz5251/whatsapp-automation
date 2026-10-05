@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   evolution-go:
-    image: evoapicloud/evolution-go:latest
+    image: evoapicloud/evolution-go@sha256:6fa601464bd76d3d19ece4c48d8bb5373d025d95d45b939ae4bf0c77b03f5aaa
     container_name: evolution-go
     restart: unless-stopped
     ports:
@@ -38,7 +36,7 @@ services:
       OS_NAME: "Linux"
 
       # Eventos (Opcionais)
-      WEBHOOK_URL: "http://host.docker.internal:5678/webhook/evolution-whatsapp-agent"
+      WEBHOOK_URL: ""
 
       AMQP_URL: ""
       AMQP_GLOBAL_ENABLED: "false"
@@ -68,8 +66,22 @@ services:
       - evolution_logs:/app/logs
     networks:
       - evolution_network
+      - automation_shared
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-T", "4", "-O", "/dev/null", "http://127.0.0.1:4000/server/ok"]
+      interval: 30s
+      timeout: 6s
+      retries: 5
+      start_period: 120s
 
   postgres:
+    profiles: ["legacy-postgres"]
     image: pgvector/pgvector:pg15
     container_name: evolution-postgres
     restart: unless-stopped
@@ -86,6 +98,7 @@ services:
       - evolution_network
 
   n8n:
+    profiles: ["legacy-alternative"]
     image: docker.n8n.io/n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
@@ -117,6 +130,9 @@ volumes:
     name: n8n_data
 
 networks:
+  automation_shared:
+    external: true
+    name: ai-automation_evolution_network
   evolution_network:
     driver: bridge
  

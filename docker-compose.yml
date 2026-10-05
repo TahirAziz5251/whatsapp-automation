@@ -1,7 +1,6 @@
-version: '3.8'
-
 services:
   evolution-go:
+    profiles: ["legacy-alternative"]
     image: evoapicloud/evolution-go:latest
     container_name: evolution-postgres-gateway
     restart: unless-stopped
@@ -32,6 +31,7 @@ services:
       - evolution_network
 
   postgres:
+    profiles: ["legacy-postgres"]
     image: pgvector/pgvector:pg15
     container_name: evolution-postgres
     restart: unless-stopped
@@ -48,7 +48,7 @@ services:
       - evolution_network
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    image: docker.n8n.io/n8nio/n8n@sha256:c628aa44f1cc3de51f81b3a2b31ca1fa95de20638379e257330e575388964faf
     container_name: n8n
     restart: unless-stopped
     ports:
@@ -66,7 +66,20 @@ services:
     networks:
       - evolution_network
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5678/healthz/readiness',{signal:AbortSignal.timeout(4000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 6s
+      retries: 5
+      start_period: 120s
+
   faiss-service:
+    profiles: ["optional-kb"]
     build:
       context: ./faiss-service
       dockerfile: Dockerfile
@@ -81,16 +94,28 @@ services:
       - evolution_network
 
   redis:
-    image: redis:alpine
+    image: redis@sha256:ba6e394f6acc2a695ef1b6944f161b9ca813711739be68319fa0db3470673f1d
     container_name: evolution-redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - evolution_network
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   evolution_data:
