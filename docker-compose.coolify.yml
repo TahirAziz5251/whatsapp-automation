@@ -49,6 +49,8 @@ services:
     depends_on:
       wa-postgres:
         condition: service_healthy
+    volumes:
+      - ./database:/database:ro
     environment:
       PGHOST: wa-postgres
       PGUSER: postgres
@@ -92,6 +94,28 @@ services:
         CREATE EXTENSION IF NOT EXISTS pgcrypto;
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
         GRANT ALL ON SCHEMA public TO bizflow_runtime;
+        SQL
+
+        # 4. Apply BizFlow SaaS & Clinic Schemas and Seed Data
+        if [ -f /database/phase1_core_saas_schema.sql ]; then
+          psql -X -d platform_db -f /database/phase1_core_saas_schema.sql || true
+        fi
+        if [ -f /database/phase4_clinic_schema.sql ]; then
+          psql -X -d platform_db -f /database/phase4_clinic_schema.sql || true
+        fi
+        if [ -f /database/phase6_billing_and_metering.sql ]; then
+          psql -X -d platform_db -f /database/phase6_billing_and_metering.sql || true
+        fi
+        if [ -f /database/seed_3_clinic_tenants.sql ]; then
+          psql -X -d platform_db -f /database/seed_3_clinic_tenants.sql || true
+        fi
+
+        # 5. Grant complete table privileges to runtime role
+        psql -X -d platform_db <<'SQL'
+        GRANT ALL ON ALL TABLES IN SCHEMA public TO bizflow_runtime;
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO bizflow_runtime;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO bizflow_runtime;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO bizflow_runtime;
         SQL
     networks:
       - bizflow-network

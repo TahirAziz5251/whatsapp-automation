@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { Activity, Stethoscope, UserCheck, MessageSquare, ShieldCheck } from "lucide-react";
+import { Activity, Stethoscope, UserCheck, MessageSquare, ShieldCheck, Zap, LayoutDashboard } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "BizFlow AI — Clinic OPD & Operations Portal",
@@ -19,7 +19,7 @@ export default function RootLayout({
         {/* Top Operational Bar */}
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
                 B
               </div>
@@ -29,29 +29,50 @@ export default function RootLayout({
                 </span>
                 <p className="text-xs text-slate-500">Alpha Clinic & Diagnostic Centre (PK-Lahore)</p>
               </div>
-            </div>
+            </Link>
 
             <nav className="flex items-center gap-1 sm:gap-2">
               <Link
+                href="/"
+                className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-emerald-700 flex items-center gap-1.5 transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4 text-slate-500" />
+                <span className="hidden md:inline">Hub</span>
+              </Link>
+              <Link
+                href="/patient"
+                className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-emerald-700 flex items-center gap-1.5 transition-colors"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span className="hidden sm:inline">Patient</span>
+              </Link>
+              <Link
                 href="/reception"
-                className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-emerald-700 flex items-center gap-1.5 transition-colors"
+                className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-emerald-700 flex items-center gap-1.5 transition-colors"
               >
                 <UserCheck className="w-4 h-4 text-emerald-600" />
                 <span className="hidden sm:inline">Reception</span>
               </Link>
               <Link
                 href="/doctor"
-                className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-blue-700 flex items-center gap-1.5 transition-colors"
+                className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-blue-700 flex items-center gap-1.5 transition-colors"
               >
                 <Stethoscope className="w-4 h-4 text-blue-600" />
                 <span className="hidden sm:inline">Doctor</span>
               </Link>
               <Link
+                href="/owner"
+                className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-indigo-700 flex items-center gap-1.5 transition-colors"
+              >
+                <Zap className="w-4 h-4 text-indigo-600" />
+                <span className="hidden sm:inline">Owner</span>
+              </Link>
+              <Link
                 href="/ticket/APT-202611-7B17E6"
-                className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-purple-700 flex items-center gap-1.5 transition-colors"
+                className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-purple-700 flex items-center gap-1.5 transition-colors"
               >
                 <Activity className="w-4 h-4 text-purple-600" />
-                <span className="hidden sm:inline">Patient Live Link</span>
+                <span className="hidden lg:inline">Live Link</span>
               </Link>
             </nav>
           </div>

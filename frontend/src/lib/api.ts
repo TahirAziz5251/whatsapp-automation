@@ -1,4 +1,19 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+// Dynamic API resolution for Client and Server environments
+export function getApiBase(): string {
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+    // If explicit non-localhost URL is provided, use it
+    if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1") && envUrl.includes("://")) {
+      return envUrl;
+    }
+    // Automatically match the current browser host on port 8001
+    return `${protocol}//${hostname}:8001/api/v1`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001/api/v1";
+}
+
 export const DEFAULT_TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || "11111111-1111-1111-1111-111111111111";
 
 export async function fetchFromApi<T = any>(
@@ -6,11 +21,12 @@ export async function fetchFromApi<T = any>(
   options: RequestInit = {},
   tenantId: string = DEFAULT_TENANT_ID
 ): Promise<T> {
+  const apiBase = getApiBase();
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
   headers.set("X-Tenant-ID", tenantId);
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const res = await fetch(`${apiBase}${endpoint}`, {
     ...options,
     headers,
   });
@@ -31,6 +47,9 @@ export const clinicApi = {
   getAppointments: (tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi<any[]>("/clinic/appointments", { method: "GET" }, tenantId),
 
+  getLiveQueue: (tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi<any>("/clinic/queue/live", { method: "GET" }, tenantId),
+
   checkIn: (appointmentId: string, tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi(`/clinic/appointments/${appointmentId}/check-in`, { method: "POST" }, tenantId),
 
@@ -49,43 +68,53 @@ export const clinicApi = {
   broadcastDelay: (doctorId: string, delayMinutes: number, reason?: string, tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi("/clinic/queue/delay-broadcast", { method: "POST", body: JSON.stringify({ doctor_id: doctorId, delay_minutes: delayMinutes, reason }) }, tenantId),
 
-  getLiveQueue: (tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi("/clinic/queue/live", { method: "GET" }, tenantId),
+  getTicket: (ticketId: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi(`/clinic/patient/ticket/${ticketId}`, { method: "GET" }, tenantId),
 
-  getPatientTicket: (identifier: string, tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi(`/clinic/patient/ticket/${identifier}`, { method: "GET" }, tenantId),
-};
+  getPatientTicket: (ticketId: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi(`/clinic/patient/ticket/${ticketId}`, { method: "GET" }, tenantId),
 
-// CRM Endpoints
-export const crmApi = {
-  getConversations: (params: { status?: string; ai_paused?: boolean; search?: string } = {}, tenantId: string = DEFAULT_TENANT_ID) => {
-    const query = new URLSearchParams();
-    if (params.status) query.set("status", params.status);
-    if (params.ai_paused !== undefined) query.set("ai_paused", String(params.ai_paused));
-    if (params.search) query.set("search", params.search);
-    return fetchFromApi<any[]>(`/crm/conversations?${query.toString()}`, { method: "GET" }, tenantId);
-  },
+  getOwnerAnalytics: (tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi("/clinic/owner/analytics", { method: "GET" }, tenantId),
 
-  getConversation: (id: string, tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi(`/crm/conversations/${id}`, { method: "GET" }, tenantId),
-
-  pauseAi: (id: string, staffUserId?: string, tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi(`/crm/conversations/${id}/pause-ai${staffUserId ? `?staff_user_id=${staffUserId}` : ""}`, { method: "POST" }, tenantId),
-
-  resumeAi: (id: string, staffUserId?: string, tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi(`/crm/conversations/${id}/resume-ai${staffUserId ? `?staff_user_id=${staffUserId}` : ""}`, { method: "POST" }, tenantId),
-
-  sendMessage: (id: string, message: string, staffUserId?: string, tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi(`/crm/conversations/${id}/messages`, {
+  sendSimulatedWhatsApp: (data: {
+    tenant_id: string;
+    instance: string;
+    phone: string;
+    message: string;
+    push_name?: string;
+  }) => {
+    const apiBase = getApiBase();
+    return fetch(`${apiBase}/channels/whatsapp/evolution`, {
       method: "POST",
-      body: JSON.stringify({ message, staff_user_id: staffUserId }),
-    }, tenantId),
-
-  getAuditEvents: (tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi<any[]>("/crm/audit-events", { method: "GET" }, tenantId),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: "messages.upsert",
+        instance: data.instance,
+        data: {
+          key: {
+            remoteJid: `${data.phone}@s.whatsapp.net`,
+            fromMe: false,
+            id: `SIM_${Date.now()}`
+          },
+          pushName: data.push_name || "Patient",
+          message: {
+            conversation: data.message
+          },
+          messageTimestamp: Math.floor(Date.now() / 1000)
+        }
+      })
+    }).then(async r => {
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(text || "Failed to send simulated message");
+      }
+      return r.json();
+    });
+  }
 };
 
-// Billing & Owner Metering Endpoints
+// Billing & Metering Endpoints
 export const billingApi = {
   getSubscription: (tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi<any>("/billing/subscription", { method: "GET" }, tenantId),
@@ -94,8 +123,14 @@ export const billingApi = {
     fetchFromApi<any>("/billing/usage", { method: "GET" }, tenantId),
 
   getPlans: () =>
-    fetchFromApi<any[]>("/billing/plans", { method: "GET" }),
+    fetchFromApi<any[]>("/billing/plans", { method: "GET" })
+};
 
-  subscribe: (planId: string, tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi("/billing/subscribe", { method: "POST", body: JSON.stringify({ plan_id: planId }) }, tenantId),
+// CRM & Audit Endpoints
+export const crmApi = {
+  getAuditEvents: (tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi<any[]>("/crm/audit-events", { method: "GET" }, tenantId),
+
+  getConversations: (tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi<any[]>("/crm/conversations", { method: "GET" }, tenantId)
 };

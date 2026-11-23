@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { DEFAULT_TENANT_ID } from "./api";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+import { DEFAULT_TENANT_ID, getApiBase } from "./api";
 
 export function useClinicSSE(
   tenantId: string = DEFAULT_TENANT_ID,
@@ -14,7 +12,8 @@ export function useClinicSSE(
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    const sseUrl = `${API_BASE}/clinic/events/stream?x_tenant_id=${tenantId}`;
+    const apiBase = getApiBase();
+    const sseUrl = `${apiBase}/clinic/events/stream?x_tenant_id=${tenantId}`;
     const es = new EventSource(sseUrl);
     eventSourceRef.current = es;
 
@@ -50,13 +49,12 @@ export function useClinicSSE(
       "QUEUE_UPDATED"
     ];
 
-    events.forEach(evName => {
-      es.addEventListener(evName, (e) => handleEvent(evName, e as MessageEvent));
+    events.forEach(eventName => {
+      es.addEventListener(eventName, (e: MessageEvent) => handleEvent(eventName, e));
     });
 
     return () => {
       es.close();
-      setIsConnected(false);
     };
   }, [tenantId, onEvent]);
 
