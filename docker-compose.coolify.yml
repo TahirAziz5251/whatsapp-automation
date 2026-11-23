@@ -86,11 +86,13 @@ services:
         GRANT ALL PRIVILEGES ON DATABASE platform_db TO postgres;
         SQL
 
-        -- Enable vector in platform_db
-        psql -X -d platform_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
-        psql -X -d platform_db -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
-        psql -X -d platform_db -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
-        psql -X -d platform_db -c "GRANT ALL ON SCHEMA public TO bizflow_runtime;"
+        # 3. Enable vector & extensions in platform_db
+        psql -X -d platform_db <<'SQL'
+        CREATE EXTENSION IF NOT EXISTS vector;
+        CREATE EXTENSION IF NOT EXISTS pgcrypto;
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        GRANT ALL ON SCHEMA public TO bizflow_runtime;
+        SQL
     networks:
       - bizflow-network
 
@@ -187,7 +189,7 @@ services:
       wa-redis:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8001}:8000"
     environment:
       POSTGRES_SERVER: wa-postgres
       POSTGRES_PORT: 5432
@@ -224,7 +226,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://192.168.1.31:8001/api/v1}
       NEXT_PUBLIC_TENANT_ID: ${DEFAULT_TENANT_ID:-11111111-1111-1111-1111-111111111111}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
