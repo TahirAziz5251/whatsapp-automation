@@ -57,13 +57,30 @@ class ChannelService:
         ).first()
 
         if not connection:
-            return {
-                "status": "UNMAPPED_CONNECTION",
-                "instance_name": normalized.instance_name,
-                "reason": f"No active tenant mapped to instance '{normalized.instance_name}'"
-            }
+            # Auto-provision connection for default clinic tenant (Alpha Clinic) so custom instance names connect smoothly
+            default_tenant = db.query(PlatformTenant).filter(
+                PlatformTenant.id == UUID("11111111-1111-1111-1111-111111111111")
+            ).first() or db.query(PlatformTenant).first()
 
-        tenant_id = connection.tenant_id
+            if default_tenant:
+                tenant_id = default_tenant.id
+                connection = ChannelConnection(
+                    tenant_id=tenant_id,
+                    channel_type="EVOLUTION_GO",
+                    phone_number_id=normalized.instance_name,
+                    display_phone_number="+923000000000",
+                    status="CONNECTED"
+                )
+                db.add(connection)
+                db.flush()
+            else:
+                return {
+                    "status": "UNMAPPED_CONNECTION",
+                    "instance_name": normalized.instance_name,
+                    "reason": f"No active tenant mapped to instance '{normalized.instance_name}'"
+                }
+        else:
+            tenant_id = connection.tenant_id
 
         # Step 3: Enforce PostgreSQL Row-Level Security for this Tenant
         db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
