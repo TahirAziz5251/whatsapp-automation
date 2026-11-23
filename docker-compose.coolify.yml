@@ -203,11 +203,11 @@ services:
       EVOLUTION_API_URL: http://evolution-go:4000
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-bizflow_evolution_api_key_2026}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 25s
     networks:
       - bizflow-network
 
@@ -221,8 +221,7 @@ services:
     container_name: bizflow-frontend
     restart: unless-stopped
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     ports:
       - "3000:3000"
     environment:
