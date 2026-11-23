@@ -27,8 +27,8 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 def root():
     return {
-        "product": "BizFlow AI",
-        "description": "Multi-Tenant WhatsApp AI SaaS",
+        "product": "GlimsTech AI",
+        "description": "Multi-Tenant Clinic Operations & WhatsApp AI SaaS",
         "version": "1.0.0",
         "docs": f"{settings.API_V1_STR}/docs"
     }

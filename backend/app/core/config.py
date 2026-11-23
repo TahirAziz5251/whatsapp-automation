@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "BizFlow AI Core SaaS"
+    PROJECT_NAME: str = "GlimsTech AI Core SaaS"
     API_V1_STR: str = "/api/v1"
     
     # Database Settings

@@ -18,7 +18,7 @@ def health_check(db: Session = Depends(get_db)):
 
     return {
         "status": "ONLINE",
-        "service": "BizFlow AI Core SaaS",
+        "service": "GlimsTech AI Core SaaS",
         "version": "1.0.0",
         "database": db_status
     }

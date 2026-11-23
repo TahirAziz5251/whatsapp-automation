@@ -139,11 +139,11 @@ export default function PatientTicketPage() {
       {/* Top Header */}
       <header className="flex items-center justify-between pb-4 border-b border-slate-800/80">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-emerald-500/20">
-            BF
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-300 flex items-center justify-center font-black text-slate-950 shadow-lg shadow-emerald-500/25">
+            GT
           </div>
           <div>
-            <h1 className="text-base font-bold text-white leading-tight">BizFlow Clinic</h1>
+            <h1 className="text-base font-bold text-white leading-tight">GlimsTech AI Clinic</h1>
             <p className="text-xs text-slate-400">Live OPD Queue Tracker</p>
           </div>
         </div>
@@ -268,7 +268,7 @@ export default function PatientTicketPage() {
           <div className="bg-purple-950/20 border border-purple-500/30 rounded-2xl p-5 text-center">
             <CheckCircle2 className="w-10 h-10 text-purple-400 mx-auto mb-2" />
             <h3 className="text-base font-bold text-white">Consultation Finished</h3>
-            <p className="text-xs text-slate-400 mt-1">Thank you for visiting BizFlow Clinic!</p>
+            <p className="text-xs text-slate-400 mt-1">Thank you for visiting GlimsTech AI Clinic!</p>
           </div>
         )}
 
