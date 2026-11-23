@@ -3,3 +3,29 @@
 /development/*.dpapi
 /development/.env
 /scratch/student-remediation/
+
+# Local environment secrets at any directory depth.
+.env
+.env.*
+*.env
+*.env.*
+
+# Node / Frontend dependencies & build artifacts
+node_modules/
+*/node_modules/
+.next/
+*/.next/
+.turbo/
+
+# Python virtual environments & bytecode
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.dump
+
+# Commit examples only after replacing credentials with placeholders.
+!.env.example
+!*.env.example

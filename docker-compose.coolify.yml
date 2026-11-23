@@ -1,0 +1,257 @@
+# ==============================================================================
+# BIZFLOW AI — UNIFIED PRODUCTION DOCKER COMPOSE FOR COOLIFY (192.168.1.31)
+# Fully aligned with existing volume names, Evolution Go, and Multi-Tenant Core
+# ==============================================================================
+version: "3.8"
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. POSTGRESQL 18 + PGVECTOR (Multi-Tenant Core & Evolution Auth)
+  # ----------------------------------------------------------------------------
+  wa-postgres:
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg16}
+    container_name: wa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Tahir@4321}
+      POSTGRES_DB: postgres
+      TZ: Asia/Karachi
+    ports:
+      - "5432:5432"
+    volumes:
+      - wa_postgres_data:/var/lib/postgresql
+      - ./database/phase1_core_saas_schema.sql:/docker-entrypoint-initdb.d/01_phase1.sql:ro
+      - ./database/phase4_clinic_schema.sql:/docker-entrypoint-initdb.d/02_phase4.sql:ro
+      - ./database/phase6_billing_and_metering.sql:/docker-entrypoint-initdb.d/03_phase6.sql:ro
+      - ./database/seed_3_clinic_tenants.sql:/docker-entrypoint-initdb.d/04_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - bizflow-network
+
+  # ----------------------------------------------------------------------------
+  # 2. DATABASE INITIALIZATION (Evolution Go & BizFlow Multi-Tenant Roles)
+  # ----------------------------------------------------------------------------
+  wa-db-init:
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg16}
+    container_name: wa-db-init
+    restart: "no"
+    depends_on:
+      wa-postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: wa-postgres
+      PGUSER: postgres
+      PGDATABASE: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:-Tahir@4321}
+      EVOLUTION_DB_PASSWORD: ${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}
+      RUNTIME_PASSWORD: ${RUNTIME_PASSWORD:-bizflow_secure_runtime_2026}
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        psql -X -v ON_ERROR_STOP=1 -v evo_password="$$EVOLUTION_DB_PASSWORD" -v runtime_password="$$RUNTIME_PASSWORD" <<'SQL'
+        -- 1. Evolution Go Roles & Databases
+        SELECT format('CREATE ROLE evolution_app LOGIN PASSWORD %L', :'evo_password')
+        WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'evolution_app');
+        \gexec
+
+        SELECT 'CREATE DATABASE evogo_auth OWNER evolution_app'
+        WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'evogo_auth');
+        \gexec
+
+        SELECT 'CREATE DATABASE evogo_users OWNER evolution_app'
+        WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'evogo_users');
+        \gexec
+
+        -- 2. BizFlow AI Multi-Tenant SaaS Database & Roles
+        SELECT 'CREATE DATABASE platform_db OWNER postgres'
+        WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'platform_db');
+        \gexec
+
+        SELECT format('CREATE ROLE bizflow_runtime LOGIN PASSWORD %L', :'runtime_password')
+        WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bizflow_runtime');
+        \gexec
+
+        GRANT ALL PRIVILEGES ON DATABASE platform_db TO bizflow_runtime;
+        GRANT ALL PRIVILEGES ON DATABASE platform_db TO postgres;
+        SQL
+
+        -- Enable vector in platform_db
+        psql -X -d platform_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
+        psql -X -d platform_db -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+        psql -X -d platform_db -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+        psql -X -d platform_db -c "GRANT ALL ON SCHEMA public TO bizflow_runtime;"
+    networks:
+      - bizflow-network
+
+  # ----------------------------------------------------------------------------
+  # 3. REDIS (Caching, Mutex Send Locks & Deduplication)
+  # ----------------------------------------------------------------------------
+  wa-redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: wa-redis
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bizflow_redis_secret_2026}
+    command:
+      - /bin/sh
+      - -ec
+      - exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"
+    ports:
+      - "6379:6379"
+    volumes:
+      - wa_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - bizflow-network
+
+  # ----------------------------------------------------------------------------
+  # 4. EVOLUTION GO WHATSAPP GATEWAY (Port 4000)
+  # ----------------------------------------------------------------------------
+  evolution-go:
+    image: ${EVOLUTION_IMAGE:-evoapicloud/evolution-go:latest}
+    container_name: evolution-go
+    restart: unless-stopped
+    depends_on:
+      wa-db-init:
+        condition: service_completed_successfully
+    ports:
+      - "4000:4000"
+    environment:
+      SERVER_PORT: "4000"
+      CLIENT_NAME: "bizflow-production"
+      GLOBAL_API_KEY: ${EVOLUTION_API_KEY:-bizflow_evolution_api_key_2026}
+      POSTGRES_AUTH_DB: "postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}@wa-postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}@wa-postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+      CONNECT_ON_STARTUP: ${EVOLUTION_CONNECT_ON_STARTUP:-false}
+      WEBHOOK_URL: "http://${SERVER_IP:-192.168.1.31}:8000/api/v1/channels/whatsapp/evolution"
+      WEBHOOK_FILES: "true"
+      EVENT_IGNORE_GROUP: "false"
+      EVENT_IGNORE_STATUS: "true"
+      QRCODE_MAX_COUNT: "5"
+      WADEBUG: INFO
+      LOGTYPE: console
+      LOG_DIRECTORY: /app/logs
+      OS_NAME: Linux
+      TZ: Asia/Karachi
+    volumes:
+      - wa_evolution_data:/app/dbdata
+      - wa_evolution_logs:/app/logs
+    healthcheck:
+      test: [CMD, wget, -q, -T, "4", -O, /dev/null, "http://127.0.0.1:4000/server/ok"]
+      interval: 30s
+      timeout: 6s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - bizflow-network
+
+  # ----------------------------------------------------------------------------
+  # 5. FASTAPI BACKEND CORE & AI SUPERVISOR (Port 8000)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bizflow-backend
+    restart: unless-stopped
+    depends_on:
+      wa-db-init:
+        condition: service_completed_successfully
+      wa-redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_SERVER: wa-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: bizflow_runtime
+      POSTGRES_PASSWORD: ${RUNTIME_PASSWORD:-bizflow_secure_runtime_2026}
+      POSTGRES_DB: platform_db
+      SECRET_KEY: ${SECRET_KEY:-bizflow_dev_secret_key_change_in_production_2026}
+      GROQ_API_KEY: ${GROQ_API_KEY:-gsk_placeholder_key}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-bizflow_redis_secret_2026}@wa-redis:6379/0
+      EVOLUTION_API_URL: http://evolution-go:4000
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-bizflow_evolution_api_key_2026}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - bizflow-network
+
+  # ----------------------------------------------------------------------------
+  # 6. NEXT.JS 14 WEB DASHBOARDS (Port 3000)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bizflow-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://${SERVER_IP:-192.168.1.31}:8000/api/v1
+      NEXT_PUBLIC_TENANT_ID: ${DEFAULT_TENANT_ID:-11111111-1111-1111-1111-111111111111}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - bizflow-network
+
+# ------------------------------------------------------------------------------
+# VOLUMES (Preserving 100% of your existing Coolify persistent data)
+# ------------------------------------------------------------------------------
+volumes:
+  wa_postgres_data:
+    name: wa_postgres_data
+  wa_evolution_data:
+    name: wa_evolution_data
+  wa_evolution_logs:
+    name: wa_evolution_logs
+  wa_redis_data:
+    name: wa_redis_data
+
+# ------------------------------------------------------------------------------
+# NETWORKS
+# ------------------------------------------------------------------------------
+networks:
+  bizflow-network:
+    name: bizflow-network
+    driver: bridge

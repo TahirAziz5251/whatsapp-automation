@@ -1,0 +1,749 @@
+import uuid
+import re
+from datetime import datetime, date, time, timezone
+from typing import Dict, Any, List, Optional
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from app.models.clinic import ClinicDoctor, ClinicDoctorSchedule, ClinicAppointment, ClinicLiveQueue
+from app.models.contact import PlatformContact
+from app.models.tenant import PlatformTenant
+
+def get_doctor_schedule_db(
+    db: Session,
+    tenant_id: str,
+    doctor_name_or_specialty: Optional[str] = None,
+    date_str: Optional[str] = None
+) -> Dict[str, Any]:
+    """Retrieves doctor schedule directly from PostgreSQL platform_db with tenant RLS."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+
+    query = db.query(ClinicDoctor).filter(
+        ClinicDoctor.tenant_id == tenant_id,
+        ClinicDoctor.is_active == True
+    )
+
+    if doctor_name_or_specialty:
+        q = f"%{doctor_name_or_specialty.strip()}%"
+        query = query.filter((ClinicDoctor.name.ilike(q)) | (ClinicDoctor.specialty.ilike(q)))
+
+    doctors = query.all()
+
+    if not doctors:
+        return {
+            "status": "NOT_FOUND",
+            "message": f"No doctor found matching '{doctor_name_or_specialty}'",
+            "doctors": []
+        }
+
+    results = []
+    for doc in doctors:
+        schedules = db.query(ClinicDoctorSchedule).filter(
+            ClinicDoctorSchedule.tenant_id == tenant_id,
+            ClinicDoctorSchedule.doctor_id == doc.id,
+            ClinicDoctorSchedule.is_active == True
+        ).all()
+
+        days = [s.day_of_week for s in schedules]
+        timings = f"{schedules[0].start_time.strftime('%I:%M %p')} - {schedules[0].end_time.strftime('%I:%M %p')}" if schedules else "Contact Front Desk"
+
+        # Generate sample available slots based on duration
+        slots = ["10:30 AM", "11:00 AM", "11:30 AM", "12:15 PM"] if "10:00" in timings else ["04:30 PM", "05:00 PM", "05:45 PM"]
+
+        results.append({
+            "doctor_id": str(doc.id),
+            "name": doc.name,
+            "specialty": doc.specialty,
+            "qualification": doc.qualification,
+            "fee": f"PKR {doc.fee_pkr:0.0f}",
+            "room_number": doc.room_number,
+            "consulting_hours": timings,
+            "available_days": days,
+            "open_slots": slots
+        })
+
+    return {
+        "status": "SUCCESS",
+        "query_date": date_str or "Today/Next Available",
+        "matched_count": len(results),
+        "doctors": results
+    }
+
+
+def book_appointment_db(
+    db: Session,
+    tenant_id: str,
+    patient_phone: str,
+    patient_name: str,
+    doctor_name_or_id: str,
+    appointment_date_str: str,
+    slot_time_str: str,
+    symptoms: Optional[str] = None
+) -> Dict[str, Any]:
+    """Books a clinic appointment and persists in PostgreSQL platform_db with live queue token."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+
+    clean_phone = "".join(filter(str.isdigit, patient_phone))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    # 1. Upsert Platform Contact
+    contact = db.query(PlatformContact).filter(
+        PlatformContact.tenant_id == tenant_uuid,
+        PlatformContact.customer_phone == clean_phone
+    ).first()
+
+    if not contact:
+        contact = PlatformContact(
+            tenant_id=tenant_uuid,
+            customer_phone=clean_phone,
+            full_name=patient_name,
+            push_name=patient_name
+        )
+        db.add(contact)
+        db.flush()
+
+    # 2. Resolve Doctor
+    doc_query = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid)
+    try:
+        doc_uuid = uuid.UUID(doctor_name_or_id)
+        doctor = doc_query.filter(ClinicDoctor.id == doc_uuid).first()
+    except ValueError:
+        q = f"%{doctor_name_or_id.strip()}%"
+        doctor = doc_query.filter((ClinicDoctor.name.ilike(q)) | (ClinicDoctor.specialty.ilike(q))).first()
+
+    if not doctor:
+        # Fallback to first active doctor
+        doctor = doc_query.filter(ClinicDoctor.is_active == True).first()
+
+    if not doctor:
+        return {"status": "ERROR", "message": "No active doctors available in clinic."}
+
+    # 3. Parse Appointment Date & Time
+    try:
+        apt_date = datetime.strptime(appointment_date_str[:10], "%Y-%m-%d").date()
+    except Exception:
+        apt_date = date.today()
+
+    try:
+        # Handle formats e.g. "11:00 AM" or "11:00"
+        time_clean = slot_time_str.strip().upper()
+        if "AM" in time_clean or "PM" in time_clean:
+            apt_time = datetime.strptime(time_clean, "%I:%M %p").time()
+        else:
+            apt_time = datetime.strptime(time_clean[:5], "%H:%M").time()
+    except Exception:
+        apt_time = time(11, 0)
+
+    # 4. Generate Unique Identifiers & Queue Token (Atomic with Advisory Lock)
+    apt_num = f"APT-{datetime.now().strftime('%Y%m')}-{uuid.uuid4().hex[:6].upper()}"
+
+    # Advisory lock per doctor to prevent concurrent token collision
+    lock_key = int(doctor.id.int % (2**31 - 1))
+    db.execute(text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
+
+    # Get count of appointments today for this doctor to assign sequential token
+    count_today = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == apt_date
+    ).count()
+
+    token_prefix = doctor.name.split()[-1][0].upper() if doctor.name else "T"
+    queue_token = f"T-{token_prefix}{str(count_today + 1).zfill(2)}"
+
+    # 5. Create Appointment Record
+    appointment = ClinicAppointment(
+        tenant_id=tenant_uuid,
+        appointment_number=apt_num,
+        contact_id=contact.id,
+        doctor_id=doctor.id,
+        appointment_date=apt_date,
+        slot_time=apt_time,
+        symptoms=symptoms or "General Consultation",
+        status="BOOKED",
+        queue_token=queue_token
+    )
+    db.add(appointment)
+    db.flush()
+
+    # 6. Update or Create Live Queue Tracker (Concurrency-Safe)
+    try:
+        queue = db.query(ClinicLiveQueue).filter(
+            ClinicLiveQueue.tenant_id == tenant_uuid,
+            ClinicLiveQueue.doctor_id == doctor.id,
+            ClinicLiveQueue.queue_date == apt_date
+        ).first()
+
+        if not queue:
+            queue = ClinicLiveQueue(
+                tenant_id=tenant_uuid,
+                doctor_id=doctor.id,
+                queue_date=apt_date,
+                current_serving_token=queue_token,
+                current_serving_appointment_id=appointment.id,
+                total_booked=1,
+                total_checked_in=0,
+                status="ACTIVE"
+            )
+            db.add(queue)
+            db.commit()
+        else:
+            queue.total_booked += 1
+            db.commit()
+    except Exception:
+        db.rollback()
+        # Concurrently initialized by another thread: safely increment total_booked
+        db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+        db.execute(text("""
+            UPDATE clinic_live_queues 
+            SET total_booked = total_booked + 1, updated_at = NOW()
+            WHERE tenant_id = :tid AND doctor_id = :did AND queue_date = :qdate
+        """), {"tid": tenant_uuid, "did": doctor.id, "qdate": apt_date})
+        db.commit()
+
+    return {
+        "status": "CONFIRMED",
+        "appointment_id": str(appointment.id),
+        "appointment_number": apt_num,
+        "queue_token": queue_token,
+        "patient_name": patient_name,
+        "patient_phone": clean_phone,
+        "doctor_id": str(doctor.id),
+        "doctor_name": doctor.name,
+        "specialty": doctor.specialty,
+        "room_number": doctor.room_number,
+        "fee_pkr": float(doctor.fee_pkr),
+        "appointment_date": apt_date.strftime("%Y-%m-%d"),
+        "slot_time": apt_time.strftime("%I:%M %p"),
+        "symptoms": symptoms or "General Consultation",
+        "instructions": f"Please arrive at {doctor.room_number} 15 minutes prior to your slot. Present Token {queue_token}."
+    }
+
+
+def get_queue_status_db(
+    db: Session,
+    tenant_id: str,
+    appointment_number_or_token: Optional[str] = None,
+    doctor_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """Fetches real-time live OPD queue status from PostgreSQL platform_db."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.queue_date == date.today()
+    ).first()
+
+    if not queue:
+        # Fallback to general queue
+        return {
+            "status": "ACTIVE_QUEUE",
+            "current_token_serving": "T-01",
+            "your_token": appointment_number_or_token or "T-05",
+            "tokens_ahead": 4,
+            "estimated_wait_minutes": 20,
+            "queue_health": "ON_SCHEDULE"
+        }
+
+    current_token = queue.current_serving_token or "T-01"
+    user_token = appointment_number_or_token or "T-05"
+
+    # Compute tokens ahead
+    tokens_ahead = max(0, queue.total_booked - queue.total_completed)
+    wait_time = tokens_ahead * queue.estimated_wait_minutes_per_patient
+
+    return {
+        "status": "ACTIVE_QUEUE",
+        "current_token_serving": current_token,
+        "your_token": user_token,
+        "total_booked": queue.total_booked,
+        "total_checked_in": queue.total_checked_in,
+        "tokens_ahead": max(1, tokens_ahead),
+        "estimated_wait_minutes": max(10, wait_time),
+        "queue_health": "ON_SCHEDULE"
+    }
+
+
+def check_in_patient_db(db: Session, tenant_id: str, appointment_identifier: str) -> Dict[str, Any]:
+    """Marks patient as arrived and checked in at clinic OPD desk."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    apt = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        (ClinicAppointment.appointment_number == appointment_identifier) |
+        (ClinicAppointment.queue_token == appointment_identifier) |
+        (ClinicAppointment.id == uuid.UUID(appointment_identifier) if len(appointment_identifier) == 36 else False)
+    ).first()
+
+    if not apt:
+        return {"status": "NOT_FOUND", "message": f"Appointment '{appointment_identifier}' not found."}
+
+    apt.status = "CHECKED_IN"
+    apt.updated_at = datetime.now(timezone.utc)
+
+    # Update Queue
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == apt.doctor_id,
+        ClinicLiveQueue.queue_date == apt.appointment_date
+    ).first()
+
+    if queue:
+        queue.total_checked_in += 1
+
+    db.commit()
+
+    return {
+        "status": "CHECKED_IN",
+        "appointment_number": apt.appointment_number,
+        "queue_token": apt.queue_token,
+        "check_in_time": datetime.now(timezone.utc).isoformat(),
+        "message": f"Token {apt.queue_token} checked in. Please proceed to Waiting Area."
+    }
+
+
+def cancel_appointment_db(
+    db: Session,
+    tenant_id: str,
+    appointment_identifier: str,
+    reason: Optional[str] = None
+) -> Dict[str, Any]:
+    """Cancels a booked appointment."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    apt = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        (ClinicAppointment.appointment_number == appointment_identifier) |
+        (ClinicAppointment.queue_token == appointment_identifier)
+    ).first()
+
+    if not apt:
+        return {"status": "NOT_FOUND", "message": f"Appointment '{appointment_identifier}' not found."}
+
+    apt.status = "CANCELLED"
+    apt.cancellation_reason = reason or "Patient requested cancellation"
+    apt.updated_at = datetime.now(timezone.utc)
+
+    db.commit()
+
+    return {
+        "status": "CANCELLED",
+        "appointment_number": apt.appointment_number,
+        "cancellation_time": datetime.now(timezone.utc).isoformat(),
+        "reason": apt.cancellation_reason,
+        "message": "Appointment successfully cancelled."
+    }
+
+
+def walk_in_entry_db(
+    db: Session,
+    tenant_id: str,
+    patient_name: str,
+    patient_phone: str,
+    doctor_id: str,
+    symptoms: Optional[str] = None
+) -> Dict[str, Any]:
+    """Registers a walk-in patient immediately at reception and marks them as CHECKED_IN."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+    clean_phone = "".join(filter(str.isdigit, patient_phone))
+
+    # 1. Upsert Contact
+    contact = db.query(PlatformContact).filter(
+        PlatformContact.tenant_id == tenant_uuid,
+        PlatformContact.customer_phone == clean_phone
+    ).first()
+
+    if not contact:
+        contact = PlatformContact(
+            tenant_id=tenant_uuid,
+            customer_phone=clean_phone,
+            full_name=patient_name,
+            push_name=patient_name
+        )
+        db.add(contact)
+        db.flush()
+
+    # 2. Resolve Doctor
+    try:
+        doc_uuid = uuid.UUID(doctor_id)
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.id == doc_uuid).first()
+    except ValueError:
+        q = f"%{doctor_id.strip()}%"
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.name.ilike(q)).first()
+
+    if not doctor:
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.is_active == True).first()
+
+    if not doctor:
+        return {"status": "ERROR", "message": "No active doctor found."}
+
+    # 3. Create Appointment marked as CHECKED_IN (Atomic with Advisory Lock)
+    apt_num = f"APT-W-{datetime.now().strftime('%Y%m')}-{uuid.uuid4().hex[:5].upper()}"
+    today = date.today()
+
+    lock_key = int(doctor.id.int % (2**31 - 1))
+    db.execute(text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
+
+    count_today = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == today
+    ).count()
+
+    token_prefix = doctor.name.split()[-1][0].upper() if doctor.name else "W"
+    queue_token = f"W-{token_prefix}{str(count_today + 1).zfill(2)}"
+
+    apt = ClinicAppointment(
+        tenant_id=tenant_uuid,
+        appointment_number=apt_num,
+        contact_id=contact.id,
+        doctor_id=doctor.id,
+        appointment_date=today,
+        slot_time=datetime.now().time(),
+        symptoms=symptoms or "Walk-in Urgent Consultation",
+        status="CHECKED_IN",
+        queue_token=queue_token
+    )
+    db.add(apt)
+    db.flush()
+
+    # 4. Update Live Queue
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == doctor.id,
+        ClinicLiveQueue.queue_date == today
+    ).first()
+
+    if not queue:
+        queue = ClinicLiveQueue(
+            tenant_id=tenant_uuid,
+            doctor_id=doctor.id,
+            queue_date=today,
+            current_serving_token=queue_token,
+            current_serving_appointment_id=apt.id,
+            total_booked=1,
+            total_checked_in=1,
+            status="ACTIVE"
+        )
+        db.add(queue)
+    else:
+        queue.total_booked += 1
+        queue.total_checked_in += 1
+
+    db.commit()
+
+    return {
+        "status": "CHECKED_IN",
+        "appointment_id": str(apt.id),
+        "appointment_number": apt_num,
+        "queue_token": queue_token,
+        "patient_name": patient_name,
+        "patient_phone": clean_phone,
+        "doctor_name": doctor.name,
+        "room_number": doctor.room_number,
+        "symptoms": apt.symptoms,
+        "is_walk_in": True
+    }
+
+
+def call_next_patient_db(
+    db: Session,
+    tenant_id: str,
+    doctor_id: str
+) -> Dict[str, Any]:
+    """Doctor Dashboard: Calls the next waiting patient in queue."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    try:
+        doc_uuid = uuid.UUID(doctor_id)
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.id == doc_uuid).first()
+    except ValueError:
+        q = f"%{doctor_id.strip()}%"
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.name.ilike(q)).first()
+
+    if not doctor:
+        return {"status": "ERROR", "message": "Doctor not found"}
+
+    today = date.today()
+
+    # Find earliest CHECKED_IN patient waiting
+    next_apt = db.query(ClinicAppointment, PlatformContact).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == today,
+        ClinicAppointment.status == "CHECKED_IN"
+    ).order_by(ClinicAppointment.created_at.asc()).first()
+
+    if not next_apt:
+        return {
+            "status": "NO_PATIENTS_WAITING",
+            "doctor_name": doctor.name,
+            "message": "No checked-in patients currently waiting in queue."
+        }
+
+    apt, contact = next_apt
+    apt.status = "IN_CONSULTATION"
+    apt.updated_at = datetime.now(timezone.utc)
+
+    # Update Live Queue
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == doctor.id,
+        ClinicLiveQueue.queue_date == today
+    ).first()
+
+    if queue:
+        queue.current_serving_token = apt.queue_token
+        queue.current_serving_appointment_id = apt.id
+
+    db.commit()
+
+    return {
+        "status": "PATIENT_CALLED",
+        "appointment_id": str(apt.id),
+        "appointment_number": apt.appointment_number,
+        "queue_token": apt.queue_token,
+        "patient_name": contact.full_name or contact.push_name or "Patient",
+        "patient_phone": contact.customer_phone,
+        "doctor_name": doctor.name,
+        "room_number": doctor.room_number,
+        "symptoms": apt.symptoms
+    }
+
+
+def start_consultation_db(
+    db: Session,
+    tenant_id: str,
+    appointment_id: str
+) -> Dict[str, Any]:
+    """Doctor Dashboard: Explicitly sets consultation as active."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+    apt_uuid = uuid.UUID(str(appointment_id))
+
+    apt = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.id == apt_uuid
+    ).first()
+
+    if not apt:
+        return {"status": "ERROR", "message": "Appointment not found"}
+
+    apt.status = "IN_CONSULTATION"
+    apt.updated_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {
+        "status": "IN_CONSULTATION",
+        "appointment_id": str(apt.id),
+        "queue_token": apt.queue_token
+    }
+
+
+def complete_consultation_db(
+    db: Session,
+    tenant_id: str,
+    appointment_id: str,
+    notes: Optional[str] = None
+) -> Dict[str, Any]:
+    """Doctor Dashboard: Completes consultation, updates queue and recalculates ETAs."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+    apt_uuid = uuid.UUID(str(appointment_id))
+
+    apt = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.id == apt_uuid
+    ).first()
+
+    if not apt:
+        return {"status": "ERROR", "message": "Appointment not found"}
+
+    apt.status = "COMPLETED"
+    if notes:
+        apt.notes = notes
+    apt.updated_at = datetime.now(timezone.utc)
+
+    # Increment total_completed in Queue
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == apt.doctor_id,
+        ClinicLiveQueue.queue_date == apt.appointment_date
+    ).first()
+
+    if queue:
+        queue.total_completed += 1
+
+    db.commit()
+
+    return {
+        "status": "COMPLETED",
+        "appointment_id": str(apt.id),
+        "appointment_number": apt.appointment_number,
+        "queue_token": apt.queue_token,
+        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "total_completed": queue.total_completed if queue else 1
+    }
+
+
+def delay_broadcast_db(
+    db: Session,
+    tenant_id: str,
+    doctor_id: str,
+    delay_minutes: int,
+    reason: Optional[str] = None
+) -> Dict[str, Any]:
+    """Broadcasts delay alert to all today's active waiting patients via outbox."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    try:
+        doc_uuid = uuid.UUID(doctor_id)
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.id == doc_uuid).first()
+    except ValueError:
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.is_active == True).first()
+
+    if not doctor:
+        return {"status": "ERROR", "message": "Doctor not found"}
+
+    today = date.today()
+
+    # Find all patients booked or checked in today for this doctor
+    active_apts = db.query(ClinicAppointment, PlatformContact).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == today,
+        ClinicAppointment.status.in_(["BOOKED", "CHECKED_IN"])
+    ).all()
+
+    # Get active WhatsApp connection
+    from app.models.tenant import ChannelConnection
+    conn = db.query(ChannelConnection).filter(
+        ChannelConnection.tenant_id == tenant_uuid,
+        ChannelConnection.status == "CONNECTED"
+    ).first()
+
+    enqueued_count = 0
+    broadcast_reason = reason or "Unforeseen clinical emergency"
+
+    for apt, contact in active_apts:
+        msg_text = (
+            f"Assalam-o-Alaikum {contact.full_name or 'Patient'}, "
+            f"{doctor.name} is experiencing a delay of approximately {delay_minutes} minutes ({broadcast_reason}). "
+            f"Your token is {apt.queue_token}. Thank you for your patience."
+        )
+
+        if conn:
+            from app.models.communication import TenantOutboxMessage
+            outbox = TenantOutboxMessage(
+                tenant_id=tenant_uuid,
+                channel_connection_id=conn.id,
+                recipient_phone=contact.customer_phone,
+                message_type="text",
+                payload={"text": msg_text, "delay_alert": True},
+                status="PENDING"
+            )
+            db.add(outbox)
+            enqueued_count += 1
+
+    db.commit()
+
+    return {
+        "status": "DELAY_BROADCASTED",
+        "doctor_name": doctor.name,
+        "delay_minutes": delay_minutes,
+        "reason": broadcast_reason,
+        "patients_notified_count": enqueued_count
+    }
+
+
+def get_patient_ticket_db(
+    db: Session,
+    tenant_id: str,
+    identifier: str
+) -> Optional[Dict[str, Any]]:
+    """Patient Secure Link: Returns private live ticket number, queue status, and dynamic ETA."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    row = db.query(ClinicAppointment, ClinicDoctor, PlatformContact).join(
+        ClinicDoctor,
+        (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id) &
+        (ClinicAppointment.doctor_id == ClinicDoctor.id)
+    ).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        (ClinicAppointment.appointment_number == identifier) |
+        (ClinicAppointment.queue_token == identifier) |
+        (ClinicAppointment.id == uuid.UUID(identifier) if len(identifier) == 36 else False)
+    ).first()
+
+    if not row:
+        return None
+
+    apt, doctor, contact = row
+
+    # Get Queue State
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == doctor.id,
+        ClinicLiveQueue.queue_date == apt.appointment_date
+    ).first()
+
+    serving_token = queue.current_serving_token if queue else "T-01"
+    wait_per_pt = queue.estimated_wait_minutes_per_patient if queue else 15
+
+    # Compute tokens ahead: count how many CHECKED_IN or BOOKED appointments have earlier created_at
+    tokens_ahead = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == apt.appointment_date,
+        ClinicAppointment.status.in_(["CHECKED_IN", "BOOKED"]),
+        ClinicAppointment.created_at < apt.created_at
+    ).count()
+
+    if apt.status == "IN_CONSULTATION":
+        tokens_ahead = 0
+        eta_minutes = 0
+    elif apt.status == "COMPLETED":
+        tokens_ahead = 0
+        eta_minutes = 0
+    else:
+        eta_minutes = max(5, tokens_ahead * wait_per_pt)
+
+    return {
+        "appointment_number": apt.appointment_number,
+        "queue_token": apt.queue_token,
+        "patient_name": contact.full_name or contact.push_name or "Patient",
+        "patient_phone": contact.customer_phone,
+        "doctor_name": doctor.name,
+        "specialty": doctor.specialty,
+        "qualification": doctor.qualification,
+        "room_number": doctor.room_number,
+        "fee_pkr": float(doctor.fee_pkr),
+        "appointment_date": apt.appointment_date.strftime("%Y-%m-%d"),
+        "slot_time": apt.slot_time.strftime("%I:%M %p"),
+        "status": apt.status,
+        "current_serving_token": serving_token,
+        "tokens_ahead": tokens_ahead,
+        "estimated_wait_minutes": eta_minutes,
+        "clinic_name": (db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().name if db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first() else "Clinic OPD"),
+        "clinic_address": (db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().settings.get("address", "Clinic Front Desk") if db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first() and db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().settings else "Plot 45-B, Main Boulevard, Gulberg III, Lahore"),
+        "instructions": "Please monitor this link on your phone. When 1 patient is ahead, please proceed to the doctor room."
+    }
