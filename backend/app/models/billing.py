@@ -7,33 +7,74 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from app.core.database import Base
 
 class SubscriptionPlan(Base):
-    __tablename__ = "platform_subscription_plans"
+    __tablename__ = "subscription_plans"
 
     id = Column(String(50), primary_key=True)
     name = Column(String(100), nullable=False)
-    monthly_price_pkr = Column(Numeric(10, 2), nullable=False, default=0.0)
-    max_whatsapp_messages = Column(Integer, nullable=False, default=1000)
-    max_ai_tokens = Column(Integer, nullable=False, default=100000)
-    max_staff_seats = Column(Integer, nullable=False, default=3)
-    max_doctors = Column(Integer, nullable=False, default=2)
+    price_monthly_pkr = Column(Numeric(10, 2), nullable=False, default=0.0)
+    included_ai_tokens = Column(Integer, nullable=False, default=100000)
+    included_whatsapp_conversations = Column(Integer, nullable=False, default=1000)
+    overage_per_token_pkr = Column(Numeric(10, 4), default=0.002)
+    overage_per_conversation_pkr = Column(Numeric(10, 2), default=3.0)
     features = Column(JSONB, default=dict)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    @hybrid_property
+    def monthly_price_pkr(self):
+        return self.price_monthly_pkr
+
+    @monthly_price_pkr.setter
+    def monthly_price_pkr(self, val):
+        self.price_monthly_pkr = val
+
+    @hybrid_property
+    def max_whatsapp_messages(self):
+        return self.included_whatsapp_conversations
+
+    @max_whatsapp_messages.setter
+    def max_whatsapp_messages(self, val):
+        self.included_whatsapp_conversations = val
+
+    @hybrid_property
+    def max_ai_tokens(self):
+        return self.included_ai_tokens
+
+    @max_ai_tokens.setter
+    def max_ai_tokens(self, val):
+        self.included_ai_tokens = val
+
+    @hybrid_property
+    def max_staff_seats(self):
+        return 5
+
+    @hybrid_property
+    def max_doctors(self):
+        return 3
 
 
 class TenantSubscription(Base):
     __tablename__ = "tenant_subscriptions"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("platform_tenants.id", ondelete="CASCADE"), primary_key=True)
-    plan_id = Column(String(50), ForeignKey("platform_subscription_plans.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("platform_tenants.id", ondelete="CASCADE"), nullable=False)
+    plan_id = Column(String(50), ForeignKey("subscription_plans.id"), nullable=False)
     status = Column(String(30), nullable=False, default="ACTIVE")
     current_period_start = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     current_period_end = Column(DateTime(timezone=True))
-    auto_renew = Column(Boolean, default=True)
+    cancel_at_period_end = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     plan = relationship("SubscriptionPlan")
+
+    @hybrid_property
+    def auto_renew(self):
+        return not self.cancel_at_period_end
+
+    @auto_renew.setter
+    def auto_renew(self, val):
+        self.cancel_at_period_end = not val
 
 
 class TenantUsageRecord(Base):
@@ -87,4 +128,5 @@ class TenantUsageRecord(Base):
     @recorded_at.setter
     def recorded_at(self, value):
         self.created_at = value
+
 
