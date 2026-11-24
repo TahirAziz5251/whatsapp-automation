@@ -452,12 +452,6 @@ export default function ReceptionDashboard() {
                           ? "Try clearing the search input or changing doctor filters."
                           : "Patients booking via WhatsApp or reception walk-in will appear here in real-time."}
                       </p>
-                      <button
-                        onClick={() => setShowWalkInModal(true)}
-                        className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-md shadow-emerald-600/20"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Register Walk-In Patient
-                      </button>
                     </div>
                   </td>
                 </tr>
