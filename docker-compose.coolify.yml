@@ -499,7 +499,7 @@ services:
     environment:
       SERVER_PORT: "4000"
       CLIENT_NAME: "bizflow-production"
-      GLOBAL_API_KEY: ${EVOLUTION_API_KEY:-bizflow_evolution_api_key_2026}
+      GLOBAL_API_KEY: ${EVOLUTION_API_KEY:-63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65}
       POSTGRES_AUTH_DB: "postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}@wa-postgres:5432/evogo_auth?sslmode=disable"
       POSTGRES_USERS_DB: "postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}@wa-postgres:5432/evogo_users?sslmode=disable"
       DATABASE_SAVE_MESSAGES: "false"
@@ -558,7 +558,7 @@ services:
       GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
       REDIS_URL: redis://:${REDIS_PASSWORD:-bizflow_redis_secret_2026}@wa-redis:6379/0
       EVOLUTION_API_URL: http://evolution-go:4000
-      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-bizflow_evolution_api_key_2026}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/health"]
       interval: 15s

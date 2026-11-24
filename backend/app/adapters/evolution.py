@@ -15,7 +15,7 @@ class EvolutionGoAdapter(BaseChannelAdapter):
     def __init__(self, instance_name: str = "alpha-clinic", api_url: Optional[str] = None, api_key: Optional[str] = None):
         self.instance_name = instance_name
         self.api_url = (api_url or getattr(settings, "EVOLUTION_API_URL", "http://evolution-go:4000")).rstrip("/")
-        self.api_key = api_key or getattr(settings, "EVOLUTION_API_KEY", "bizflow_evolution_api_key_2026")
+        self.api_key = api_key or getattr(settings, "EVOLUTION_API_KEY", "63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65")
         self._cached_instance_token: Optional[str] = None
 
     def normalize_inbound(self, payload: Dict[str, Any]) -> Optional[NormalizedInboundMessage]:

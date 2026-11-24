@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     
     # Evolution Go WhatsApp Gateway
     EVOLUTION_API_URL: str = "http://evolution-go:4000"
-    EVOLUTION_API_KEY: str = "bizflow_evolution_api_key_2026"
-    EVOLUTION_GLOBAL_API_KEY: str = "bizflow_evolution_api_key_2026"
+    EVOLUTION_API_KEY: str = "63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65"
+    EVOLUTION_GLOBAL_API_KEY: str = "63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65"
 
     model_config = SettingsConfigDict(
         env_file=".env",

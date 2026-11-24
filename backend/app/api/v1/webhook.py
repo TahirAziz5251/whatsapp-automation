@@ -36,11 +36,15 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
 
     logger.info(f"Received Evolution webhook: event={payload.get('event')}, instance={payload.get('instance') or payload.get('instanceName')}")
 
-    result = ChannelService.process_inbound_webhook(
-        provider="EVOLUTION_GO",
-        payload=payload,
-        db=db
-    )
+    try:
+        result = ChannelService.process_inbound_webhook(
+            provider="EVOLUTION_GO",
+            payload=payload,
+            db=db
+        )
+    except Exception as e:
+        logger.error(f"Error in ChannelService.process_inbound_webhook: {e}", exc_info=True)
+        return {"status": "ERROR", "error": str(e)}
 
     if result.get("status") != "PROCESSED":
         logger.info(f"Webhook discarded or skipped: status={result.get('status')}, reason={result.get('reason')}")

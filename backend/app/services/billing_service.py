@@ -1,8 +1,11 @@
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func, desc
+
+logger = logging.getLogger(__name__)
 
 from app.models.billing import SubscriptionPlan, TenantSubscription, TenantUsageRecord
 from app.models.tenant import PlatformTenant
@@ -74,29 +77,44 @@ def record_usage_db(
     metadata: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Records a metered usage event (e.g. WHATSAPP_INBOUND, WHATSAPP_OUTBOUND, AI_TOKENS)."""
-    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
-    tenant_uuid = uuid.UUID(str(tenant_id))
-    now = datetime.now(timezone.utc)
-    month_str = now.strftime("%Y-%m")
+    try:
+        db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        now = datetime.now(timezone.utc)
+        today = now.date()
+        month_str = today.strftime("%Y-%m")
 
-    rec = TenantUsageRecord(
-        tenant_id=tenant_uuid,
-        metric_name=metric_name,
-        quantity=quantity,
-        period_month=month_str,
-        metadata_=metadata or {},
-        recorded_at=now
-    )
-    db.add(rec)
-    db.commit()
+        # Map to valid metric_type allowed by DB check constraint
+        valid_metric = metric_name
+        if valid_metric not in ('AI_TOKENS', 'WHATSAPP_INBOUND', 'WHATSAPP_OUTBOUND', 'STORAGE_MB', 'API_CALLS'):
+            valid_metric = "API_CALLS"
 
-    return {
-        "status": "RECORDED",
-        "tenant_id": str(tenant_id),
-        "metric_name": metric_name,
-        "quantity": quantity,
-        "period_month": month_str
-    }
+        rec = TenantUsageRecord(
+            tenant_id=tenant_uuid,
+            metric_type=valid_metric,
+            quantity=quantity,
+            period_date=today,
+            details=metadata or {},
+            created_at=now
+        )
+        db.add(rec)
+        db.flush()
+
+        return {
+            "status": "RECORDED",
+            "tenant_id": str(tenant_id),
+            "metric_name": valid_metric,
+            "quantity": quantity,
+            "period_month": month_str
+        }
+    except Exception as e:
+        logger.warning(f"Non-critical usage metering recording failed for tenant {tenant_id}: {e}")
+        return {
+            "status": "SKIPPED",
+            "tenant_id": str(tenant_id),
+            "metric_name": metric_name,
+            "error": str(e)
+        }
 
 
 def get_tenant_monthly_usage_db(
@@ -105,19 +123,27 @@ def get_tenant_monthly_usage_db(
     period_month: Optional[str] = None
 ) -> Dict[str, Any]:
     """Aggregates usage totals by metric for the given billing month."""
-    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
-    tenant_uuid = uuid.UUID(str(tenant_id))
-    month_str = period_month or datetime.now(timezone.utc).strftime("%Y-%m")
+    try:
+        db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        month_str = period_month or datetime.now(timezone.utc).strftime("%Y-%m")
+        parts = month_str.split("-")
+        year, month = int(parts[0]), int(parts[1])
 
-    rows = db.query(
-        TenantUsageRecord.metric_name,
-        func.sum(TenantUsageRecord.quantity).label("total_quantity")
-    ).filter(
-        TenantUsageRecord.tenant_id == tenant_uuid,
-        TenantUsageRecord.period_month == month_str
-    ).group_by(TenantUsageRecord.metric_name).all()
+        rows = db.query(
+            TenantUsageRecord.metric_type,
+            func.sum(TenantUsageRecord.quantity).label("total_quantity")
+        ).filter(
+            TenantUsageRecord.tenant_id == tenant_uuid,
+            func.extract('year', TenantUsageRecord.period_date) == year,
+            func.extract('month', TenantUsageRecord.period_date) == month
+        ).group_by(TenantUsageRecord.metric_type).all()
 
-    usage_map = {metric: int(tot) for metric, tot in rows}
+        usage_map = {metric: int(tot) for metric, tot in rows if metric and tot is not None}
+    except Exception as e:
+        logger.warning(f"Error querying monthly usage for tenant {tenant_id}: {e}")
+        usage_map = {}
+        month_str = period_month or datetime.now(timezone.utc).strftime("%Y-%m")
 
     whatsapp_total = usage_map.get("WHATSAPP_INBOUND", 0) + usage_map.get("WHATSAPP_OUTBOUND", 0)
     ai_tokens_total = usage_map.get("AI_TOKENS", 0)

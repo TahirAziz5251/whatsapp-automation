@@ -1,8 +1,9 @@
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Numeric, Integer
+from datetime import datetime, timezone, date
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Numeric, Integer, Date
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 from app.core.database import Base
 
 class SubscriptionPlan(Base):
@@ -38,10 +39,52 @@ class TenantSubscription(Base):
 class TenantUsageRecord(Base):
     __tablename__ = "tenant_usage_records"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("platform_tenants.id", ondelete="CASCADE"), primary_key=True)
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    metric_name = Column(String(50), nullable=False)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("platform_tenants.id", ondelete="CASCADE"), nullable=False)
+    metric_type = Column(String(50), nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
-    period_month = Column(String(7), nullable=False)
-    metadata_ = Column("metadata", JSONB, default=dict)
-    recorded_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    period_date = Column(Date, default=date.today, nullable=False)
+    details = Column(JSONB, default=dict)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, **kwargs):
+        if "metric_name" in kwargs and "metric_type" not in kwargs:
+            kwargs["metric_type"] = kwargs.pop("metric_name")
+        if "metadata_" in kwargs and "details" not in kwargs:
+            kwargs["details"] = kwargs.pop("metadata_")
+        if "metadata" in kwargs and "details" not in kwargs:
+            kwargs["details"] = kwargs.pop("metadata")
+        if "recorded_at" in kwargs and "created_at" not in kwargs:
+            kwargs["created_at"] = kwargs.pop("recorded_at")
+        if "period_month" in kwargs and "period_date" not in kwargs:
+            p_month = kwargs.pop("period_month")
+            try:
+                kwargs["period_date"] = datetime.strptime(f"{p_month}-01", "%Y-%m-%d").date()
+            except Exception:
+                kwargs["period_date"] = date.today()
+        super().__init__(**kwargs)
+
+    @hybrid_property
+    def metric_name(self):
+        return self.metric_type
+
+    @metric_name.setter
+    def metric_name(self, value):
+        self.metric_type = value
+
+    @hybrid_property
+    def metadata_(self):
+        return self.details
+
+    @metadata_.setter
+    def metadata_(self, value):
+        self.details = value
+
+    @hybrid_property
+    def recorded_at(self):
+        return self.created_at
+
+    @recorded_at.setter
+    def recorded_at(self, value):
+        self.created_at = value
+
