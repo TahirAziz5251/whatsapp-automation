@@ -1,6 +1,6 @@
 import uuid
 import re
-from datetime import datetime, date, time, timezone
+from datetime import datetime, date, time, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -989,4 +989,208 @@ def get_patient_ticket_db(
         "clinic_name": (db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().name if db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first() else "Clinic OPD"),
         "clinic_address": (db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().settings.get("address", "Clinic Front Desk") if db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first() and db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().settings else "Plot 45-B, Main Boulevard, Gulberg III, Lahore"),
         "instructions": "Please monitor this link on your phone. When 1 patient is ahead, please proceed to the doctor room."
+    }
+
+
+def get_owner_analytics_db(
+    db: Session,
+    tenant_id: str,
+    period: str = "today",
+    start_date_str: Optional[str] = None,
+    end_date_str: Optional[str] = None
+) -> Dict[str, Any]:
+    """Executive Owner Analytics: Reconciled SQL aggregates, telemetry, and non-clinical booking ledger."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    tenant = db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first()
+    tz_name = tenant.timezone if tenant and tenant.timezone else "Asia/Karachi"
+
+    # Compute current date in tenant timezone
+    try:
+        from zoneinfo import ZoneInfo
+        now_tz = datetime.now(ZoneInfo(tz_name))
+    except Exception:
+        # Fallback for Asia/Karachi (UTC+5)
+        now_tz = datetime.now(timezone(timedelta(hours=5)))
+
+    today_date = now_tz.date()
+
+    # Determine date range based on period
+    if period == "yesterday":
+        start_date = today_date - timedelta(days=1)
+        end_date = start_date
+    elif period == "week":
+        start_date = today_date - timedelta(days=6)
+        end_date = today_date
+    elif period == "month":
+        start_date = today_date - timedelta(days=29)
+        end_date = today_date
+    elif period == "custom" and start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str[:10], "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str[:10], "%Y-%m-%d").date()
+        except Exception:
+            start_date = today_date
+            end_date = today_date
+    else:  # today
+        start_date = today_date
+        end_date = today_date
+
+    # 1. Query appointments in period with tenant isolation
+    rows = db.query(ClinicAppointment, ClinicDoctor, PlatformContact).join(
+        ClinicDoctor,
+        (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id) &
+        (ClinicAppointment.doctor_id == ClinicDoctor.id)
+    ).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.appointment_date >= start_date,
+        ClinicAppointment.appointment_date <= end_date
+    ).order_by(ClinicAppointment.appointment_date.desc(), ClinicAppointment.slot_time.asc()).all()
+
+    # 2. KPI Calculations
+    total_bookings = len(rows)
+    completed_visits = [r for r in rows if r[0].status == "COMPLETED"]
+    completed_count = len(completed_visits)
+    checked_in_count = len([r for r in rows if r[0].status in ["CHECKED_IN", "CALLED"]])
+    in_consultation_count = len([r for r in rows if r[0].status == "IN_CONSULTATION"])
+    booked_count = len([r for r in rows if r[0].status == "BOOKED"])
+    cancelled_count = len([r for r in rows if r[0].status == "CANCELLED"])
+    no_show_count = len([r for r in rows if r[0].status == "NO_SHOW"])
+
+    gross_revenue_pkr = sum(float(doc.fee_pkr) for apt, doc, _ in completed_visits)
+    potential_revenue_pkr = sum(float(doc.fee_pkr) for apt, doc, _ in rows)
+
+    durations = [apt.consultation_duration_seconds for apt, _, _ in completed_visits if apt.consultation_duration_seconds]
+    avg_duration_minutes = round((sum(durations) / len(durations)) / 60, 1) if durations else 0.0
+
+    no_show_rate_percent = round((no_show_count / total_bookings) * 100, 1) if total_bookings > 0 else 0.0
+
+    # 3. Doctor-wise Breakdown
+    all_doctors = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.is_active == True).all()
+    doctor_stats = []
+    for doc in all_doctors:
+        doc_rows = [r for r in rows if r[0].doctor_id == doc.id]
+        doc_completed = [r for r in doc_rows if r[0].status == "COMPLETED"]
+        doc_revenue = sum(float(doc.fee_pkr) for _ in doc_completed)
+        doc_durations = [r[0].consultation_duration_seconds for r in doc_completed if r[0].consultation_duration_seconds]
+        avg_doc_dur = round((sum(doc_durations) / len(doc_durations)) / 60, 1) if doc_durations else 0.0
+
+        doctor_stats.append({
+            "doctor_id": str(doc.id),
+            "name": doc.name,
+            "specialty": doc.specialty,
+            "room_number": doc.room_number,
+            "fee_pkr": float(doc.fee_pkr),
+            "is_on_break": bool(getattr(doc, "is_on_break", False)),
+            "break_reason": getattr(doc, "break_reason", None),
+            "total_bookings": len(doc_rows),
+            "completed_visits": len(doc_completed),
+            "revenue_pkr": doc_revenue,
+            "avg_duration_minutes": avg_doc_dur
+        })
+
+    # 4. Authorized Booking List (Strictly Operational, NO clinical details/symptoms/diagnoses)
+    bookings_ledger = [
+        {
+            "id": str(apt.id),
+            "appointment_number": apt.appointment_number,
+            "queue_token": apt.queue_token,
+            "appointment_date": apt.appointment_date.strftime("%Y-%m-%d"),
+            "slot_time": apt.slot_time.strftime("%I:%M %p"),
+            "status": apt.status,
+            "patient_name": contact.full_name or contact.push_name or "Patient",
+            "patient_phone": contact.customer_phone,
+            "doctor_name": doc.name,
+            "doctor_specialty": doc.specialty,
+            "room_number": doc.room_number,
+            "fee_pkr": float(doc.fee_pkr),
+            "duration_seconds": apt.consultation_duration_seconds,
+            "follow_up_task": apt.follow_up_task,
+            "reminder_24h_sent": bool(apt.reminder_24h_sent),
+            "reminder_2h_sent": bool(apt.reminder_2h_sent)
+        }
+        for apt, doc, contact in rows
+    ]
+
+    # 5. Real Provider & Infrastructure Telemetry (Never Fake Success Indicators)
+    from app.models.tenant import ChannelConnection
+    from app.models.communication import TenantOutboxMessage
+    conn = db.query(ChannelConnection).filter(ChannelConnection.tenant_id == tenant_uuid).first()
+
+    outbox_q = db.query(TenantOutboxMessage).filter(TenantOutboxMessage.tenant_id == tenant_uuid)
+    total_outbox = outbox_q.count()
+    dispatched_outbox = outbox_q.filter(TenantOutboxMessage.status == "DISPATCHED").count()
+    pending_outbox = outbox_q.filter(TenantOutboxMessage.status == "PENDING").count()
+    failed_outbox = outbox_q.filter(TenantOutboxMessage.status.in_(["FAILED", "DEAD_LETTER"])).count()
+
+    recent_failed_jobs = [
+        {
+            "id": str(m.id),
+            "recipient_phone": m.recipient_phone,
+            "error": m.last_error or "Delivery timeout",
+            "retry_count": m.retry_count,
+            "max_retries": m.max_retries,
+            "created_at": m.created_at.strftime("%I:%M %p • %d %b") if m.created_at else "Recent"
+        }
+        for m in outbox_q.filter(TenantOutboxMessage.status.in_(["FAILED", "DEAD_LETTER"])).order_by(TenantOutboxMessage.created_at.desc()).limit(5).all()
+    ]
+
+    # Walk-in count in period
+    walk_in_count = len([r for r in rows if r[0].appointment_number.startswith("APT-W-")])
+
+    # 6. SaaS Plan & Usage Telemetry
+    from app.services.billing_service import get_tenant_subscription_db, get_tenant_monthly_usage_db
+    subscription = get_tenant_subscription_db(db, tenant_id)
+    usage = get_tenant_monthly_usage_db(db, tenant_id)
+
+    return {
+        "status": "SUCCESS",
+        "tenant_id": str(tenant_uuid),
+        "tenant_name": tenant.name if tenant else "Alpha Clinic",
+        "timezone": tz_name,
+        "currency": tenant.currency if tenant else "PKR",
+        "period": {
+            "name": period,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d")
+        },
+        "kpis": {
+            "total_bookings": total_bookings,
+            "completed_visits": completed_count,
+            "checked_in_waiting": checked_in_count,
+            "in_consultation": in_consultation_count,
+            "booked_unconfirmed": booked_count,
+            "cancelled": cancelled_count,
+            "no_show": no_show_count,
+            "walk_in_count": walk_in_count,
+            "gross_revenue_pkr": gross_revenue_pkr,
+            "potential_revenue_pkr": potential_revenue_pkr,
+            "avg_consultation_duration_minutes": avg_duration_minutes,
+            "no_show_rate_percent": no_show_rate_percent,
+            "baseline_notice": "Production Baseline Phase: No-show and utilization baselines cannot be treated as proof of business improvement until recorded and compared in production over a 14-day sample."
+        },
+        "doctor_breakdown": doctor_stats,
+        "bookings_ledger": bookings_ledger,
+        "telemetry": {
+            "provider": {
+                "type": conn.channel_type if conn else "NOT_CONNECTED",
+                "phone_number_id": conn.phone_number_id if conn else "N/A",
+                "display_phone_number": conn.display_phone_number if conn else "N/A",
+                "status": conn.status if conn else "DISCONNECTED"
+            },
+            "outbox": {
+                "total": total_outbox,
+                "dispatched": dispatched_outbox,
+                "pending": pending_outbox,
+                "failed": failed_outbox,
+                "recent_failed_jobs": recent_failed_jobs
+            }
+        },
+        "saas_subscription": subscription,
+        "saas_usage": usage
     }

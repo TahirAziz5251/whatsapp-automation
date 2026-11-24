@@ -18,7 +18,8 @@ from app.services.clinic_service import (
     assign_follow_up_task_db,
     toggle_doctor_break_db,
     delay_broadcast_db,
-    get_patient_ticket_db
+    get_patient_ticket_db,
+    get_owner_analytics_db
 )
 from app.services.clinic_event_broadcaster import broadcaster
 
@@ -337,4 +338,21 @@ def dispatch_automated_reminders(
         return process_2h_reminders_db(db, tenant_id=x_tenant_id)
     else:
         return run_full_reminder_cycle(db, tenant_id=x_tenant_id)
+
+@router.get("/owner/analytics")
+def get_owner_executive_analytics(
+    period: str = Query("today", description="Period: today, yesterday, week, month, custom"),
+    start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD for custom period"),
+    end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD for custom period"),
+    x_tenant_id: str = Header(..., alias="X-Tenant-ID"),
+    db: Session = Depends(get_tenant_db)
+):
+    """Clinic Owner Executive Analytics: Reconciled SQL metrics, provider telemetry, outbox health, and non-clinical bookings."""
+    return get_owner_analytics_db(
+        db=db,
+        tenant_id=x_tenant_id,
+        period=period,
+        start_date_str=start_date,
+        end_date_str=end_date
+    )
 

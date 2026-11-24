@@ -80,8 +80,14 @@ export const clinicApi = {
   getPatientTicket: (ticketId: string, tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi(`/clinic/patient/ticket/${ticketId}`, { method: "GET" }, tenantId),
 
-  getOwnerAnalytics: (tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi("/clinic/owner/analytics", { method: "GET" }, tenantId),
+  getOwnerAnalytics: (tenantId: string = DEFAULT_TENANT_ID, params?: { period?: string; start_date?: string; end_date?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.period) q.set("period", params.period);
+    if (params?.start_date) q.set("start_date", params.start_date);
+    if (params?.end_date) q.set("end_date", params.end_date);
+    const qs = q.toString() ? `?${q.toString()}` : "";
+    return fetchFromApi<any>(`/clinic/owner/analytics${qs}`, { method: "GET" }, tenantId);
+  },
 
   sendSimulatedWhatsApp: (data: {
     tenant_id: string;

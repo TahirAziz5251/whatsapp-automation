@@ -19,7 +19,8 @@ export default function Header() {
   const pathname = usePathname();
   const isReception = pathname === "/reception";
   const isDoctor = pathname === "/doctor";
-  const isTerminal = isReception || isDoctor;
+  const isOwner = pathname === "/owner";
+  const isTerminal = isReception || isDoctor || isOwner;
   const [timeStr, setTimeStr] = useState<string>("");
 
   useEffect(() => {
@@ -67,6 +68,11 @@ export default function Header() {
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                     Doctor Workspace
                   </span>
+                ) : isOwner ? (
+                  <span className="text-xs bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2.5 py-0.5 rounded-full font-bold shadow-2xs flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                    Owner Executive Console
+                  </span>
                 ) : (
                   <span className="text-xs bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-700/50 px-2.5 py-0.5 rounded-full font-semibold shadow-2xs">
                     Clinic Pilot
@@ -87,7 +93,7 @@ export default function Header() {
             <div className="flex items-center gap-2.5">
               {timeStr && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/70 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs">
-                  <Clock className={`w-3.5 h-3.5 ${isDoctor ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"}`} />
+                  <Clock className={`w-3.5 h-3.5 ${isOwner ? "text-indigo-600 dark:text-indigo-400" : isDoctor ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"}`} />
                   <span className="tracking-tight">{timeStr}</span>
                 </div>
               )}
@@ -95,6 +101,11 @@ export default function Header() {
                 <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50 text-xs font-semibold text-blue-800 dark:text-blue-300">
                   <Stethoscope className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Doctor Console Active</span>
+                </div>
+              ) : isOwner ? (
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/50 text-xs font-semibold text-indigo-800 dark:text-indigo-300">
+                  <Zap className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Executive Console Active</span>
                 </div>
               ) : (
                 <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
