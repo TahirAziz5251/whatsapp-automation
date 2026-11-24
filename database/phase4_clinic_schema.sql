@@ -56,6 +56,10 @@ CREATE TABLE IF NOT EXISTS clinic_appointments (
     queue_token VARCHAR(30) NOT NULL,
     cancellation_reason TEXT,
     notes TEXT,
+    reminder_24h_sent BOOLEAN DEFAULT FALSE,
+    reminder_24h_sent_at TIMESTAMPTZ,
+    reminder_2h_sent BOOLEAN DEFAULT FALSE,
+    reminder_2h_sent_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (tenant_id, id),
@@ -144,6 +148,18 @@ GRANT ALL PRIVILEGES ON TABLE clinic_live_queues TO bizflow_runtime;
 -- ------------------------------------------------------------------------------
 -- 7. Seed Initial Doctor Roster for Alpha Clinic (11111111-1111-1111-1111-111111111111)
 -- ------------------------------------------------------------------------------
+INSERT INTO platform_tenants (id, slug, name, business_template_id, status, timezone, currency, settings)
+VALUES (
+    '11111111-1111-1111-1111-111111111111',
+    'alpha-clinic',
+    'Alpha Heart & Medical Centre',
+    'CLINIC_OPD',
+    'ACTIVE',
+    'Asia/Karachi',
+    'PKR',
+    '{"bot_name": "Dr. Shifa", "welcome_message": "Assalam-o-Alaikum! Welcome to Alpha Heart & Medical Centre Lahore.", "address": "Plot 45-B, Main Boulevard, Gulberg III, Lahore", "phone": "042-35780000"}'::jsonb
+) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, settings = EXCLUDED.settings;
+
 INSERT INTO clinic_doctors (tenant_id, id, name, specialty, qualification, fee_pkr, room_number)
 VALUES
 ('11111111-1111-1111-1111-111111111111', 'dddddddd-1111-0000-0000-000000000001', 'Dr. Tariq Mahmood', 'Cardiology', 'MBBS, FCPS (Cardiology)', 2500.00, 'Room 101'),
