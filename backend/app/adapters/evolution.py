@@ -1,18 +1,22 @@
 import re
+import logging
 import httpx
 from typing import Optional, Dict, Any
 from app.adapters.base import BaseChannelAdapter, NormalizedInboundMessage
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 class EvolutionGoAdapter(BaseChannelAdapter):
     """
-    Adapter for Evolution Go (unofficial Whatsmeow client).
-    Provides 100% free-of-cost WhatsApp messaging for development, testing, and SMB pilots.
+    Adapter for Evolution Go (Whatsmeow client).
+    Provides WhatsApp messaging for the GlimsTech AI Healthcare Platform.
     """
-    def __init__(self, instance_name: str = "hospital-assistant", api_url: Optional[str] = None, api_key: Optional[str] = None):
+    def __init__(self, instance_name: str = "alpha-clinic", api_url: Optional[str] = None, api_key: Optional[str] = None):
         self.instance_name = instance_name
-        self.api_url = api_url or getattr(settings, "EVOLUTION_API_URL", "http://localhost:4000")
-        self.api_key = api_key or getattr(settings, "EVOLUTION_GLOBAL_API_KEY", "63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65")
+        self.api_url = (api_url or getattr(settings, "EVOLUTION_API_URL", "http://evolution-go:4000")).rstrip("/")
+        self.api_key = api_key or getattr(settings, "EVOLUTION_API_KEY", "bizflow_evolution_api_key_2026")
+        self._cached_instance_token: Optional[str] = None
 
     def normalize_inbound(self, payload: Dict[str, Any]) -> Optional[NormalizedInboundMessage]:
         body = payload.get("body", payload)
@@ -78,12 +82,45 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             raw_payload=payload
         )
 
+    def get_instance_token(self) -> str:
+        """
+        Resolves the instance token for this instance.
+        Evolution Go's /send/text requires the instance token in the 'apikey' header.
+        We fetch it using the global API key from /instance/all.
+        """
+        if self._cached_instance_token:
+            return self._cached_instance_token
+
+        try:
+            url = f"{self.api_url}/instance/all"
+            headers = {"apikey": self.api_key}
+            with httpx.Client(timeout=4.0) as client:
+                res = client.get(url, headers=headers)
+                if res.is_success:
+                    instances = res.json().get("data", [])
+                    for inst in instances:
+                        if inst.get("name") == self.instance_name:
+                            self._cached_instance_token = inst.get("token")
+                            logger.info(f"Resolved token for Evolution instance '{self.instance_name}'")
+                            return self._cached_instance_token
+                    # If only 1 instance exists in Evolution GO, use its token
+                    if len(instances) == 1 and instances[0].get("token"):
+                        self._cached_instance_token = instances[0].get("token")
+                        logger.info(f"Using single active instance token from '{instances[0].get('name')}'")
+                        return self._cached_instance_token
+        except Exception as e:
+            logger.warning(f"Failed to query instance token from {self.api_url}/instance/all: {e}")
+
+        return self.api_key
+
     def send_text_message(self, recipient_phone: str, text: str, **kwargs) -> Dict[str, Any]:
         """Sends WhatsApp text message via Evolution Go API."""
         clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
         url = f"{self.api_url}/send/text"
+        
+        token = self.get_instance_token()
         headers = {
-            "apikey": self.api_key,
+            "apikey": token,
             "Content-Type": "application/json"
         }
         body = {
@@ -93,12 +130,21 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         try:
             with httpx.Client(timeout=10.0) as client:
                 resp = client.post(url, json=body, headers=headers)
+                
+                # If 401 Unauthorized, retry once with global API key
+                if resp.status_code == 401 and token != self.api_key:
+                    logger.warning("Token unauthorized on /send/text, retrying with global API key...")
+                    headers["apikey"] = self.api_key
+                    resp = client.post(url, json=body, headers=headers)
+
+                logger.info(f"Evolution sendText to {clean_phone} -> HTTP {resp.status_code}")
                 return {
                     "success": resp.is_success,
                     "status_code": resp.status_code,
                     "response": resp.json() if resp.is_success else resp.text
                 }
         except Exception as e:
+            logger.error(f"Failed to send text message via Evolution Go ({url}): {e}")
             return {
                 "success": False,
                 "status_code": 500,
@@ -107,7 +153,7 @@ class EvolutionGoAdapter(BaseChannelAdapter):
 
     def get_connection_status(self) -> Dict[str, Any]:
         url = f"{self.api_url}/instance/status"
-        headers = {"apikey": self.api_key}
+        headers = {"apikey": self.get_instance_token()}
         try:
             with httpx.Client(timeout=5.0) as client:
                 resp = client.get(url, headers=headers)

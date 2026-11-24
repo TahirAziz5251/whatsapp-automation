@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     GROQ_TIMEOUT_SECONDS: int = 30
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     
+    # Evolution Go WhatsApp Gateway
+    EVOLUTION_API_URL: str = "http://evolution-go:4000"
+    EVOLUTION_API_KEY: str = "bizflow_evolution_api_key_2026"
+    EVOLUTION_GLOBAL_API_KEY: str = "bizflow_evolution_api_key_2026"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

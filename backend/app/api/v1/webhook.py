@@ -33,21 +33,28 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
+    logger.info(f"Received Evolution webhook: event={payload.get('event')}, instance={payload.get('instance') or payload.get('instanceName')}")
+
     result = ChannelService.process_inbound_webhook(
         provider="EVOLUTION_GO",
         payload=payload,
         db=db
     )
 
-    if result.get("status") == "PROCESSED" and not result.get("ai_paused"):
+    if result.get("status") != "PROCESSED":
+        logger.info(f"Webhook discarded or skipped: status={result.get('status')}, reason={result.get('reason')}")
+        return result
+
+    if not result.get("ai_paused"):
         user_text = result.get("text", "")
         customer_phone = result.get("customer_phone", "")
         tenant_id = result.get("tenant_id")
         conversation_id = result.get("conversation_id")
         instance_name = result.get("instance_name") or "alpha-clinic"
 
+        logger.info(f"Processing inbound message from {customer_phone} (Instance: {instance_name}): '{user_text}'")
+
         # 1. Medical Emergency Language Interception (Rescue 1122)
-        # Never diagnose, prescribe, or treat; immediately redirect to emergency services
         emergency_pattern = r"\b(1122|emergency|heart attack|chest pain|stroke|unconscious|behosh|khoon|bleeding|severe pain|breath|saans|choking|accident)\b"
         if re.search(emergency_pattern, user_text, re.IGNORECASE):
             emergency_reply = (
@@ -59,7 +66,8 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
             )
             try:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
-                adapter.send_text_message(recipient_phone=customer_phone, text=emergency_reply)
+                send_res = adapter.send_text_message(recipient_phone=customer_phone, text=emergency_reply)
+                logger.info(f"Emergency advisory dispatched to {customer_phone}: {send_res}")
             except Exception as e:
                 logger.error(f"Failed to dispatch emergency WhatsApp message: {e}")
 
@@ -97,7 +105,8 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                     "Hamara staff jald hi aap se is number par rabta karega. Shukriya!"
                 )
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
-                adapter.send_text_message(recipient_phone=customer_phone, text=handoff_reply)
+                send_res = adapter.send_text_message(recipient_phone=customer_phone, text=handoff_reply)
+                logger.info(f"Human handoff message dispatched to {customer_phone}: {send_res}")
                 result["reply_sent"] = handoff_reply
                 result["human_handoff"] = True
                 return result
@@ -119,11 +128,12 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
             if reply_text:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
                 send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
+                logger.info(f"AI response dispatched to {customer_phone}: {send_res.get('status_code')} | Success: {send_res.get('success')}")
                 result["reply_sent"] = reply_text
                 result["send_status"] = send_res.get("success", False)
                 result["tools_executed"] = ai_turn.get("tools_executed", [])
         except Exception as e:
-            logger.error(f"Error executing AI supervisor turn for WhatsApp inbound: {e}")
+            logger.error(f"Error executing AI supervisor turn for WhatsApp inbound: {e}", exc_info=True)
 
     return result
 
@@ -134,18 +144,17 @@ def meta_webhook_verification(
     hub_verify_token: str = Query(None, alias="hub.verify_token")
 ):
     """
-    Meta Webhook Challenge Verification Endpoint.
     Used by Meta Graph API during initial webhook URL subscription.
     """
-    # Accept any verify token in development or test mode
-    if hub_mode == "subscribe" and hub_challenge:
-        return Response(content=hub_challenge, media_type="text/plain")
-    raise HTTPException(status_code=403, detail="Verification token mismatch")
+    expected_token = getattr(settings, "META_WEBHOOK_VERIFY_TOKEN", "bizflow_meta_verify_2026")
+    if hub_mode == "subscribe" and hub_verify_token == expected_token:
+        return Response(content=hub_challenge, media_type="text/plain", status_code=status.HTTP_200_OK)
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Verification token mismatch")
 
 @router.post("/whatsapp/meta", tags=["WhatsApp Webhook"])
 async def meta_whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
     """
-    Webhook Ingress Endpoint for official Meta WhatsApp Cloud API.
+    Webhook Ingress Endpoint for Meta Cloud API (Official WhatsApp Business API).
     """
     try:
         payload = await request.json()
@@ -153,42 +162,8 @@ async def meta_whatsapp_webhook(request: Request, db: Session = Depends(get_db))
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
     result = ChannelService.process_inbound_webhook(
-        provider="META_CLOUD_API",
+        provider="META_CLOUD",
         payload=payload,
         db=db
     )
-    return result
-
-@router.post("/outbox/enqueue", tags=["Outbox Queue"])
-def enqueue_outbound_message(
-    payload: EnqueueMessageRequest,
-    x_tenant_id: str = Query(..., alias="tenant_id"),
-    db: Session = Depends(get_db)
-):
-    """Enqueues an outbound message in the transactional outbox."""
-    try:
-        tenant_uuid = UUID(x_tenant_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid tenant_id format")
-
-    outbox = ChannelService.enqueue_outbound_message(
-        tenant_id=tenant_uuid,
-        channel_connection_id=payload.channel_connection_id,
-        recipient_phone=payload.recipient_phone,
-        text_content=payload.text,
-        db=db
-    )
-    return {
-        "status": "ENQUEUED",
-        "outbox_id": str(outbox.id),
-        "status_state": outbox.status,
-        "recipient_phone": outbox.recipient_phone
-    }
-
-@router.post("/outbox/dispatch/{outbox_id}", tags=["Outbox Queue"])
-def dispatch_outbound_message(outbox_id: UUID, db: Session = Depends(get_db)):
-    """Triggers delivery dispatch for a specific outbox record."""
-    result = ChannelService.dispatch_outbox_message(outbox_id=outbox_id, db=db)
-    if not result.get("success") and result.get("error") == "Outbox record not found":
-        raise HTTPException(status_code=404, detail="Outbox message not found")
     return result
