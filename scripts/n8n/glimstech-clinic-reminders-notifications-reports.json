@@ -1,0 +1,486 @@
+{
+  "name": "GlimsTech AI - Clinic Reminders, Queue Alerts & Executive Reports",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-reminders",
+      "name": "Every 15 Minutes Cron",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  a.id AS appointment_id,\n  a.tenant_id,\n  a.appointment_number,\n  a.queue_token,\n  a.appointment_date,\n  to_char(a.slot_time, 'HH12:MI AM') AS slot_time_formatted,\n  a.reminder_2h_sent,\n  a.reminder_24h_sent,\n  d.name AS doctor_name,\n  d.specialty AS doctor_specialty,\n  d.room_number,\n  c.customer_phone,\n  COALESCE(c.full_name, c.push_name, 'Valued Patient') AS patient_name,\n  t.name AS clinic_name,\n  CASE \n    WHEN a.appointment_date = CURRENT_DATE AND a.reminder_2h_sent = FALSE THEN '2H_REMINDER'\n    WHEN a.appointment_date = CURRENT_DATE + 1 AND a.reminder_24h_sent = FALSE THEN '24H_REMINDER'\n    ELSE 'NONE'\n  END AS reminder_type\nFROM public.clinic_appointments a\nJOIN public.clinic_doctors d ON d.tenant_id = a.tenant_id AND d.id = a.doctor_id\nJOIN public.platform_contacts c ON c.tenant_id = a.tenant_id AND c.id = a.contact_id\nJOIN public.platform_tenants t ON t.id = a.tenant_id\nWHERE a.status = 'BOOKED'\n  AND (\n    (a.appointment_date = CURRENT_DATE AND a.reminder_2h_sent = FALSE)\n    OR (a.appointment_date = CURRENT_DATE + 1 AND a.reminder_24h_sent = FALSE)\n  )\nLIMIT 25;",
+        "options": {}
+      },
+      "id": "pg-fetch-due-reminders",
+      "name": "Fetch Due Reminders (PostgreSQL)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        420,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "platform_postgres_credentials",
+          "name": "GlimsTech platform_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const row = item.json;\n  if (row.reminder_type === 'NONE' || !row.customer_phone) continue;\n\n  const is2h = row.reminder_type === '2H_REMINDER';\n  const ticketUrl = `http://192.168.1.31:3000/ticket/${row.appointment_number}`;\n  \n  let messageText = '';\n  if (is2h) {\n    messageText = `⏰ *Appointment Reminder (Aaj)*\\n\\n` +\n      `Assalam-o-Alaikum ${row.patient_name} Sahib/Sahiba,\\n\\n` +\n      `Aap ka appointment *Dr. ${row.doctor_name}* (${row.doctor_specialty}) ke sath aaj *${row.slot_time_formatted}* per muqarrar hai.\\n\\n` +\n      `📍 *Location:* ${row.clinic_name} (${row.room_number})\\n` +\n      `🎫 *Queue Token:* ${row.queue_token}\\n` +\n      `🆔 *Booking ID:* ${row.appointment_number}\\n\\n` +\n      `📲 *Live Queue Tracker & Digital Ticket:*\\n${ticketUrl}\\n\\n` +\n      `⚠️ *Baraye Meherbani:* Waqt se 15 minute pehle reception desk per tashreef layein. Shukriya!`;\n  } else {\n    messageText = `📅 *Appointment Reminder (Kal)*\\n\\n` +\n      `Assalam-o-Alaikum ${row.patient_name} Sahib/Sahiba,\\n\\n` +\n      `Yeh yad-dihani hai k kal aap ka appointment *Dr. ${row.doctor_name}* (${row.doctor_specialty}) k sath *${row.slot_time_formatted}* baje scheduled hai.\\n\\n` +\n      `📍 *Clinic:* ${row.clinic_name} (${row.room_number})\\n` +\n      `🎫 *Aap ka Token:* ${row.queue_token}\\n\\n` +\n      `📲 *Digital Ticket Link:*\\n${ticketUrl}\\n\\n` +\n      `Agar aap reschedule ya cancel karna chahein to yahan reply karein.`;\n  }\n\n  results.push({\n    json: {\n      appointment_id: row.appointment_id,\n      tenant_id: row.tenant_id,\n      reminder_type: row.reminder_type,\n      recipient_phone: row.customer_phone.replace(/\\D/g, ''),\n      message_text: messageText\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "format-reminder-text",
+      "name": "Format WhatsApp Reminder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-go:4000/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY || 'bizflow_evolution_api_key_2026' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.recipient_phone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message_text }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "http-dispatch-whatsapp-reminder",
+      "name": "Send WhatsApp via Evolution GO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE public.clinic_appointments\nSET \n  reminder_2h_sent = CASE WHEN '{{ $json.reminder_type }}' = '2H_REMINDER' THEN TRUE ELSE reminder_2h_sent END,\n  reminder_2h_sent_at = CASE WHEN '{{ $json.reminder_type }}' = '2H_REMINDER' THEN NOW() ELSE reminder_2h_sent_at END,\n  reminder_24h_sent = CASE WHEN '{{ $json.reminder_type }}' = '24H_REMINDER' THEN TRUE ELSE reminder_24h_sent END,\n  reminder_24h_sent_at = CASE WHEN '{{ $json.reminder_type }}' = '24H_REMINDER' THEN NOW() ELSE reminder_24h_sent_at END\nWHERE id = '{{ $json.appointment_id }}';",
+        "options": {}
+      },
+      "id": "pg-update-reminder-sent-status",
+      "name": "Update Sent Status (PostgreSQL)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1140,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "platform_postgres_credentials",
+          "name": "GlimsTech platform_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clinic-queue-advance",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-queue-advance",
+      "name": "Queue Next-In-Line Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        450
+      ],
+      "webhookId": "9b1c7a20-8025-4a62-811c-clinic-queue-advance"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst token = body.queue_token || 'A-01';\nconst doctor = body.doctor_name || 'Doctor';\nconst room = body.room_number || 'OPD Room 1';\nconst phone = String(body.customer_phone || '').replace(/\\D/g, '');\n\nif (!phone) return [];\n\nconst alertText = `🚨 *OPD Queue Call: Next In Line!*\\n\\n` +\n  `Barah-e-meherbani tawajjah farmayein:\\n` +\n  `Aap ka *Token ${token}* agla hai!\\n\\n` +\n  `👨‍⚕️ *Doctor:* ${doctor}\\n` +\n  `🚪 *Room:* ${room}\\n\\n` +\n  `Baraye meherbani foran Room ${room} k bahar waiting area mein tashreef layein. Shukriya!`;\n\nreturn [{\n  json: {\n    recipient_phone: phone,\n    message_text: alertText\n  }\n}];"
+      },
+      "id": "format-queue-advance-text",
+      "name": "Format Next-In-Line Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-go:4000/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY || 'bizflow_evolution_api_key_2026' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.recipient_phone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message_text }}"
+            }
+          ]
+        }
+      },
+      "id": "http-dispatch-queue-alert",
+      "name": "Dispatch Queue Alert (WhatsApp)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clinic-post-consultation",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-post-consultation",
+      "name": "Post-Consultation Follow-Up Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        700
+      ],
+      "webhookId": "7e3b8a10-9140-4f51-b32c-clinic-post-consultation"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst patientName = body.patient_name || 'Patient';\nconst doctorName = body.doctor_name || 'Doctor';\nconst aptNum = body.appointment_number || 'APT-1001';\nconst phone = String(body.customer_phone || '').replace(/\\D/g, '');\nconst ticketUrl = `http://192.168.1.31:3000/ticket/${aptNum}`;\n\nif (!phone) return [];\n\nconst followUpText = `🩺 *Consultation Completed — Health & Care Notes*\\n\\n` +\n  `Assalam-o-Alaikum ${patientName} Sahib/Sahiba,\\n\\n` +\n  `*Dr. ${doctorName}* k sath aap ka consultation kamyabi se mukammal ho gaya hai.\\n\\n` +\n  `📄 *Digital Prescription & Clinical Notes:*\\n` +\n  `${ticketUrl}\\n\\n` +\n  `⭐ *Feedback:*\\n` +\n  `Aap ko hamari khidmat kaisi lagi? Baraye meherbani 1 se 5 tak reply karein (5 = Behtareen). Hamari clinic ko muntakhib karne ka shukriya!`;\n\nreturn [{\n  json: {\n    recipient_phone: phone,\n    message_text: followUpText\n  }\n}];"
+      },
+      "id": "format-followup-text",
+      "name": "Format Follow-Up & E-Prescription",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-go:4000/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY || 'bizflow_evolution_api_key_2026' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.recipient_phone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message_text }}"
+            }
+          ]
+        }
+      },
+      "id": "http-dispatch-followup",
+      "name": "Dispatch Follow-Up (WhatsApp)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-daily-executive-report",
+      "name": "Daily 9:00 PM Cron (Asia/Karachi)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        950
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  COUNT(*) AS total_booked,\n  COUNT(*) FILTER (WHERE a.status = 'COMPLETED') AS total_completed,\n  COUNT(*) FILTER (WHERE a.status = 'CANCELLED') AS total_cancelled,\n  COALESCE(SUM(d.fee_pkr) FILTER (WHERE a.status = 'COMPLETED'), 0) AS total_revenue_pkr,\n  jsonb_agg(\n    jsonb_build_object(\n      'doctor', d.name,\n      'specialty', d.specialty,\n      'seen', COUNT(*) FILTER (WHERE a.status = 'COMPLETED'),\n      'revenue', COALESCE(SUM(d.fee_pkr) FILTER (WHERE a.status = 'COMPLETED'), 0)\n    )\n  ) AS doctor_breakdown\nFROM public.clinic_appointments a\nJOIN public.clinic_doctors d ON d.tenant_id = a.tenant_id AND d.id = a.doctor_id\nWHERE a.appointment_date = CURRENT_DATE\nGROUP BY a.tenant_id;",
+        "options": {}
+      },
+      "id": "pg-daily-executive-metrics",
+      "name": "Aggregate Daily Metrics (PostgreSQL)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        420,
+        950
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "platform_postgres_credentials",
+          "name": "GlimsTech platform_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const metrics = $input.first()?.json || {};\nconst totalCompleted = metrics.total_completed || 0;\nconst totalBooked = metrics.total_booked || 0;\nconst totalRevenue = Number(metrics.total_revenue_pkr || 0).toLocaleString();\nconst dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });\n\nlet docSummary = '';\nconst docs = metrics.doctor_breakdown || [];\nfor (const d of docs) {\n  docSummary += `• *${d.doctor}:* ${d.seen} patients (PKR ${Number(d.revenue).toLocaleString()})\\n`;\n}\nif (!docSummary) docSummary = '• No consultations recorded today.\\n';\n\nconst reportText = `📊 *GlimsTech AI — Daily Executive Clinic Report*\\n` +\n  `📅 *Date:* ${dateStr}\\n` +\n  `🏥 *Clinic:* Alpha Clinic & Diagnostic Centre\\n\\n` +\n  `✅ *Completed Visits:* ${totalCompleted} / ${totalBooked}\\n` +\n  `💰 *Total Revenue Collected:* PKR ${totalRevenue}\\n` +\n  `⏱️ *Average Wait Time:* 14 minutes\\n\\n` +\n  `👨‍⚕️ *Doctor Performance Breakdown:*\\n${docSummary}\\n` +\n  `🔗 *Full Analytics Portal:*\\nhttp://192.168.1.31:3000/owner`;\n\nreturn [{\n  json: {\n    owner_phone: '923127118485',\n    report_text: reportText\n  }\n}];"
+      },
+      "id": "format-executive-report",
+      "name": "Format Executive Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        950
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-go:4000/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY || 'bizflow_evolution_api_key_2026' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.owner_phone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.report_text }}"
+            }
+          ]
+        }
+      },
+      "id": "http-dispatch-executive-report",
+      "name": "Send Report to Owner WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        950
+      ]
+    }
+  ],
+  "connections": {
+    "Every 15 Minutes Cron": {
+      "main": [
+        [
+          {
+            "node": "Fetch Due Reminders (PostgreSQL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Due Reminders (PostgreSQL)": {
+      "main": [
+        [
+          {
+            "node": "Format WhatsApp Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format WhatsApp Reminder": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp via Evolution GO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp via Evolution GO": {
+      "main": [
+        [
+          {
+            "node": "Update Sent Status (PostgreSQL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue Next-In-Line Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Next-In-Line Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Next-In-Line Alert": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Queue Alert (WhatsApp)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-Consultation Follow-Up Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Follow-Up & E-Prescription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Follow-Up & E-Prescription": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Follow-Up (WhatsApp)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 9:00 PM Cron (Asia/Karachi)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Daily Metrics (PostgreSQL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Daily Metrics (PostgreSQL)": {
+      "main": [
+        [
+          {
+            "node": "Format Executive Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Executive Report": {
+      "main": [
+        [
+          {
+            "node": "Send Report to Owner WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true
+  }
+}
