@@ -1120,7 +1120,12 @@ def get_owner_analytics_db(
     # 5. Real Provider & Infrastructure Telemetry (Never Fake Success Indicators)
     from app.models.tenant import ChannelConnection
     from app.models.communication import TenantOutboxMessage
-    conn = db.query(ChannelConnection).filter(ChannelConnection.tenant_id == tenant_uuid).first()
+    conn = db.query(ChannelConnection).filter(
+        ChannelConnection.tenant_id == tenant_uuid,
+        ChannelConnection.phone_number_id == "alpha-clinic"
+    ).first() or db.query(ChannelConnection).filter(
+        ChannelConnection.tenant_id == tenant_uuid
+    ).first()
 
     outbox_q = db.query(TenantOutboxMessage).filter(TenantOutboxMessage.tenant_id == tenant_uuid)
     total_outbox = outbox_q.count()

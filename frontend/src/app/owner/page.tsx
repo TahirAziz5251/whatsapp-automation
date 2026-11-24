@@ -52,6 +52,7 @@ export default function OwnerDashboard() {
   // Filter for booking ledger in UI
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showAuditNotice, setShowAuditNotice] = useState<boolean>(true);
 
   const loadData = useCallback(async () => {
     try {
@@ -326,9 +327,17 @@ export default function OwnerDashboard() {
       </div>
 
       {errorMsg && (
-        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-3.5 text-xs text-rose-800 dark:text-rose-300 font-semibold flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-          <span>{errorMsg}</span>
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-3.5 text-xs text-rose-800 dark:text-rose-300 font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            onClick={() => loadData()}
+            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+          >
+            Retry Sync
+          </button>
         </div>
       )}
 
@@ -431,12 +440,23 @@ export default function OwnerDashboard() {
             </div>
 
             {/* Strict Regulatory / Audit Notice */}
-            <div className="mt-4 p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/40 rounded-xl text-xs text-amber-800 dark:text-amber-300 font-medium flex items-start gap-2">
-              <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-              <span>
-                <strong>Audit Rule:</strong> No-show and utilization baselines cannot be treated as proof of business improvement until recorded and compared in production over a minimum 14-day sample.
-              </span>
-            </div>
+            {showAuditNotice && (
+              <div className="mt-4 p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/40 rounded-xl text-xs text-amber-800 dark:text-amber-300 font-medium flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2">
+                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                  <span>
+                    <strong>Clinical Governance Audit Rule:</strong> No-show and utilization baselines cannot be treated as verified proof of business improvement until recorded and compared in production over a minimum 14-day sample (currently in <em>Baseline Calibration Phase</em>).
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowAuditNotice(false)}
+                  className="text-amber-600 hover:text-amber-800 dark:text-amber-300 text-xs px-1.5 py-0.5 rounded cursor-pointer shrink-0"
+                  title="Dismiss notification"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Real Infrastructure, WhatsApp Provider & Outbox Telemetry (Never Fake Success Indicators) */}
