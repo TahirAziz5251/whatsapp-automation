@@ -244,8 +244,14 @@ def execute_tool(
     args["tenant_id"] = str(tenant_id)
     if db is not None:
         args["db"] = db
-    if customer_phone and "patient_phone" not in args:
-        args["patient_phone"] = customer_phone
+    if customer_phone:
+        # Enforce verified incoming WhatsApp caller number as authoritative patient_phone
+        # unless an explicit valid 10+ digit alternate phone was explicitly provided
+        explicit_phone = "".join(filter(str.isdigit, str(args.get("patient_phone") or "")))
+        if len(explicit_phone) >= 10:
+            args["patient_phone"] = explicit_phone
+        else:
+            args["patient_phone"] = customer_phone
 
     try:
         result = handler(**args)
