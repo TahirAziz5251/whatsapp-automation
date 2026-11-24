@@ -503,7 +503,7 @@ services:
       POSTGRES_AUTH_DB: "postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}@wa-postgres:5432/evogo_auth?sslmode=disable"
       POSTGRES_USERS_DB: "postgresql://evolution_app:${EVOLUTION_DB_PASSWORD:-bizflow_evo_db_pass_2026}@wa-postgres:5432/evogo_users?sslmode=disable"
       DATABASE_SAVE_MESSAGES: "false"
-      CONNECT_ON_STARTUP: ${EVOLUTION_CONNECT_ON_STARTUP:-false}
+      CONNECT_ON_STARTUP: ${EVOLUTION_CONNECT_ON_STARTUP:-true}
       WEBHOOK_URL: ${WEBHOOK_URL:-http://backend:8000/api/v1/channels/whatsapp/evolution}
       WEBHOOK_FILES: "true"
       EVENT_IGNORE_GROUP: "false"
