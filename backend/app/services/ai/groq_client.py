@@ -105,18 +105,62 @@ class GroqClient:
             lang = lang_info["language"]
 
             if result_data.get("status") == "CONFIRMED":
-                # Booking confirmation
-                apt_id = result_data.get("appointment_id", "APT-1001")
+                # Authoritative Booking confirmation from PostgreSQL
+                apt_id = result_data.get("appointment_number") or result_data.get("appointment_id", "APT-1001")
                 token = result_data.get("queue_token", "T-01")
                 doc = result_data.get("doctor_name", "Doctor")
+                spec = result_data.get("specialty", "Consultant")
+                room = result_data.get("room_number", "OPD Room 1")
                 slot = result_data.get("slot_time", "11:00 AM")
+                apt_date = result_data.get("appointment_date", "Today")
+                fee = result_data.get("fee_pkr", 2500)
+                ticket_url = f"http://192.168.1.31:3000/ticket/{apt_id}"
 
                 if lang == "ROMAN_URDU":
-                    content = f"Jee aap ka appointment {doc} k sath kamyabi se book ho gaya hai! Aap ka Token Number {token} hai aur Appointment ID {apt_id} hai. Bara-e-meherbani waqt se 15 minute pehle tashreef layein. Shukriya!"
+                    content = (
+                        f"✅ *Appointment Confirmed!*\n\n"
+                        f"🏥 *Alpha Clinic & Diagnostic Centre*\n"
+                        f"👨‍⚕️ *Doctor:* {doc} ({spec})\n"
+                        f"📅 *Date:* {apt_date}\n"
+                        f"⏰ *Time:* {slot}\n"
+                        f"🚪 *Room:* {room}\n"
+                        f"🎫 *Queue Token:* {token}\n"
+                        f"🆔 *Booking ID:* {apt_id}\n"
+                        f"💵 *Consultation Fee:* PKR {fee:,.0f}\n\n"
+                        f"📲 *Live Queue Tracking & Digital Ticket:*\n"
+                        f"{ticket_url}\n\n"
+                        f"⚠️ *Important:* Barah-e-meherbani waqt se 15 minute pehle reception counter par tashreef layein. Shukriya!"
+                    )
                 elif lang == "URDU":
-                    content = f"جی آپ کا اپائنٹمنٹ {doc} کے ساتھ کامیابی سے طے ہو گیا ہے! آپ کا ٹوکن نمبر {token} ہے اور اپائنٹمنٹ آئی ڈی {apt_id} ہے۔ برائے مہربانی 15 منٹ پہلے تشریف لائیں۔ شکریہ!"
+                    content = (
+                        f"✅ *اپائنٹمنٹ بک ہو گئی ہے!*\n\n"
+                        f"🏥 *الفا کلینک اینڈ ڈائیگنوسٹک سینٹر*\n"
+                        f"👨‍⚕️ *ڈاکٹر:* {doc} ({spec})\n"
+                        f"📅 *تاریخ:* {apt_date}\n"
+                        f"⏰ *وقت:* {slot}\n"
+                        f"🚪 *کمرہ نمبر:* {room}\n"
+                        f"🎫 *ٹوکن نمبر:* {token}\n"
+                        f"🆔 *بکنگ آئی ڈی:* {apt_id}\n"
+                        f"💵 *فیس:* PKR {fee:,.0f}\n\n"
+                        f"📲 *لائیو ٹوکن اور ٹریکنگ لنک:*\n"
+                        f"{ticket_url}\n\n"
+                        f"⚠️ *نوٹ:* برائے مہربانی اپنے وقت سے 15 منٹ پہلے تشریف لائیں۔ شکریہ!"
+                    )
                 else:
-                    content = f"Your appointment with {doc} has been successfully confirmed for {slot}! Your Token Number is {token} (ID: {apt_id}). Please arrive 15 minutes before your slot."
+                    content = (
+                        f"✅ *Appointment Confirmed!*\n\n"
+                        f"🏥 *Alpha Clinic & Diagnostic Centre*\n"
+                        f"👨‍⚕️ *Doctor:* {doc} ({spec})\n"
+                        f"📅 *Date:* {apt_date}\n"
+                        f"⏰ *Time:* {slot}\n"
+                        f"🚪 *Room:* {room}\n"
+                        f"🎫 *Queue Token:* {token}\n"
+                        f"🆔 *Booking ID:* {apt_id}\n"
+                        f"💵 *Fee:* PKR {fee:,.0f}\n\n"
+                        f"📲 *Live Digital Ticket & Queue Tracker:*\n"
+                        f"{ticket_url}\n\n"
+                        f"⚠️ *Note:* Please arrive 15 minutes before your scheduled slot. Present your token number at the reception desk."
+                    )
 
             elif "doctors" in result_data:
                 # Doctor schedule
@@ -124,16 +168,17 @@ class GroqClient:
                 if docs:
                     doc = docs[0]
                     name = doc.get("name")
+                    spec = doc.get("specialty", "Specialist")
                     hours = doc.get("consulting_hours")
                     fee = doc.get("fee")
                     slots = ", ".join(doc.get("open_slots", [])[:3])
 
                     if lang == "ROMAN_URDU":
-                        content = f"Jee zaroor! {name} OPD mein dastiyab hain. Un k timings {hours} hain aur fees {fee} hai. Open slots yeh hain: {slots}. Kya main aap k liye slot book kar doon?"
+                        content = f"Jee zaroor! {name} ({spec}) OPD mein dastiyab hain. Un k timings {hours} hain aur consultation fees {fee} hai. Open slots: {slots}. Kya main aap k liye appointment book kar doon?"
                     elif lang == "URDU":
-                        content = f"جی بالکل! {name} دستیاب ہیں۔ ان کے اوقات {hours} ہیں اور فیس {fee} ہے۔ کیا میں آپ کا وقت بک کر دوں؟"
+                        content = f"جی بالکل! {name} ({spec}) دستیاب ہیں۔ ان کے اوقات {hours} ہیں اور فیس {fee} ہے۔ دستیاب سلاٹس: {slots}۔ کیا میں آپ کی اپائنٹمنٹ بک کر دوں؟"
                     else:
-                        content = f"Yes, {name} is available ({hours}). Consultation fee is {fee}. Available slots: {slots}. Would you like me to book an appointment for you?"
+                        content = f"Yes, {name} ({spec}) is available ({hours}). Consultation fee is {fee}. Available slots: {slots}. Would you like me to book this slot for you?"
                 else:
                     content = "Maazrat, is specialty k mutabiq koi doctor dastiyab nahi hain."
 
@@ -168,8 +213,15 @@ class GroqClient:
         user_text = last_msg.get("content", "").lower()
         tool_names = [t["function"]["name"] for t in (tools or [])]
 
+        from datetime import datetime
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
         # Prioritize explicit booking action over informational schedule lookup
-        if any(w in user_text for w in ["book", "appointment", "booking", "slot", "kar do"]) and "book_appointment" in tool_names:
+        if any(w in user_text for w in ["book", "appointment", "booking", "slot", "kar do", "chahiye", "mil sakta", "checkup", "dikhana"]) and "book_appointment" in tool_names:
+            target_doc = "Dr. Ayesha Malik" if "ayesha" in user_text else ("Dr. Bilal Asghar" if ("bilal" in user_text or "child" in user_text or "bacha" in user_text) else "Dr. Tariq Mahmood")
+            target_slot = "04:30 PM" if "ayesha" in user_text else ("06:15 PM" if "bilal" in user_text else "11:00 AM")
+            target_symptom = "Cardiology evaluation" if "tariq" in user_text else ("Pediatric consultation" if ("bilal" in user_text or "child" in user_text) else "General medical consultation")
+
             return {
                 "status": "SUCCESS",
                 "message": {
@@ -182,11 +234,11 @@ class GroqClient:
                             "function": {
                                 "name": "book_appointment",
                                 "arguments": json.dumps({
-                                    "patient_name": "Ahmed Khan",
-                                    "doctor_name": "Dr. Tariq Mahmood",
-                                    "date": "2026-11-22",
-                                    "slot_time": "11:00 AM",
-                                    "symptoms": "Routine checkup"
+                                    "patient_name": "Valued Patient",
+                                    "doctor_name": target_doc,
+                                    "date": today_str,
+                                    "slot_time": target_slot,
+                                    "symptoms": target_symptom
                                 })
                             }
                         }

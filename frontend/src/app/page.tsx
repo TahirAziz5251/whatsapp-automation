@@ -67,24 +67,24 @@ export default function HomePage() {
           </div>
         </Link>
 
-        {/* Patient WhatsApp Simulator */}
+        {/* Patient Live Link / Digital Ticket */}
         <Link
-          href="/patient"
-          className="group relative p-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-200/90 dark:border-slate-800/90 shadow-xl dark:shadow-slate-950/50 hover:shadow-2xl hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
+          href="/ticket/APT-202611-7B17E6"
+          className="group relative p-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-200/90 dark:border-slate-800/90 shadow-xl dark:shadow-slate-950/50 hover:shadow-2xl hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
         >
           <div>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center mb-4 shadow-lg shadow-teal-500/25 group-hover:scale-110 transition-transform">
-              <MessageSquare className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center mb-4 shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
+              <Activity className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-              Patient WhatsApp
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              Patient Live Ticket
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Interactive WhatsApp simulation: book appointments, generate tokens, and scan QR for live phone testing.
+              Mobile digital ticket sent to patient WhatsApp: dynamic queue position, live wait time, and room guide.
             </p>
           </div>
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center text-xs font-bold text-teal-600 dark:text-teal-400 group-hover:translate-x-1 transition-transform">
-            Open Patient Simulator <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center text-xs font-bold text-purple-600 dark:text-purple-400 group-hover:translate-x-1 transition-transform">
+            View Live Ticket Demo <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </div>
         </Link>
 

@@ -186,6 +186,7 @@ class ChannelService:
             "customer_phone": normalized.customer_phone,
             "push_name": normalized.push_name,
             "text": normalized.text,
+            "instance_name": normalized.instance_name,
             "ai_paused": conversation.ai_paused
         }
 
