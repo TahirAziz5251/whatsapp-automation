@@ -48,12 +48,18 @@ class EvolutionGoAdapter(BaseChannelAdapter):
 
         # 5. Extract message text
         msg_obj = data.get("Message") or data.get("message") or {}
-        text = str(
-            msg_obj.get("conversation") or 
-            msg_obj.get("extendedTextMessage", {}).get("text") or 
-            data.get("caption") or 
-            ""
-        ).strip()
+        if isinstance(msg_obj, str):
+            text = msg_obj.strip()
+        else:
+            text = str(
+                msg_obj.get("conversation") or 
+                msg_obj.get("extendedTextMessage", {}).get("text") or 
+                msg_obj.get("text") or
+                data.get("caption") or 
+                data.get("text") or
+                body.get("text") or
+                ""
+            ).strip()
         if not text:
             return None
 

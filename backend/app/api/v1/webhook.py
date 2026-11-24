@@ -21,6 +21,7 @@ class EnqueueMessageRequest(BaseModel):
     channel_connection_id: UUID
 
 @router.post("/whatsapp/evolution", tags=["WhatsApp Webhook"])
+@router.post("/evolution/webhook", tags=["WhatsApp Webhook"])
 async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
     """
     Webhook Ingress Endpoint for Evolution Go (Whatsmeow client).
