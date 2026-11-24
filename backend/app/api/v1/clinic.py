@@ -15,6 +15,8 @@ from app.services.clinic_service import (
     call_next_patient_db,
     start_consultation_db,
     complete_consultation_db,
+    assign_follow_up_task_db,
+    toggle_doctor_break_db,
     delay_broadcast_db,
     get_patient_ticket_db
 )
@@ -43,6 +45,16 @@ class CallNextRequest(BaseModel):
 class ConsultationActionRequest(BaseModel):
     appointment_id: str = Field(...)
     notes: Optional[str] = None
+    follow_up_task: Optional[str] = None
+
+class FollowUpTaskRequest(BaseModel):
+    appointment_id: str = Field(...)
+    task: str = Field(..., min_length=2, max_length=255)
+
+class DoctorBreakRequest(BaseModel):
+    doctor_id: str = Field(...)
+    on_break: bool = Field(...)
+    reason: Optional[str] = "Rest / Administrative break"
 
 class DelayBroadcastRequest(BaseModel):
     doctor_id: str = Field(...)
@@ -69,7 +81,9 @@ def list_doctors(
             "specialty": d.specialty,
             "qualification": d.qualification,
             "fee_pkr": float(d.fee_pkr),
-            "room_number": d.room_number
+            "room_number": d.room_number,
+            "is_on_break": bool(getattr(d, "is_on_break", False)),
+            "break_reason": getattr(d, "break_reason", None)
         }
         for d in doctors
     ]
@@ -101,7 +115,11 @@ def list_appointments(
             "appointment_date": a.appointment_date.strftime("%Y-%m-%d"),
             "slot_time": a.slot_time.strftime("%I:%M %p"),
             "status": a.status,
-            "symptoms": a.symptoms
+            "symptoms": a.symptoms,
+            "consultation_started_at": a.consultation_started_at.isoformat() if a.consultation_started_at else None,
+            "consultation_ended_at": a.consultation_ended_at.isoformat() if a.consultation_ended_at else None,
+            "consultation_duration_seconds": a.consultation_duration_seconds,
+            "follow_up_task": a.follow_up_task
         }
         for a in apts
     ]
@@ -193,14 +211,51 @@ async def complete_consultation(
     x_tenant_id: str = Header(..., alias="X-Tenant-ID"),
     db: Session = Depends(get_tenant_db)
 ):
-    """Doctor Dashboard: Completes visit and updates remaining patients' ETA."""
-    result = complete_consultation_db(db, x_tenant_id, payload.appointment_id, payload.notes)
+    """Doctor Dashboard: Completes visit, persists duration, and records audit log."""
+    task = payload.follow_up_task or payload.notes
+    result = complete_consultation_db(db, x_tenant_id, payload.appointment_id, task)
     if result.get("status") == "ERROR":
         raise HTTPException(status_code=404, detail=result.get("message"))
 
     await broadcaster.broadcast(
         tenant_id=x_tenant_id,
         event_type="CONSULTATION_COMPLETED",
+        data=result
+    )
+    return result
+
+@router.post("/doctor/follow-up-task")
+async def assign_follow_up_task(
+    payload: FollowUpTaskRequest,
+    x_tenant_id: str = Header(..., alias="X-Tenant-ID"),
+    db: Session = Depends(get_tenant_db)
+):
+    """Doctor Dashboard: Assigns non-clinical follow-up task."""
+    result = assign_follow_up_task_db(db, x_tenant_id, payload.appointment_id, payload.task)
+    if result.get("status") == "ERROR":
+        raise HTTPException(status_code=404, detail=result.get("message"))
+
+    await broadcaster.broadcast(
+        tenant_id=x_tenant_id,
+        event_type="FOLLOW_UP_TASK_ASSIGNED",
+        data=result
+    )
+    return result
+
+@router.post("/doctor/toggle-break")
+async def toggle_doctor_break(
+    payload: DoctorBreakRequest,
+    x_tenant_id: str = Header(..., alias="X-Tenant-ID"),
+    db: Session = Depends(get_tenant_db)
+):
+    """Doctor Dashboard: Toggles break / defers queue order with documented reason."""
+    result = toggle_doctor_break_db(db, x_tenant_id, payload.doctor_id, payload.on_break, payload.reason)
+    if result.get("status") == "ERROR":
+        raise HTTPException(status_code=404, detail=result.get("message"))
+
+    await broadcaster.broadcast(
+        tenant_id=x_tenant_id,
+        event_type="DOCTOR_BREAK_TOGGLED",
         data=result
     )
     return result

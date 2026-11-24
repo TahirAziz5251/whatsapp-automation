@@ -65,6 +65,12 @@ export const clinicApi = {
   completeConsultation: (appointmentId: string, notes?: string, tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi("/clinic/doctor/complete-consultation", { method: "POST", body: JSON.stringify({ appointment_id: appointmentId, notes }) }, tenantId),
 
+  assignFollowUpTask: (appointmentId: string, task: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi("/clinic/doctor/follow-up-task", { method: "POST", body: JSON.stringify({ appointment_id: appointmentId, task }) }, tenantId),
+
+  toggleDoctorBreak: (doctorId: string, onBreak: boolean, reason?: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi("/clinic/doctor/toggle-break", { method: "POST", body: JSON.stringify({ doctor_id: doctorId, on_break: onBreak, reason }) }, tenantId),
+
   broadcastDelay: (doctorId: string, delayMinutes: number, reason?: string, tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi("/clinic/queue/delay-broadcast", { method: "POST", body: JSON.stringify({ doctor_id: doctorId, delay_minutes: delayMinutes, reason }) }, tenantId),
 

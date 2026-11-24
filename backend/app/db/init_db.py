@@ -244,6 +244,8 @@ CREATE TABLE IF NOT EXISTS clinic_doctors (
     fee_pkr NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     room_number VARCHAR(30),
     is_active BOOLEAN DEFAULT TRUE,
+    is_on_break BOOLEAN DEFAULT FALSE,
+    break_reason VARCHAR(255),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (tenant_id, id)
@@ -276,7 +278,7 @@ CREATE TABLE IF NOT EXISTS clinic_appointments (
     appointment_date DATE NOT NULL,
     slot_time TIME NOT NULL,
     symptoms TEXT,
-    status VARCHAR(20) NOT NULL DEFAULT 'BOOKED' CHECK (status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW')),
+    status VARCHAR(20) NOT NULL DEFAULT 'BOOKED' CHECK (status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'CALLED', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW')),
     queue_token VARCHAR(30) NOT NULL,
     cancellation_reason TEXT,
     notes TEXT,
@@ -284,6 +286,10 @@ CREATE TABLE IF NOT EXISTS clinic_appointments (
     reminder_24h_sent_at TIMESTAMPTZ,
     reminder_2h_sent BOOLEAN DEFAULT FALSE,
     reminder_2h_sent_at TIMESTAMPTZ,
+    consultation_started_at TIMESTAMPTZ,
+    consultation_ended_at TIMESTAMPTZ,
+    consultation_duration_seconds INT,
+    follow_up_task VARCHAR(255),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (tenant_id, id),
@@ -292,11 +298,26 @@ CREATE TABLE IF NOT EXISTS clinic_appointments (
     CONSTRAINT fk_clinic_appointment_doctor FOREIGN KEY (tenant_id, doctor_id) REFERENCES clinic_doctors(tenant_id, id) ON DELETE RESTRICT
 );
 
--- Ensure reminder columns exist if table was already created in earlier runs
+-- Migrations for existing database
+ALTER TABLE clinic_doctors ADD COLUMN IF NOT EXISTS is_on_break BOOLEAN DEFAULT FALSE;
+ALTER TABLE clinic_doctors ADD COLUMN IF NOT EXISTS break_reason VARCHAR(255);
+
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent_at TIMESTAMPTZ;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent_at TIMESTAMPTZ;
+ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_started_at TIMESTAMPTZ;
+ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_ended_at TIMESTAMPTZ;
+ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_duration_seconds INT;
+ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS follow_up_task VARCHAR(255);
+
+DO $$
+BEGIN
+    ALTER TABLE clinic_appointments DROP CONSTRAINT IF EXISTS clinic_appointments_status_check;
+    ALTER TABLE clinic_appointments ADD CONSTRAINT clinic_appointments_status_check CHECK (status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'CALLED', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW'));
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_clinic_appointments_lookup ON clinic_appointments(tenant_id, doctor_id, appointment_date);
 CREATE INDEX IF NOT EXISTS idx_clinic_appointments_token ON clinic_appointments(tenant_id, queue_token);

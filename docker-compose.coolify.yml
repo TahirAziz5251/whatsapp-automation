@@ -295,6 +295,20 @@ services:
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent_at TIMESTAMPTZ;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent BOOLEAN DEFAULT FALSE;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent_at TIMESTAMPTZ;
+        ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_started_at TIMESTAMPTZ;
+        ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_ended_at TIMESTAMPTZ;
+        ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_duration_seconds INT;
+        ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS follow_up_task VARCHAR(255);
+        ALTER TABLE clinic_doctors ADD COLUMN IF NOT EXISTS is_on_break BOOLEAN DEFAULT FALSE;
+        ALTER TABLE clinic_doctors ADD COLUMN IF NOT EXISTS break_reason VARCHAR(255);
+
+        DO $$
+        BEGIN
+            ALTER TABLE clinic_appointments DROP CONSTRAINT IF EXISTS clinic_appointments_status_check;
+            ALTER TABLE clinic_appointments ADD CONSTRAINT clinic_appointments_status_check CHECK (status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'CALLED', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW'));
+        EXCEPTION
+            WHEN OTHERS THEN NULL;
+        END $$;
 
         CREATE TABLE IF NOT EXISTS clinic_live_queues (
             tenant_id UUID NOT NULL REFERENCES platform_tenants(id) ON DELETE CASCADE,

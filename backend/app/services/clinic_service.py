@@ -455,7 +455,9 @@ def call_next_patient_db(
     tenant_id: str,
     doctor_id: str
 ) -> Dict[str, Any]:
-    """Doctor Dashboard: Calls the next waiting patient in queue."""
+    """Doctor Dashboard: Calls the next waiting patient in queue.
+    Exactly one waiting visit is called per doctor; repeated taps never duplicate calls or notifications.
+    """
     db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
     tenant_uuid = uuid.UUID(str(tenant_id))
 
@@ -471,7 +473,56 @@ def call_next_patient_db(
 
     today = date.today()
 
-    # Find earliest CHECKED_IN patient waiting
+    # 1. Idempotency Check: Is a patient already in CALLED status?
+    existing_called = db.query(ClinicAppointment, PlatformContact).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == today,
+        ClinicAppointment.status == "CALLED"
+    ).first()
+
+    if existing_called:
+        apt, contact = existing_called
+        return {
+            "status": "ALREADY_CALLED",
+            "message": f"Token {apt.queue_token} is already called and awaiting entry. Repeat taps do not duplicate notifications.",
+            "appointment_id": str(apt.id),
+            "appointment_number": apt.appointment_number,
+            "queue_token": apt.queue_token,
+            "patient_name": contact.full_name or contact.push_name or "Patient",
+            "patient_phone": contact.customer_phone,
+            "doctor_name": doctor.name,
+            "room_number": doctor.room_number,
+            "symptoms": apt.symptoms,
+            "consultation_started_at": apt.consultation_started_at.isoformat() if apt.consultation_started_at else None
+        }
+
+    # 2. Check if a patient is actively IN_CONSULTATION
+    active_consulting = db.query(ClinicAppointment, PlatformContact).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.doctor_id == doctor.id,
+        ClinicAppointment.appointment_date == today,
+        ClinicAppointment.status == "IN_CONSULTATION"
+    ).first()
+
+    if active_consulting:
+        apt, contact = active_consulting
+        return {
+            "status": "CONSULTATION_IN_PROGRESS",
+            "message": f"Token {apt.queue_token} ({contact.full_name or 'Patient'}) is currently in consultation. Please complete visit before calling next.",
+            "appointment_id": str(apt.id),
+            "queue_token": apt.queue_token
+        }
+
+    # 3. Find earliest CHECKED_IN patient waiting
     next_apt = db.query(ClinicAppointment, PlatformContact).join(
         PlatformContact,
         (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
@@ -491,7 +542,7 @@ def call_next_patient_db(
         }
 
     apt, contact = next_apt
-    apt.status = "IN_CONSULTATION"
+    apt.status = "CALLED"
     apt.updated_at = datetime.now(timezone.utc)
 
     # Update Live Queue
@@ -505,6 +556,42 @@ def call_next_patient_db(
         queue.current_serving_token = apt.queue_token
         queue.current_serving_appointment_id = apt.id
 
+    # 4. Notify patient ONCE via WhatsApp outbox
+    from app.models.tenant import ChannelConnection
+    conn = db.query(ChannelConnection).filter(
+        ChannelConnection.tenant_id == tenant_uuid,
+        ChannelConnection.status == "CONNECTED"
+    ).first()
+
+    if conn and contact.customer_phone:
+        from app.models.communication import TenantOutboxMessage
+        outbox = TenantOutboxMessage(
+            tenant_id=tenant_uuid,
+            channel_connection_id=conn.id,
+            recipient_phone=contact.customer_phone,
+            message_type="text",
+            payload={
+                "text": f"Assalam-o-Alaikum {contact.full_name or 'Patient'}! Your token {apt.queue_token} has been called. Please proceed inside {doctor.name}'s cabin ({doctor.room_number or 'Room'}).",
+                "queue_call": True,
+                "token": apt.queue_token
+            },
+            status="PENDING"
+        )
+        db.add(outbox)
+
+    # 5. Persist Audit Event
+    from app.models.communication import TenantAuditEvent
+    audit = TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="USER",
+        actor_id=str(doctor.id),
+        action="PATIENT_CALLED",
+        resource_type="clinic_appointment",
+        resource_id=str(apt.id),
+        details={"queue_token": apt.queue_token, "doctor_name": doctor.name}
+    )
+    db.add(audit)
+
     db.commit()
 
     return {
@@ -516,7 +603,8 @@ def call_next_patient_db(
         "patient_phone": contact.customer_phone,
         "doctor_name": doctor.name,
         "room_number": doctor.room_number,
-        "symptoms": apt.symptoms
+        "symptoms": apt.symptoms,
+        "called_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -525,7 +613,7 @@ def start_consultation_db(
     tenant_id: str,
     appointment_id: str
 ) -> Dict[str, Any]:
-    """Doctor Dashboard: Explicitly sets consultation as active."""
+    """Doctor Dashboard: Starts consultation, marks visit in consultation and persists start timestamp."""
     db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
     tenant_uuid = uuid.UUID(str(tenant_id))
     apt_uuid = uuid.UUID(str(appointment_id))
@@ -538,14 +626,41 @@ def start_consultation_db(
     if not apt:
         return {"status": "ERROR", "message": "Appointment not found"}
 
+    now_utc = datetime.now(timezone.utc)
     apt.status = "IN_CONSULTATION"
-    apt.updated_at = datetime.now(timezone.utc)
+    if not apt.consultation_started_at:
+        apt.consultation_started_at = now_utc
+    apt.updated_at = now_utc
+
+    # Update queue
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == apt.doctor_id,
+        ClinicLiveQueue.queue_date == apt.appointment_date
+    ).first()
+    if queue:
+        queue.current_serving_token = apt.queue_token
+        queue.current_serving_appointment_id = apt.id
+
+    from app.models.communication import TenantAuditEvent
+    audit = TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="USER",
+        actor_id=str(apt.doctor_id),
+        action="CONSULTATION_STARTED",
+        resource_type="clinic_appointment",
+        resource_id=str(apt.id),
+        details={"queue_token": apt.queue_token, "consultation_started_at": apt.consultation_started_at.isoformat()}
+    )
+    db.add(audit)
+
     db.commit()
 
     return {
         "status": "IN_CONSULTATION",
         "appointment_id": str(apt.id),
-        "queue_token": apt.queue_token
+        "queue_token": apt.queue_token,
+        "consultation_started_at": apt.consultation_started_at.isoformat()
     }
 
 
@@ -553,9 +668,11 @@ def complete_consultation_db(
     db: Session,
     tenant_id: str,
     appointment_id: str,
-    notes: Optional[str] = None
+    follow_up_task: Optional[str] = None
 ) -> Dict[str, Any]:
-    """Doctor Dashboard: Completes consultation, updates queue and recalculates ETAs."""
+    """Doctor Dashboard: Ends consultation, updates queue, persists duration and creates audit log.
+    Strictly non-clinical: no diagnoses, prescriptions, lab orders or free-text clinical notes.
+    """
     db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
     tenant_uuid = uuid.UUID(str(tenant_id))
     apt_uuid = uuid.UUID(str(appointment_id))
@@ -568,10 +685,17 @@ def complete_consultation_db(
     if not apt:
         return {"status": "ERROR", "message": "Appointment not found"}
 
+    now_utc = datetime.now(timezone.utc)
     apt.status = "COMPLETED"
-    if notes:
-        apt.notes = notes
-    apt.updated_at = datetime.now(timezone.utc)
+    apt.consultation_ended_at = now_utc
+    if apt.consultation_started_at:
+        duration = int((now_utc - apt.consultation_started_at).total_seconds())
+    else:
+        duration = 0
+    apt.consultation_duration_seconds = max(0, duration)
+    if follow_up_task:
+        apt.follow_up_task = follow_up_task.strip()
+    apt.updated_at = now_utc
 
     # Increment total_completed in Queue
     queue = db.query(ClinicLiveQueue).filter(
@@ -582,6 +706,24 @@ def complete_consultation_db(
 
     if queue:
         queue.total_completed += 1
+        if queue.current_serving_appointment_id == apt.id:
+            queue.current_serving_appointment_id = None
+
+    from app.models.communication import TenantAuditEvent
+    audit = TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="USER",
+        actor_id=str(apt.doctor_id),
+        action="CONSULTATION_COMPLETED",
+        resource_type="clinic_appointment",
+        resource_id=str(apt.id),
+        details={
+            "queue_token": apt.queue_token,
+            "duration_seconds": apt.consultation_duration_seconds,
+            "follow_up_task": apt.follow_up_task
+        }
+    )
+    db.add(audit)
 
     db.commit()
 
@@ -590,8 +732,109 @@ def complete_consultation_db(
         "appointment_id": str(apt.id),
         "appointment_number": apt.appointment_number,
         "queue_token": apt.queue_token,
-        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": now_utc.isoformat(),
+        "duration_seconds": apt.consultation_duration_seconds,
+        "follow_up_task": apt.follow_up_task,
         "total_completed": queue.total_completed if queue else 1
+    }
+
+
+def assign_follow_up_task_db(
+    db: Session,
+    tenant_id: str,
+    appointment_id: str,
+    task: str
+) -> Dict[str, Any]:
+    """Doctor Dashboard: Assign non-clinical follow-up task (e.g. 2-week checkup, report collection)."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+    apt_uuid = uuid.UUID(str(appointment_id))
+
+    apt = db.query(ClinicAppointment).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        ClinicAppointment.id == apt_uuid
+    ).first()
+
+    if not apt:
+        return {"status": "ERROR", "message": "Appointment not found"}
+
+    apt.follow_up_task = task.strip()
+    apt.updated_at = datetime.now(timezone.utc)
+
+    from app.models.communication import TenantAuditEvent
+    audit = TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="USER",
+        actor_id=str(apt.doctor_id),
+        action="FOLLOW_UP_TASK_ASSIGNED",
+        resource_type="clinic_appointment",
+        resource_id=str(apt.id),
+        details={"follow_up_task": apt.follow_up_task, "queue_token": apt.queue_token}
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "status": "SUCCESS",
+        "appointment_id": str(apt.id),
+        "queue_token": apt.queue_token,
+        "follow_up_task": apt.follow_up_task
+    }
+
+
+def toggle_doctor_break_db(
+    db: Session,
+    tenant_id: str,
+    doctor_id: str,
+    on_break: bool,
+    reason: Optional[str] = None
+) -> Dict[str, Any]:
+    """Doctor Dashboard: Defers queue order / takes break with documented reason."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    try:
+        doc_uuid = uuid.UUID(doctor_id)
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.id == doc_uuid).first()
+    except ValueError:
+        doctor = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.name.ilike(f"%{doctor_id}%")).first()
+
+    if not doctor:
+        return {"status": "ERROR", "message": "Doctor not found"}
+
+    doctor.is_on_break = on_break
+    doctor.break_reason = reason if on_break else None
+    doctor.updated_at = datetime.now(timezone.utc)
+
+    # Update Live Queue status if on break
+    today = date.today()
+    queue = db.query(ClinicLiveQueue).filter(
+        ClinicLiveQueue.tenant_id == tenant_uuid,
+        ClinicLiveQueue.doctor_id == doctor.id,
+        ClinicLiveQueue.queue_date == today
+    ).first()
+    if queue:
+        queue.status = "PAUSED" if on_break else "ACTIVE"
+
+    from app.models.communication import TenantAuditEvent
+    audit = TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="USER",
+        actor_id=str(doctor.id),
+        action="DOCTOR_BREAK_TOGGLED",
+        resource_type="clinic_doctor",
+        resource_id=str(doctor.id),
+        details={"is_on_break": on_break, "break_reason": doctor.break_reason}
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "status": "SUCCESS",
+        "doctor_id": str(doctor.id),
+        "doctor_name": doctor.name,
+        "is_on_break": doctor.is_on_break,
+        "break_reason": doctor.break_reason
     }
 
 

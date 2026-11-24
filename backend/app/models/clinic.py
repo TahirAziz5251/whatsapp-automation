@@ -16,6 +16,8 @@ class ClinicDoctor(Base):
     fee_pkr = Column(Numeric(10, 2), nullable=False, default=0.00)
     room_number = Column(String(30), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_on_break = Column(Boolean, default=False)
+    break_reason = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
@@ -66,6 +68,10 @@ class ClinicAppointment(Base):
     reminder_24h_sent_at = Column(DateTime(timezone=True), nullable=True)
     reminder_2h_sent = Column(Boolean, default=False)
     reminder_2h_sent_at = Column(DateTime(timezone=True), nullable=True)
+    consultation_started_at = Column(DateTime(timezone=True), nullable=True)
+    consultation_ended_at = Column(DateTime(timezone=True), nullable=True)
+    consultation_duration_seconds = Column(Integer, nullable=True)
+    follow_up_task = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
