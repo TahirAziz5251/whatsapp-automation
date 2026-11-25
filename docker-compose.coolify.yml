@@ -324,13 +324,8 @@ services:
         ALTER TABLE clinic_doctors ADD COLUMN IF NOT EXISTS is_on_break BOOLEAN DEFAULT FALSE;
         ALTER TABLE clinic_doctors ADD COLUMN IF NOT EXISTS break_reason VARCHAR(255);
 
-        DO $$
-        BEGIN
-            ALTER TABLE clinic_appointments DROP CONSTRAINT IF EXISTS clinic_appointments_status_check;
-            ALTER TABLE clinic_appointments ADD CONSTRAINT clinic_appointments_status_check CHECK (status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'CALLED', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW'));
-        EXCEPTION
-            WHEN OTHERS THEN NULL;
-        END $$;
+        ALTER TABLE clinic_appointments DROP CONSTRAINT IF EXISTS clinic_appointments_status_check;
+        ALTER TABLE clinic_appointments ADD CONSTRAINT clinic_appointments_status_check CHECK (status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'CALLED', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW'));
 
         CREATE TABLE IF NOT EXISTS clinic_live_queues (
             tenant_id UUID NOT NULL REFERENCES platform_tenants(id) ON DELETE CASCADE,
@@ -446,31 +441,62 @@ services:
             updated_at TIMESTAMPTZ DEFAULT NOW()
         );
 
-        -- Row-Level Security (RLS) Enforcement across all tenant-scoped tables
-        DO $$
-        DECLARE
-            tbl TEXT;
-            rls_tables TEXT[] := ARRAY[
-                'platform_contacts',
-                'tenant_conversations',
-                'tenant_messages',
-                'tenant_outbox_messages',
-                'clinic_doctors',
-                'clinic_doctor_schedules',
-                'clinic_appointments',
-                'clinic_live_queues'
-            ];
-        BEGIN
-            FOREACH tbl IN ARRAY rls_tables LOOP
-                EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
-                EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
-                EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_%I ON %I', tbl, tbl);
-                EXECUTE format(
-                    'CREATE POLICY tenant_isolation_%I ON %I FOR ALL USING (tenant_id = (NULLIF(current_setting(''app.current_tenant_id'', true), ''''))::uuid) WITH CHECK (tenant_id = (NULLIF(current_setting(''app.current_tenant_id'', true), ''''))::uuid)',
-                    tbl, tbl
-                );
-            END LOOP;
-        END $$;
+        -- Row-Level Security (RLS) Enforcement across all 8 tenant-scoped tables (plain SQL — no $$ escaping issues in Docker Compose)
+        ALTER TABLE platform_contacts ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE platform_contacts FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_platform_contacts ON platform_contacts;
+        CREATE POLICY tenant_isolation_platform_contacts ON platform_contacts FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE tenant_conversations ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE tenant_conversations FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_tenant_conversations ON tenant_conversations;
+        CREATE POLICY tenant_isolation_tenant_conversations ON tenant_conversations FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE tenant_messages ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE tenant_messages FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_tenant_messages ON tenant_messages;
+        CREATE POLICY tenant_isolation_tenant_messages ON tenant_messages FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE tenant_outbox_messages ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE tenant_outbox_messages FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_tenant_outbox_messages ON tenant_outbox_messages;
+        CREATE POLICY tenant_isolation_tenant_outbox_messages ON tenant_outbox_messages FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE clinic_doctors ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE clinic_doctors FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_clinic_doctors ON clinic_doctors;
+        CREATE POLICY tenant_isolation_clinic_doctors ON clinic_doctors FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE clinic_doctor_schedules ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE clinic_doctor_schedules FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_clinic_doctor_schedules ON clinic_doctor_schedules;
+        CREATE POLICY tenant_isolation_clinic_doctor_schedules ON clinic_doctor_schedules FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE clinic_appointments ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE clinic_appointments FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_clinic_appointments ON clinic_appointments;
+        CREATE POLICY tenant_isolation_clinic_appointments ON clinic_appointments FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
+
+        ALTER TABLE clinic_live_queues ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE clinic_live_queues FORCE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS tenant_isolation_clinic_live_queues ON clinic_live_queues;
+        CREATE POLICY tenant_isolation_clinic_live_queues ON clinic_live_queues FOR ALL
+            USING (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid)
+            WITH CHECK (tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::uuid);
 
         -- Privileges for runtime user
         GRANT USAGE ON SCHEMA public TO bizflow_runtime;
