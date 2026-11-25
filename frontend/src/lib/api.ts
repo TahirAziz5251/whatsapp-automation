@@ -80,6 +80,18 @@ export const clinicApi = {
   getPatientTicket: (ticketId: string, tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi(`/clinic/patient/ticket/${ticketId}`, { method: "GET" }, tenantId),
 
+  cancelTicket: (ticketId: string, reason?: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi(`/clinic/patient/ticket/${ticketId}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ reason: reason || "Customer cancelled via WhatsApp ticket link" }),
+    }, tenantId),
+
+  rescheduleTicket: (ticketId: string, appointmentDate: string, slotTime: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi(`/clinic/patient/ticket/${ticketId}/reschedule`, {
+      method: "POST",
+      body: JSON.stringify({ appointment_date: appointmentDate, slot_time: slotTime }),
+    }, tenantId),
+
   getOwnerAnalytics: (tenantId: string = DEFAULT_TENANT_ID, params?: { period?: string; start_date?: string; end_date?: string }) => {
     const q = new URLSearchParams();
     if (params?.period) q.set("period", params.period);

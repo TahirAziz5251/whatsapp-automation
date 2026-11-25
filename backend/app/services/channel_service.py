@@ -216,8 +216,11 @@ class ChannelService:
         return outbox
 
     @staticmethod
-    def dispatch_outbox_message(outbox_id: UUID, db: Session) -> Dict[str, Any]:
+    def dispatch_outbox_message(outbox_id: UUID, db: Session, tenant_id: Optional[str] = None) -> Dict[str, Any]:
         """Dispatches an enqueued outbox message via its assigned channel adapter."""
+        if tenant_id:
+            db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+
         outbox = db.query(TenantOutboxMessage).filter(TenantOutboxMessage.id == outbox_id).first()
         if not outbox:
             return {"success": False, "error": "Outbox record not found"}

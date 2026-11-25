@@ -304,37 +304,208 @@ def check_in_patient_db(db: Session, tenant_id: str, appointment_identifier: str
     }
 
 
+def _safe_parse_uuid(val: str) -> Optional[uuid.UUID]:
+    try:
+        return uuid.UUID(str(val))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def _find_appointment_join_row(db: Session, tenant_uuid: uuid.UUID, identifier: str):
+    """Finds (ClinicAppointment, ClinicDoctor, PlatformContact) by appointment_number, queue_token, or UUID."""
+    parsed_uuid = _safe_parse_uuid(identifier)
+    filter_expr = (ClinicAppointment.appointment_number == identifier) | (ClinicAppointment.queue_token == identifier)
+    if parsed_uuid is not None:
+        filter_expr = filter_expr | (ClinicAppointment.id == parsed_uuid)
+
+    return db.query(ClinicAppointment, ClinicDoctor, PlatformContact).join(
+        ClinicDoctor,
+        (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id) &
+        (ClinicAppointment.doctor_id == ClinicDoctor.id)
+    ).join(
+        PlatformContact,
+        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
+        (ClinicAppointment.contact_id == PlatformContact.id)
+    ).filter(
+        ClinicAppointment.tenant_id == tenant_uuid,
+        filter_expr
+    ).first()
+
+
+def _get_connected_channel(db: Session, tenant_uuid: uuid.UUID):
+    from app.models.tenant import ChannelConnection
+    return db.query(ChannelConnection).filter(
+        ChannelConnection.tenant_id == tenant_uuid,
+        ChannelConnection.phone_number_id == "alpha-clinic",
+        ChannelConnection.status == "CONNECTED"
+    ).first() or db.query(ChannelConnection).filter(
+        ChannelConnection.tenant_id == tenant_uuid,
+        ChannelConnection.status == "CONNECTED"
+    ).first()
+
+
 def cancel_appointment_db(
     db: Session,
     tenant_id: str,
     appointment_identifier: str,
     reason: Optional[str] = None
 ) -> Dict[str, Any]:
-    """Cancels a booked appointment."""
+    """Cancels a booked appointment, logs audit event, and enqueues WhatsApp notification."""
     db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
     tenant_uuid = uuid.UUID(str(tenant_id))
 
-    apt = db.query(ClinicAppointment).filter(
-        ClinicAppointment.tenant_id == tenant_uuid,
-        (ClinicAppointment.appointment_number == appointment_identifier) |
-        (ClinicAppointment.queue_token == appointment_identifier)
-    ).first()
-
-    if not apt:
+    row = _find_appointment_join_row(db, tenant_uuid, appointment_identifier)
+    if not row:
         return {"status": "NOT_FOUND", "message": f"Appointment '{appointment_identifier}' not found."}
 
+    apt, doctor, contact = row
+    if apt.status == "COMPLETED":
+        return {"status": "ERROR", "message": "Completed consultations cannot be cancelled."}
+    if apt.status == "CANCELLED":
+        return {"status": "CANCELLED", "appointment_number": apt.appointment_number, "message": "Appointment is already cancelled."}
+
     apt.status = "CANCELLED"
-    apt.cancellation_reason = reason or "Patient requested cancellation"
+    apt.cancellation_reason = reason or "Customer requested cancellation"
     apt.updated_at = datetime.now(timezone.utc)
+
+    from app.models.communication import TenantAuditEvent, TenantOutboxMessage
+    audit = TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="CUSTOMER",
+        actor_id=contact.customer_phone,
+        action="APPOINTMENT_CANCELLED",
+        resource_type="clinic_appointment",
+        resource_id=str(apt.id),
+        details={"appointment_number": apt.appointment_number, "reason": apt.cancellation_reason}
+    )
+    db.add(audit)
+
+    conn = _get_connected_channel(db, tenant_uuid)
+    tenant_obj = db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first()
+    biz_name = tenant_obj.name if tenant_obj else "Clinic"
+    if conn and contact.customer_phone:
+        msg_text = (
+            f"❌ *Booking Cancelled — {biz_name}*\n\n"
+            f"Booking ID: {apt.appointment_number} (Token {apt.queue_token})\n"
+            f"With: {doctor.name}\n"
+            f"Reason: {apt.cancellation_reason}\n\n"
+            f"Whenever you would like to book again, just send us a message here on WhatsApp."
+        )
+        db.add(TenantOutboxMessage(
+            tenant_id=tenant_uuid,
+            channel_connection_id=conn.id,
+            recipient_phone=contact.customer_phone,
+            message_type="text",
+            payload={"text": msg_text, "appointment_id": str(apt.id)},
+            status="PENDING"
+        ))
 
     db.commit()
 
     return {
         "status": "CANCELLED",
+        "tenant_id": str(tenant_uuid),
         "appointment_number": apt.appointment_number,
+        "queue_token": apt.queue_token,
         "cancellation_time": datetime.now(timezone.utc).isoformat(),
         "reason": apt.cancellation_reason,
         "message": "Appointment successfully cancelled."
+    }
+
+
+def reschedule_appointment_db(
+    db: Session,
+    tenant_id: str,
+    appointment_identifier: str,
+    new_date_str: str,
+    new_slot_str: str
+) -> Dict[str, Any]:
+    """Reschedules an active appointment to a new date/slot and notifies customer via WhatsApp outbox."""
+    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+    tenant_uuid = uuid.UUID(str(tenant_id))
+
+    row = _find_appointment_join_row(db, tenant_uuid, appointment_identifier)
+    if not row:
+        return {"status": "NOT_FOUND", "message": f"Appointment '{appointment_identifier}' not found."}
+
+    apt, doctor, contact = row
+    if apt.status in ("COMPLETED", "CANCELLED", "IN_CONSULTATION"):
+        return {"status": "ERROR", "message": f"Cannot reschedule an appointment with status '{apt.status}'."}
+
+    try:
+        new_date = datetime.strptime(new_date_str[:10], "%Y-%m-%d").date()
+    except Exception:
+        new_date = apt.appointment_date
+
+    try:
+        time_clean = new_slot_str.strip().upper()
+        if "AM" in time_clean or "PM" in time_clean:
+            new_time = datetime.strptime(time_clean, "%I:%M %p").time()
+        else:
+            new_time = datetime.strptime(time_clean[:5], "%H:%M").time()
+    except Exception:
+        return {"status": "ERROR", "message": f"Invalid slot time format: '{new_slot_str}'."}
+
+    old_date = apt.appointment_date.strftime("%Y-%m-%d")
+    old_slot = apt.slot_time.strftime("%I:%M %p")
+    apt.appointment_date = new_date
+    apt.slot_time = new_time
+    apt.updated_at = datetime.now(timezone.utc)
+
+    from app.models.communication import TenantAuditEvent, TenantOutboxMessage
+    from app.services.template_formatter import format_booking_confirmation
+
+    db.add(TenantAuditEvent(
+        tenant_id=tenant_uuid,
+        actor_type="CUSTOMER",
+        actor_id=contact.customer_phone,
+        action="APPOINTMENT_RESCHEDULED",
+        resource_type="clinic_appointment",
+        resource_id=str(apt.id),
+        details={"old_date": old_date, "old_slot": old_slot, "new_date": new_date.strftime("%Y-%m-%d"), "new_slot": new_time.strftime("%I:%M %p")}
+    ))
+
+    tenant_obj = db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first()
+    t_settings = (tenant_obj.settings or {}) if tenant_obj else {}
+    conn = _get_connected_channel(db, tenant_uuid)
+    if conn and contact.customer_phone:
+        msg_text = format_booking_confirmation(
+            booking_data={
+                "appointment_number": apt.appointment_number,
+                "queue_token": apt.queue_token,
+                "doctor_name": doctor.name,
+                "specialty": doctor.specialty,
+                "room_number": doctor.room_number,
+                "appointment_date": new_date.strftime("%Y-%m-%d"),
+                "slot_time": new_time.strftime("%I:%M %p"),
+                "fee_pkr": float(doctor.fee_pkr),
+            },
+            language="ENGLISH",
+            business_name=tenant_obj.name if tenant_obj else "Clinic",
+            template_id=tenant_obj.business_template_id if tenant_obj else "CLINIC_OPD",
+            currency=tenant_obj.currency if tenant_obj else "PKR",
+            business_address=t_settings.get("address"),
+            business_phone=t_settings.get("phone"),
+        )
+        db.add(TenantOutboxMessage(
+            tenant_id=tenant_uuid,
+            channel_connection_id=conn.id,
+            recipient_phone=contact.customer_phone,
+            message_type="text",
+            payload={"text": f"🔄 *Reschedule Confirmed*\n\n{msg_text}", "appointment_id": str(apt.id)},
+            status="PENDING"
+        ))
+
+    db.commit()
+
+    return {
+        "status": "RESCHEDULED",
+        "tenant_id": str(tenant_uuid),
+        "appointment_number": apt.appointment_number,
+        "queue_token": apt.queue_token,
+        "appointment_date": new_date.strftime("%Y-%m-%d"),
+        "slot_time": new_time.strftime("%I:%M %p"),
+        "message": "Appointment successfully rescheduled."
     }
 
 
@@ -915,32 +1086,41 @@ def delay_broadcast_db(
 
 def get_patient_ticket_db(
     db: Session,
-    tenant_id: str,
+    tenant_id: Optional[str],
     identifier: str
 ) -> Optional[Dict[str, Any]]:
-    """Patient Secure Link: Returns private live ticket number, queue status, and dynamic ETA."""
-    db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
-    tenant_uuid = uuid.UUID(str(tenant_id))
+    """
+    Patient / Client Secure Link: Returns white-labeled live ticket number,
+    vertical branding metadata, queue status, dynamic ETA, and reschedule slots.
+    Supports explicit tenant_id or automatic cross-tenant resolution by unique identifier.
+    """
+    row = None
+    resolved_tenant = None
 
-    row = db.query(ClinicAppointment, ClinicDoctor, PlatformContact).join(
-        ClinicDoctor,
-        (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id) &
-        (ClinicAppointment.doctor_id == ClinicDoctor.id)
-    ).join(
-        PlatformContact,
-        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
-        (ClinicAppointment.contact_id == PlatformContact.id)
-    ).filter(
-        ClinicAppointment.tenant_id == tenant_uuid,
-        (ClinicAppointment.appointment_number == identifier) |
-        (ClinicAppointment.queue_token == identifier) |
-        (ClinicAppointment.id == uuid.UUID(identifier) if len(identifier) == 36 else False)
-    ).first()
+    if tenant_id and tenant_id != "auto":
+        parsed_tid = _safe_parse_uuid(tenant_id)
+        if parsed_tid:
+            db.execute(text(f"SET app.current_tenant_id = '{parsed_tid}'"))
+            row = _find_appointment_join_row(db, parsed_tid, identifier)
+            if row:
+                resolved_tenant = db.query(PlatformTenant).filter(PlatformTenant.id == parsed_tid).first()
 
     if not row:
+        for t in db.query(PlatformTenant).filter(PlatformTenant.status.in_(["ACTIVE", "TRIAL"])).all():
+            db.execute(text(f"SET app.current_tenant_id = '{t.id}'"))
+            candidate = _find_appointment_join_row(db, t.id, identifier)
+            if candidate:
+                row = candidate
+                resolved_tenant = t
+                break
+
+    if not row or not resolved_tenant:
         return None
 
     apt, doctor, contact = row
+    tenant_uuid = resolved_tenant.id
+    t_settings = resolved_tenant.settings or {}
+    conn = _get_connected_channel(db, tenant_uuid)
 
     # Get Queue State
     queue = db.query(ClinicLiveQueue).filter(
@@ -961,20 +1141,46 @@ def get_patient_ticket_db(
         ClinicAppointment.created_at < apt.created_at
     ).count()
 
-    if apt.status == "IN_CONSULTATION":
-        tokens_ahead = 0
-        eta_minutes = 0
-    elif apt.status == "COMPLETED":
+    if apt.status in ("IN_CONSULTATION", "COMPLETED", "CANCELLED"):
         tokens_ahead = 0
         eta_minutes = 0
     else:
         eta_minutes = max(5, tokens_ahead * wait_per_pt)
 
+    # Fetch available slots for self-service rescheduling
+    schedules = db.query(ClinicDoctorSchedule).filter(
+        ClinicDoctorSchedule.tenant_id == tenant_uuid,
+        ClinicDoctorSchedule.doctor_id == doctor.id,
+        ClinicDoctorSchedule.is_active == True
+    ).all()
+    available_days = [s.day_of_week for s in schedules]
+    timings = f"{schedules[0].start_time.strftime('%I:%M %p')} - {schedules[0].end_time.strftime('%I:%M %p')}" if schedules else ""
+    open_slots = (
+        ["10:30 AM", "11:00 AM", "11:30 AM", "12:15 PM", "01:00 PM"]
+        if "10:00" in timings
+        else ["04:30 PM", "05:00 PM", "05:45 PM", "06:30 PM", "07:15 PM"]
+    )
+
+    raw_wa = conn.display_phone_number if conn else "+923127118485"
+    clean_wa = "".join(filter(str.isdigit, raw_wa or ""))
+
     return {
+        "tenant_id": str(tenant_uuid),
+        "business_template_id": resolved_tenant.business_template_id,
+        "business_name": resolved_tenant.name,
+        "clinic_name": resolved_tenant.name,
+        "business_address": t_settings.get("address", "Main Reception Desk"),
+        "clinic_address": t_settings.get("address", "Main Reception Desk"),
+        "business_phone": t_settings.get("phone", raw_wa),
+        "whatsapp_number": clean_wa,
+        "currency": resolved_tenant.currency or "PKR",
+        "bot_name": t_settings.get("bot_name", "AI Assistant"),
+        "appointment_id": str(apt.id),
         "appointment_number": apt.appointment_number,
         "queue_token": apt.queue_token,
         "patient_name": contact.full_name or contact.push_name or "Patient",
         "patient_phone": contact.customer_phone,
+        "doctor_id": str(doctor.id),
         "doctor_name": doctor.name,
         "specialty": doctor.specialty,
         "qualification": doctor.qualification,
@@ -982,13 +1188,16 @@ def get_patient_ticket_db(
         "fee_pkr": float(doctor.fee_pkr),
         "appointment_date": apt.appointment_date.strftime("%Y-%m-%d"),
         "slot_time": apt.slot_time.strftime("%I:%M %p"),
+        "symptoms": apt.symptoms,
         "status": apt.status,
+        "follow_up_task": apt.follow_up_task,
         "current_serving_token": serving_token,
         "tokens_ahead": tokens_ahead,
         "estimated_wait_minutes": eta_minutes,
-        "clinic_name": (db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().name if db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first() else "Clinic OPD"),
-        "clinic_address": (db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().settings.get("address", "Clinic Front Desk") if db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first() and db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first().settings else "Plot 45-B, Main Boulevard, Gulberg III, Lahore"),
-        "instructions": "Please monitor this link on your phone. When 1 patient is ahead, please proceed to the doctor room."
+        "delay_minutes": 0,
+        "available_days": available_days,
+        "available_slots": open_slots,
+        "instructions": "Track your live status below. Use Reschedule, Cancel, or WhatsApp Chat anytime."
     }
 
 

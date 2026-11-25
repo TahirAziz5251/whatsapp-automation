@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # Groq & AI Configuration
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     GROQ_TEMPERATURE: float = 0.2
     GROQ_MAX_TOKENS: int = 1024
     GROQ_TIMEOUT_SECONDS: int = 30
@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     EVOLUTION_API_URL: str = "http://evolution-go:4000"
     EVOLUTION_API_KEY: str = "63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65"
     EVOLUTION_GLOBAL_API_KEY: str = "63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65"
+
+    # Public Frontend & Background Worker Flags
+    FRONTEND_PUBLIC_URL: str = "http://192.168.1.31:3000"
+    ENABLE_OUTBOX_DISPATCHER: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",

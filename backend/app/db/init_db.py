@@ -6,10 +6,16 @@ from app.core.database import engine
 logger = logging.getLogger(__name__)
 
 INIT_SQL = """
--- Extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "btree_gist";
+-- Extensions (safe when executed by non-superuser runtime role)
+DO $$
+BEGIN
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+    CREATE EXTENSION IF NOT EXISTS "btree_gist";
+EXCEPTION
+    WHEN insufficient_privilege THEN NULL;
+    WHEN OTHERS THEN NULL;
+END $$;
 
 -- 1. Business Templates Catalog
 CREATE TABLE IF NOT EXISTS business_templates (
@@ -142,10 +148,9 @@ CREATE TABLE IF NOT EXISTS channel_connections (
     CONSTRAINT uq_channel_phone UNIQUE (channel_type, phone_number_id)
 );
 
--- Seed Default Evolution Connections
+-- Seed Default Evolution Connection
 INSERT INTO channel_connections (id, tenant_id, channel_type, phone_number_id, display_phone_number, status)
 VALUES
-('cccccccc-1111-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'EVOLUTION_GO', 'hospital-assistant', '+923127118485', 'CONNECTED'),
 ('cccccccc-1111-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'EVOLUTION_GO', 'alpha-clinic', '+923127118485', 'CONNECTED')
 ON CONFLICT (channel_type, phone_number_id) DO UPDATE SET
     display_phone_number = EXCLUDED.display_phone_number,
@@ -416,6 +421,7 @@ CREATE TABLE IF NOT EXISTS tenant_invoices (
 );
 
 -- 9. Seed Doctors for Alpha Clinic (11111111-1111-1111-1111-111111111111)
+SET LOCAL app.current_tenant_id = '11111111-1111-1111-1111-111111111111';
 INSERT INTO clinic_doctors (tenant_id, id, name, specialty, qualification, fee_pkr, room_number)
 VALUES
 ('11111111-1111-1111-1111-111111111111', 'dddddddd-1111-0000-0000-000000000001', 'Dr. Tariq Mahmood', 'Cardiology', 'MBBS, FCPS (Cardiology)', 2500.00, 'Room 101'),
@@ -455,12 +461,77 @@ ON CONFLICT (tenant_id, doctor_id, queue_date) DO UPDATE SET
     status = EXCLUDED.status,
     updated_at = NOW();
 
--- 10. Table Privileges for bizflow_runtime
-GRANT USAGE ON SCHEMA public TO bizflow_runtime;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO bizflow_runtime;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO bizflow_runtime;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO bizflow_runtime;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO bizflow_runtime;
+RESET app.current_tenant_id;
+
+-- 9b. Knowledge Base Documents & pgvector Chunks
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+    id BIGSERIAL PRIMARY KEY,
+    business_code VARCHAR(64) NOT NULL,
+    namespace VARCHAR(64) NOT NULL DEFAULT 'default',
+    source VARCHAR(255),
+    title VARCHAR(255) NOT NULL,
+    doc_type VARCHAR(64) DEFAULT 'POLICY',
+    version VARCHAR(32) DEFAULT '1.0',
+    status VARCHAR(32) DEFAULT 'ACTIVE',
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS knowledge_chunks (
+    id BIGSERIAL PRIMARY KEY,
+    document_id BIGINT NOT NULL REFERENCES knowledge_documents(id) ON DELETE CASCADE,
+    business_code VARCHAR(64) NOT NULL,
+    chunk_index INT NOT NULL DEFAULT 0,
+    chunk_title VARCHAR(255),
+    chunk_text TEXT NOT NULL,
+    token_count INT DEFAULT 0,
+    embedding vector(384),
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 10. Table Privileges & Row-Level Security (RLS) Enforcement (safe if already applied by postgres superuser)
+DO $$
+DECLARE
+    tbl TEXT;
+    rls_tables TEXT[] := ARRAY[
+        'platform_contacts',
+        'tenant_conversations',
+        'tenant_messages',
+        'tenant_outbox_messages',
+        'clinic_doctors',
+        'clinic_doctor_schedules',
+        'clinic_appointments',
+        'clinic_live_queues'
+    ];
+BEGIN
+    FOREACH tbl IN ARRAY rls_tables LOOP
+        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+        EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+        EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_%I ON %I', tbl, tbl);
+        EXECUTE format(
+            'CREATE POLICY tenant_isolation_%I ON %I FOR ALL USING (tenant_id = (NULLIF(current_setting(''app.current_tenant_id'', true), ''''))::uuid) WITH CHECK (tenant_id = (NULLIF(current_setting(''app.current_tenant_id'', true), ''''))::uuid)',
+            tbl, tbl
+        );
+    END LOOP;
+EXCEPTION
+    WHEN insufficient_privilege THEN NULL;
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    GRANT USAGE ON SCHEMA public TO bizflow_runtime;
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO bizflow_runtime;
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO bizflow_runtime;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO bizflow_runtime;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO bizflow_runtime;
+EXCEPTION
+    WHEN insufficient_privilege THEN NULL;
+    WHEN OTHERS THEN NULL;
+END $$;
 """
 
 def bootstrap_database():
@@ -469,6 +540,9 @@ def bootstrap_database():
         logger.info("Verifying and bootstrapping platform_db database schema and seeds...")
         with engine.begin() as conn:
             conn.execute(text(INIT_SQL))
+            from app.services.ai.embedding_utils import sync_knowledge_base_embeddings
+            kb_stats = sync_knowledge_base_embeddings(conn)
+            logger.info(f"Knowledge base pgvector sync complete: {kb_stats}")
         logger.info("Database schema and seeds successfully verified and bootstrapped!")
     except Exception as e:
         logger.error(f"Error bootstrapping database schema: {e}", exc_info=True)

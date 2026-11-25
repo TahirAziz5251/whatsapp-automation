@@ -10,8 +10,44 @@ from app.models.contact import PlatformContact
 from app.models.tenant import ChannelConnection, PlatformTenant
 from app.models.communication import TenantOutboxMessage, TenantAuditEvent
 from app.services.billing_service import record_usage_db
+from app.services.template_formatter import get_ticket_url
 
 logger = logging.getLogger(__name__)
+
+
+def _collect_due_appointments(db: Session, tenant_id: Optional[str], extra_filters: list) -> list:
+    """Queries ClinicAppointment safely under FORCE ROW LEVEL SECURITY per tenant."""
+    if tenant_id:
+        tenant_ids = [uuid.UUID(str(tenant_id))]
+    else:
+        tenant_ids = [
+            t.id
+            for t in db.query(PlatformTenant)
+            .filter(PlatformTenant.status.in_(["ACTIVE", "TRIAL"]))
+            .all()
+        ]
+
+    rows = []
+    for t_uuid in tenant_ids:
+        db.execute(text(f"SET app.current_tenant_id = '{t_uuid}'"))
+        t_rows = (
+            db.query(ClinicAppointment, ClinicDoctor, PlatformContact)
+            .join(
+                ClinicDoctor,
+                (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id)
+                & (ClinicAppointment.doctor_id == ClinicDoctor.id),
+            )
+            .join(
+                PlatformContact,
+                (ClinicAppointment.tenant_id == PlatformContact.tenant_id)
+                & (ClinicAppointment.contact_id == PlatformContact.id),
+            )
+            .filter(ClinicAppointment.tenant_id == t_uuid, *extra_filters)
+            .all()
+        )
+        rows.extend(t_rows)
+    return rows
+
 
 def process_24h_reminders_db(
     db: Session,
@@ -23,26 +59,16 @@ def process_24h_reminders_db(
     the 24-hour reminder, formats personalized WhatsApp alerts, and enqueues to outbox.
     """
     check_date = target_date or (date.today() + timedelta(days=1))
-    
-    query = db.query(ClinicAppointment, ClinicDoctor, PlatformContact).join(
-        ClinicDoctor,
-        (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id) &
-        (ClinicAppointment.doctor_id == ClinicDoctor.id)
-    ).join(
-        PlatformContact,
-        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
-        (ClinicAppointment.contact_id == PlatformContact.id)
-    ).filter(
-        ClinicAppointment.appointment_date == check_date,
-        ClinicAppointment.status == "BOOKED",
-        ClinicAppointment.reminder_24h_sent == False
+
+    appointments = _collect_due_appointments(
+        db=db,
+        tenant_id=tenant_id,
+        extra_filters=[
+            ClinicAppointment.appointment_date == check_date,
+            ClinicAppointment.status == "BOOKED",
+            ClinicAppointment.reminder_24h_sent == False,
+        ],
     )
-
-    if tenant_id:
-        db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
-        query = query.filter(ClinicAppointment.tenant_id == uuid.UUID(str(tenant_id)))
-
-    appointments = query.all()
     dispatched_count = 0
 
     for apt, doctor, contact in appointments:
@@ -65,10 +91,10 @@ def process_24h_reminders_db(
         msg_body = (
             f"Assalam-o-Alaikum {patient_name}!\n\n"
             f"Yeh {clinic_title} ki taraf se reminder hai ke kal ({date_str}) ko {slot_str} baje "
-            f"aapki appointment Dr. {doctor.name} ({doctor.specialty}, Room {doctor.room_number}) ke saath muqarrar hai.\n\n"
+            f"aapki appointment {doctor.name} ({doctor.specialty}, {doctor.room_number}) ke saath muqarrar hai.\n\n"
             f"Aapka Token Number: {apt.queue_token}\n\n"
-            f"Apna live queue status is link per check karein:\n"
-            f"http://localhost:3000/ticket/{apt.id}\n\n"
+            f"Apna live queue status aur reschedule/cancel options is link per check karein:\n"
+            f"{get_ticket_url(apt.appointment_number)}\n\n"
             f"Agar aap cancel karna chahein to 'Cancel' likh kar reply karein. Shukriya!"
         )
 
@@ -132,27 +158,17 @@ def process_2h_reminders_db(
     today = date.today()
     now_dt = datetime.now(timezone.utc)
     curr_time = current_time_val or now_dt.time()
-    
-    # Query today's booked appointments that need 2h reminder
-    query = db.query(ClinicAppointment, ClinicDoctor, PlatformContact).join(
-        ClinicDoctor,
-        (ClinicAppointment.tenant_id == ClinicDoctor.tenant_id) &
-        (ClinicAppointment.doctor_id == ClinicDoctor.id)
-    ).join(
-        PlatformContact,
-        (ClinicAppointment.tenant_id == PlatformContact.tenant_id) &
-        (ClinicAppointment.contact_id == PlatformContact.id)
-    ).filter(
-        ClinicAppointment.appointment_date == today,
-        ClinicAppointment.status == "BOOKED",
-        ClinicAppointment.reminder_2h_sent == False
+
+    # Query today's booked appointments that need 2h reminder under strict tenant RLS
+    appointments = _collect_due_appointments(
+        db=db,
+        tenant_id=tenant_id,
+        extra_filters=[
+            ClinicAppointment.appointment_date == today,
+            ClinicAppointment.status == "BOOKED",
+            ClinicAppointment.reminder_2h_sent == False,
+        ],
     )
-
-    if tenant_id:
-        db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
-        query = query.filter(ClinicAppointment.tenant_id == uuid.UUID(str(tenant_id)))
-
-    appointments = query.all()
     dispatched_count = 0
 
     for apt, doctor, contact in appointments:
@@ -172,10 +188,10 @@ def process_2h_reminders_db(
 
         msg_body = (
             f"Assalam-o-Alaikum {patient_name}!\n\n"
-            f"Aapki appointment Dr. {doctor.name} ke saath aaj {slot_str} baje (taqreeban 2 ghante mein) hai.\n\n"
+            f"Aapki appointment {doctor.name} ke saath aaj {slot_str} baje (taqreeban 2 ghante mein) hai.\n\n"
             f"Baraye meherbani waqt per {clinic_title} tashreef layen aur reception per apna Token {apt.queue_token} dikha kar check-in karwayen.\n\n"
             f"Live OPD Queue Tracker:\n"
-            f"http://localhost:3000/ticket/{apt.id}"
+            f"{get_ticket_url(apt.appointment_number)}"
         )
 
         if conn:

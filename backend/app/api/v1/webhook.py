@@ -130,13 +130,46 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                 user_text=user_text
             )
             reply_text = ai_turn.get("response_text", "")
+            outbox_id = ai_turn.get("outbox_id")
             if reply_text:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
                 send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
                 logger.info(f"AI response dispatched to {customer_phone}: {send_res.get('status_code')} | Success: {send_res.get('success')}")
+                # Sync outbox state so background dispatcher never double-sends
+                if outbox_id:
+                    from app.models.communication import TenantOutboxMessage
+                    from datetime import datetime, timezone
+                    outbox_row = db.query(TenantOutboxMessage).filter(TenantOutboxMessage.id == UUID(outbox_id)).first()
+                    if outbox_row:
+                        if send_res.get("success"):
+                            outbox_row.status = "DISPATCHED"
+                            outbox_row.updated_at = datetime.now(timezone.utc)
+                        else:
+                            outbox_row.status = "FAILED"
+                            outbox_row.last_error = str(send_res.get("error") or send_res.get("response"))
+                        db.commit()
                 result["reply_sent"] = reply_text
                 result["send_status"] = send_res.get("success", False)
                 result["tools_executed"] = ai_turn.get("tools_executed", [])
+
+            # Emit real-time SSE updates if an appointment was booked or cancelled via WhatsApp
+            for exec_item in ai_turn.get("tools_executed", []):
+                t_name = exec_item.get("tool")
+                t_res = exec_item.get("result") or {}
+                if t_name == "book_appointment" and t_res.get("status") == "CONFIRMED":
+                    from app.services.clinic_event_broadcaster import broadcaster
+                    await broadcaster.broadcast(
+                        tenant_id=str(tenant_id),
+                        event_type="BOOKING_CREATED",
+                        data=t_res
+                    )
+                elif t_name == "cancel_appointment" and t_res.get("status") == "CANCELLED":
+                    from app.services.clinic_event_broadcaster import broadcaster
+                    await broadcaster.broadcast(
+                        tenant_id=str(tenant_id),
+                        event_type="QUEUE_UPDATED",
+                        data=t_res
+                    )
         except Exception as e:
             logger.error(f"Error executing AI supervisor turn for WhatsApp inbound: {e}", exc_info=True)
 

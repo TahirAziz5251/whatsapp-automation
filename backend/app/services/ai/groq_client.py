@@ -32,7 +32,7 @@ class GroqClient:
         Sends chat completion request to Groq OpenAI-compatible endpoint.
         If GROQ_API_KEY is not configured or in test mode, falls back to deterministic mock completion.
         """
-        if not self.api_key or self.api_key.startswith("test_") or self.api_key == "mock":
+        if not self.api_key or self.api_key.startswith("test_") or self.api_key in ("mock", "gsk_placeholder_key", "gsk_test_mock_key"):
             return self._mock_completion(messages, tools)
 
         headers = {
@@ -51,27 +51,44 @@ class GroqClient:
             payload["tools"] = tools
             payload["tool_choice"] = tool_choice
 
+        candidate_models = [self.model]
+        for fallback_model in ("openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"):
+            if fallback_model not in candidate_models:
+                candidate_models.append(fallback_model)
+
         try:
             async with httpx.AsyncClient(timeout=float(self.timeout)) as client:
-                response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers=headers,
-                    json=payload
-                )
+                for active_model in candidate_models:
+                    payload["model"] = active_model
+                    response = await client.post(
+                        f"{self.base_url}/chat/completions",
+                        headers=headers,
+                        json=payload
+                    )
 
-                if response.status_code == 200:
-                    data = response.json()
-                    choice = data["choices"][0]
-                    return {
-                        "status": "SUCCESS",
-                        "message": choice["message"],
-                        "finish_reason": choice.get("finish_reason"),
-                        "usage": data.get("usage", {})
-                    }
-                else:
-                    logger.warning(f"Groq API returned HTTP {response.status_code}: {response.text}")
-                    # In case of quota exhaustion or upstream error, fallback to mock generator
-                    return self._mock_completion(messages, tools)
+                    if response.status_code == 200:
+                        data = response.json()
+                        choice = data["choices"][0]
+                        if active_model != self.model:
+                            logger.info(f"Groq fallback model succeeded: {active_model} (configured: {self.model})")
+                        return {
+                            "status": "SUCCESS",
+                            "message": choice["message"],
+                            "finish_reason": choice.get("finish_reason"),
+                            "usage": data.get("usage", {}),
+                            "model_used": active_model,
+                        }
+
+                    err_text = response.text or ""
+                    if response.status_code in (400, 404) and ("model" in err_text.lower() or "decommissioned" in err_text.lower()):
+                        logger.warning(f"Groq model '{active_model}' unavailable ({response.status_code}); trying next fallback.")
+                        continue
+
+                    logger.warning(f"Groq API returned HTTP {response.status_code}: {err_text}")
+                    break
+
+                # Fallback to mock generator if all configured/fallback Groq models failed
+                return self._mock_completion(messages, tools)
 
         except Exception as e:
             logger.error(f"Error calling Groq API: {e}")
@@ -104,63 +121,26 @@ class GroqClient:
             lang_info = detect_language_and_script(user_msg)
             lang = lang_info["language"]
 
-            if result_data.get("status") == "CONFIRMED":
-                # Authoritative Booking confirmation from PostgreSQL
-                apt_id = result_data.get("appointment_number") or result_data.get("appointment_id", "APT-1001")
-                token = result_data.get("queue_token", "T-01")
-                doc = result_data.get("doctor_name", "Doctor")
-                spec = result_data.get("specialty", "Consultant")
-                room = result_data.get("room_number", "OPD Room 1")
-                slot = result_data.get("slot_time", "11:00 AM")
-                apt_date = result_data.get("appointment_date", "Today")
-                fee = result_data.get("fee_pkr", 2500)
-                ticket_url = f"http://192.168.1.31:3000/ticket/{apt_id}"
+            # Extract dynamic business branding from system prompt when available
+            sys_prompt = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
+            biz_name = result_data.get("business_name")
+            if not biz_name and 'for "' in sys_prompt:
+                try:
+                    biz_name = sys_prompt.split('for "', 1)[1].split('"', 1)[0]
+                except Exception:
+                    biz_name = None
 
-                if lang == "ROMAN_URDU":
-                    content = (
-                        f"✅ *Appointment Confirmed!*\n\n"
-                        f"🏥 *Alpha Clinic & Diagnostic Centre*\n"
-                        f"👨‍⚕️ *Doctor:* {doc} ({spec})\n"
-                        f"📅 *Date:* {apt_date}\n"
-                        f"⏰ *Time:* {slot}\n"
-                        f"🚪 *Room:* {room}\n"
-                        f"🎫 *Queue Token:* {token}\n"
-                        f"🆔 *Booking ID:* {apt_id}\n"
-                        f"💵 *Consultation Fee:* PKR {fee:,.0f}\n\n"
-                        f"📲 *Live Queue Tracking & Digital Ticket:*\n"
-                        f"{ticket_url}\n\n"
-                        f"⚠️ *Important:* Barah-e-meherbani waqt se 15 minute pehle reception counter par tashreef layein. Shukriya!"
-                    )
-                elif lang == "URDU":
-                    content = (
-                        f"✅ *اپائنٹمنٹ بک ہو گئی ہے!*\n\n"
-                        f"🏥 *الفا کلینک اینڈ ڈائیگنوسٹک سینٹر*\n"
-                        f"👨‍⚕️ *ڈاکٹر:* {doc} ({spec})\n"
-                        f"📅 *تاریخ:* {apt_date}\n"
-                        f"⏰ *وقت:* {slot}\n"
-                        f"🚪 *کمرہ نمبر:* {room}\n"
-                        f"🎫 *ٹوکن نمبر:* {token}\n"
-                        f"🆔 *بکنگ آئی ڈی:* {apt_id}\n"
-                        f"💵 *فیس:* PKR {fee:,.0f}\n\n"
-                        f"📲 *لائیو ٹوکن اور ٹریکنگ لنک:*\n"
-                        f"{ticket_url}\n\n"
-                        f"⚠️ *نوٹ:* برائے مہربانی اپنے وقت سے 15 منٹ پہلے تشریف لائیں۔ شکریہ!"
-                    )
-                else:
-                    content = (
-                        f"✅ *Appointment Confirmed!*\n\n"
-                        f"🏥 *Alpha Clinic & Diagnostic Centre*\n"
-                        f"👨‍⚕️ *Doctor:* {doc} ({spec})\n"
-                        f"📅 *Date:* {apt_date}\n"
-                        f"⏰ *Time:* {slot}\n"
-                        f"🚪 *Room:* {room}\n"
-                        f"🎫 *Queue Token:* {token}\n"
-                        f"🆔 *Booking ID:* {apt_id}\n"
-                        f"💵 *Fee:* PKR {fee:,.0f}\n\n"
-                        f"📲 *Live Digital Ticket & Queue Tracker:*\n"
-                        f"{ticket_url}\n\n"
-                        f"⚠️ *Note:* Please arrive 15 minutes before your scheduled slot. Present your token number at the reception desk."
-                    )
+            if result_data.get("status") == "CONFIRMED":
+                from app.services.template_formatter import format_booking_confirmation
+                content = format_booking_confirmation(
+                    booking_data=result_data,
+                    language=lang,
+                    business_name=biz_name,
+                    template_id=result_data.get("template_id", "CLINIC_OPD"),
+                    currency=result_data.get("currency", "PKR"),
+                    business_address=result_data.get("business_address"),
+                    business_phone=result_data.get("business_phone"),
+                )
 
             elif "doctors" in result_data:
                 # Doctor schedule
@@ -216,8 +196,33 @@ class GroqClient:
         from datetime import datetime
         today_str = datetime.now().strftime("%Y-%m-%d")
 
-        # Prioritize explicit booking action over informational schedule lookup
-        if any(w in user_text for w in ["book", "appointment", "booking", "slot", "kar do", "chahiye", "mil sakta", "checkup", "dikhana"]) and "book_appointment" in tool_names:
+        is_availability_query = any(w in user_text for w in ["which slot", "which slots", "available", "dastiyab", "timing", "timings", "schedule", "kab"]) and not any(w in user_text for w in ["book", "kar do", "leni", "lena", "confirm"])
+
+        # Informational schedule/slot queries must NOT book appointments
+        if is_availability_query and "get_doctor_schedule" in tool_names:
+            doc_target = "Dr. Tariq" if "tariq" in user_text else ("Dr. Ayesha" if "ayesha" in user_text else ("Dr. Bilal" if "bilal" in user_text else ""))
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_sched_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_doctor_schedule",
+                                "arguments": json.dumps({"doctor_name_or_specialty": doc_target, "date": today_str})
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 80, "completion_tokens": 25, "total_tokens": 105}
+            }
+
+        # Explicit booking action
+        elif any(w in user_text for w in ["book", "appointment", "booking", "kar do", "leni", "lena", "chahiye", "mil sakta", "checkup", "dikhana"]) and "book_appointment" in tool_names:
             target_doc = "Dr. Ayesha Malik" if "ayesha" in user_text else ("Dr. Bilal Asghar" if ("bilal" in user_text or "child" in user_text or "bacha" in user_text) else "Dr. Tariq Mahmood")
             target_slot = "04:30 PM" if "ayesha" in user_text else ("06:15 PM" if "bilal" in user_text else "11:00 AM")
             target_symptom = "Cardiology evaluation" if "tariq" in user_text else ("Pediatric consultation" if ("bilal" in user_text or "child" in user_text) else "General medical consultation")

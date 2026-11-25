@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +10,19 @@ from app.db.init_db import bootstrap_database
 async def lifespan(app: FastAPI):
     # Bootstrap and verify database schema, tables, and seeds on startup
     bootstrap_database()
-    yield
+    worker_task = None
+    if getattr(settings, "ENABLE_OUTBOX_DISPATCHER", True):
+        from app.workers.outbox_dispatcher import run_outbox_and_reminder_loop
+        worker_task = asyncio.create_task(run_outbox_and_reminder_loop())
+    try:
+        yield
+    finally:
+        if worker_task:
+            worker_task.cancel()
+            try:
+                await worker_task
+            except asyncio.CancelledError:
+                pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

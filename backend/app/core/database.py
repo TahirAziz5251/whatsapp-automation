@@ -21,11 +21,16 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 def get_db() -> Generator[Session, None, None]:
-    """Base database session dependency without tenant context."""
+    """Base database session dependency; resets RLS tenant context before pooling."""
     db = SessionLocal()
     try:
         yield db
     finally:
+        try:
+            db.rollback()
+            db.execute(text("RESET app.current_tenant_id"))
+        except Exception:
+            pass
         db.close()
 
 def get_tenant_db(tenant_id: str) -> Generator[Session, None, None]:

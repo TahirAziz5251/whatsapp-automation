@@ -19,6 +19,8 @@ from app.services.clinic_service import (
     toggle_doctor_break_db,
     delay_broadcast_db,
     get_patient_ticket_db,
+    cancel_appointment_db,
+    reschedule_appointment_db,
     get_owner_analytics_db
 )
 from app.services.clinic_event_broadcaster import broadcaster
@@ -61,6 +63,13 @@ class DelayBroadcastRequest(BaseModel):
     doctor_id: str = Field(...)
     delay_minutes: int = Field(..., ge=5, le=180)
     reason: Optional[str] = "Emergency clinical procedure"
+
+class TicketCancelRequest(BaseModel):
+    reason: Optional[str] = "Customer requested cancellation via live link"
+
+class TicketRescheduleRequest(BaseModel):
+    appointment_date: str = Field(..., description="YYYY-MM-DD")
+    slot_time: str = Field(..., description="e.g. 11:30 AM")
 
 # Endpoints
 @router.get("/doctors")
@@ -299,13 +308,65 @@ def get_patient_secure_ticket(
     x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
     db: Session = Depends(get_db)
 ):
-    """Patient Secure Link: Mobile web view showing private live ticket number and dynamic ETA."""
-    # If header omitted, default to Alpha Clinic
-    tenant = x_tenant_id or "11111111-1111-1111-1111-111111111111"
-    ticket = get_patient_ticket_db(db, tenant, identifier)
+    """Patient / Client Secure Link: Mobile web view showing branded live ticket, queue ETA, and self-service options."""
+    ticket = get_patient_ticket_db(db, x_tenant_id or "auto", identifier)
     if not ticket:
         raise HTTPException(status_code=404, detail="Appointment ticket not found")
     return ticket
+
+
+@router.post("/patient/ticket/{identifier}/cancel")
+async def cancel_patient_ticket(
+    identifier: str,
+    payload: TicketCancelRequest,
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+    db: Session = Depends(get_db)
+):
+    """Customer Self-Service: Cancels an appointment from the digital ticket link and syncs dashboards via SSE."""
+    ticket = get_patient_ticket_db(db, x_tenant_id or "auto", identifier)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Appointment ticket not found")
+
+    result = cancel_appointment_db(db, ticket["tenant_id"], ticket["appointment_number"], reason=payload.reason)
+    if result.get("status") in ("NOT_FOUND", "ERROR"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Unable to cancel"))
+
+    await broadcaster.broadcast(
+        tenant_id=ticket["tenant_id"],
+        event_type="QUEUE_UPDATED",
+        data=result
+    )
+    return result
+
+
+@router.post("/patient/ticket/{identifier}/reschedule")
+async def reschedule_patient_ticket(
+    identifier: str,
+    payload: TicketRescheduleRequest,
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+    db: Session = Depends(get_db)
+):
+    """Customer Self-Service: Reschedules an appointment slot from the digital ticket link and notifies via WhatsApp."""
+    ticket = get_patient_ticket_db(db, x_tenant_id or "auto", identifier)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Appointment ticket not found")
+
+    result = reschedule_appointment_db(
+        db,
+        ticket["tenant_id"],
+        ticket["appointment_number"],
+        new_date_str=payload.appointment_date,
+        new_slot_str=payload.slot_time
+    )
+    if result.get("status") in ("NOT_FOUND", "ERROR"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Unable to reschedule"))
+
+    await broadcaster.broadcast(
+        tenant_id=ticket["tenant_id"],
+        event_type="QUEUE_UPDATED",
+        data=result
+    )
+    return result
 
 @router.get("/events/stream")
 async def stream_clinic_events(

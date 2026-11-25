@@ -199,10 +199,84 @@ def check_in_patient(tenant_id: str, appointment_id: str, db: Optional[Any] = No
     }
 
 
-def search_knowledge_base(tenant_id: str, query: str) -> Dict[str, Any]:
-    """Answers common clinic FAQ inquiries."""
-    q = (query or "").lower()
-    
+_TEMPLATE_TO_BUSINESS_CODE = {
+    "CLINIC_OPD": "HOSP_HEALTH",
+    "DENTAL_CLINIC": "HOSP_HEALTH",
+    "VETERINARY_CLINIC": "HOSP_HEALTH",
+}
+
+
+def search_knowledge_base(tenant_id: str, query: str, db: Optional[Any] = None) -> Dict[str, Any]:
+    """Searches PostgreSQL pgvector knowledge_chunks + keyword ranking & tenant settings before fallback."""
+    q = (query or "").lower().strip()
+
+    if db is not None:
+        try:
+            import uuid as _uuid
+            from sqlalchemy import text
+            from app.models.tenant import PlatformTenant
+            from app.services.ai.embedding_utils import compute_text_embedding, format_pgvector_literal
+
+            tenant = db.query(PlatformTenant).filter(PlatformTenant.id == _uuid.UUID(str(tenant_id))).first()
+            t_settings = (tenant.settings or {}) if tenant else {}
+            biz_name = tenant.name if tenant else "Alpha Clinic"
+            addr = t_settings.get("address", "")
+            phone = t_settings.get("phone", "")
+            template_id = (tenant.business_template_id or "CLINIC_OPD") if tenant else "CLINIC_OPD"
+            business_code = _TEMPLATE_TO_BUSINESS_CODE.get(template_id, template_id)
+
+            if addr and any(k in q for k in ["address", "location", "kahan", "jagah", "pata"]):
+                return {
+                    "status": "FOUND",
+                    "topic": "Location & Address",
+                    "source": "tenant_settings",
+                    "information": f"{biz_name} is located at {addr}. Contact: {phone or 'Direct WhatsApp'}."
+                }
+
+            # Hybrid pgvector cosine similarity + keyword ranking across knowledge_chunks
+            qvec_literal = format_pgvector_literal(compute_text_embedding(query or biz_name))
+            tokens = [tok for tok in q.split() if len(tok) >= 3][:5]
+            if tokens:
+                like_clauses = " OR ".join(
+                    [f"kc.chunk_text ILIKE :kw{i} OR kc.chunk_title ILIKE :kw{i} OR kd.title ILIKE :kw{i}" for i in range(len(tokens))]
+                )
+                params: Dict[str, Any] = {f"kw{i}": f"%{tok}%" for i, tok in enumerate(tokens)}
+                kw_bonus_sql = f"CASE WHEN ({like_clauses}) THEN 0.25 ELSE 0.0 END"
+            else:
+                params = {}
+                kw_bonus_sql = "0.0"
+
+            params["qvec"] = qvec_literal
+            params["bcode"] = business_code
+            params["tpl_id"] = template_id
+
+            rows = db.execute(
+                text(
+                    f"SELECT kd.title, kc.chunk_title, kc.chunk_text, "
+                    f"COALESCE(1.0 - (kc.embedding <=> CAST(:qvec AS vector)), 0.0) AS vec_score, "
+                    f"({kw_bonus_sql}) AS kw_score "
+                    f"FROM knowledge_chunks kc "
+                    f"JOIN knowledge_documents kd ON kd.id = kc.document_id "
+                    f"WHERE kd.status = 'ACTIVE' AND kc.business_code IN (:bcode, :tpl_id) "
+                    f"ORDER BY (COALESCE(1.0 - (kc.embedding <=> CAST(:qvec AS vector)), 0.0) + ({kw_bonus_sql})) DESC, kc.id ASC "
+                    f"LIMIT 2"
+                ),
+                params,
+            ).fetchall()
+
+            if rows:
+                top_title = f"{rows[0][0]} — {rows[0][1]}" if rows[0][1] else rows[0][0]
+                combined_info = " | ".join(r[2] for r in rows if r[2])
+                return {
+                    "status": "FOUND",
+                    "topic": top_title,
+                    "source": "pgvector_hybrid_kb",
+                    "similarity": round(float(rows[0][3] or 0.0), 4),
+                    "information": combined_info,
+                }
+        except Exception as e:
+            logger.debug(f"KB vector query fallback triggered: {e}")
+
     if "address" in q or "location" in q or "kahan" in q or "jagah" in q:
         return {
             "status": "FOUND",

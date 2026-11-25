@@ -127,6 +127,19 @@ class AiSupervisor:
                     db=db
                 )
 
+                # Enrich booking confirmations with tenant branding and dynamic ticket URL
+                if fn_name == "book_appointment" and isinstance(tool_output, dict) and tool_output.get("status") == "CONFIRMED":
+                    from app.services.template_formatter import get_ticket_url
+                    ref_id = tool_output.get("appointment_number") or tool_output.get("appointment_id", "")
+                    t_settings = tenant.settings or {}
+                    tool_output["business_name"] = tenant.name
+                    tool_output["template_id"] = tenant.business_template_id
+                    tool_output["currency"] = tenant.currency or "PKR"
+                    tool_output["business_address"] = t_settings.get("address", "")
+                    tool_output["business_phone"] = t_settings.get("phone", "")
+                    if ref_id:
+                        tool_output["ticket_url"] = get_ticket_url(ref_id)
+
                 tools_executed.append({
                     "call_id": call_id,
                     "tool": fn_name,
@@ -147,8 +160,18 @@ class AiSupervisor:
                 tools=tool_schemas if tool_schemas else None
             )
             final_reply = second_response.get("message", {}).get("content", "")
+            usage_meta = second_response.get("usage") or first_response.get("usage") or {}
         else:
             final_reply = msg_obj.get("content", "")
+            usage_meta = first_response.get("usage") or {}
+
+        # Ensure live Groq replies for confirmed bookings always include the dynamic digital ticket URL
+        for exec_item in tools_executed:
+            res = exec_item.get("result") or {}
+            if exec_item.get("tool") == "book_appointment" and res.get("status") == "CONFIRMED":
+                t_url = res.get("ticket_url")
+                if t_url and t_url not in (final_reply or ""):
+                    final_reply = f"{final_reply}\n\n📲 Live Digital Ticket & Self-Service Link:\n{t_url}".strip()
 
         # Fallback if empty
         if not final_reply:
@@ -174,17 +197,23 @@ class AiSupervisor:
         db.add(ai_message)
         db.flush()
 
-        # Record AI Token Consumption
+        # Record AI Token Consumption (prefer actual provider usage if returned)
+        actual_tokens = int(usage_meta.get("total_tokens") or 0)
+        recorded_tokens = actual_tokens if actual_tokens > 0 else (len(user_text.split()) * 4 + len(final_reply.split()) * 4 + 100)
         record_usage_db(
             db=db,
             tenant_id=str(tenant.id),
             metric_name="AI_TOKENS",
-            quantity=len(user_text.split()) * 4 + len(final_reply.split()) * 4 + 100,
+            quantity=recorded_tokens,
             metadata={"conversation_id": str(conversation_id), "model": self.groq_client.model}
         )
 
         # Step 9: Enqueue to Transactional Outbox for Delivery
         connection = db.query(ChannelConnection).filter(
+            ChannelConnection.tenant_id == tenant.id,
+            ChannelConnection.phone_number_id == "alpha-clinic",
+            ChannelConnection.status == "CONNECTED"
+        ).first() or db.query(ChannelConnection).filter(
             ChannelConnection.tenant_id == tenant.id,
             ChannelConnection.status == "CONNECTED"
         ).first()
@@ -212,5 +241,6 @@ class AiSupervisor:
             "response_text": final_reply,
             "tools_executed": tools_executed,
             "ai_message_id": str(ai_message.id),
+            "outbox_id": str(outbox_entry.id) if outbox_entry else None,
             "outbox_enqueued": bool(outbox_entry)
         }
