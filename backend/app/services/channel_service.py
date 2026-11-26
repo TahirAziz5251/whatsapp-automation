@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from typing import Dict, Any, Optional
 from uuid import UUID
@@ -84,6 +85,19 @@ class ChannelService:
 
         # Step 3: Enforce PostgreSQL Row-Level Security for this Tenant
         db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+
+        # Acquire transaction-scoped advisory lock per (tenant, provider_message_id)
+        # so simultaneous webhook deliveries cannot both pass deduplication.
+        if normalized.provider_message_id:
+            try:
+                if db.bind and db.bind.dialect.name == "postgresql":
+                    lock_key = int(
+                        hashlib.sha256(f"wa_msg:{tenant_id}:{normalized.provider_message_id}".encode("utf-8")).hexdigest()[:15],
+                        16,
+                    )
+                    db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": lock_key})
+            except Exception:
+                pass
 
         # Step 4: Deduplicate Inbound Event
         existing_msg = db.query(TenantMessage).filter(
@@ -270,16 +284,38 @@ class ChannelService:
             ).first()
 
             if conversation:
-                outbound_msg = TenantMessage(
-                    tenant_id=outbox.tenant_id,
-                    conversation_id=conversation.id,
-                    provider_message_id=str(dispatch_result.get("response", {}).get("key", {}).get("id", uuid.uuid4().hex)),
-                    sender_type="AI_AGENT",
-                    message_type="text",
-                    content=text_body,
-                    delivery_status="SENT"
-                )
-                db.add(outbound_msg)
+                resp_obj = dispatch_result.get("response") or {}
+                sent_id = str((resp_obj.get("key") or {}).get("id") or "") if isinstance(resp_obj, dict) else ""
+                if not sent_id and isinstance(resp_obj, dict) and isinstance(resp_obj.get("data"), dict):
+                    sent_id = str((resp_obj["data"].get("Info") or {}).get("ID") or resp_obj["data"].get("id") or "")
+                sent_id = sent_id or uuid.uuid4().hex
+
+                existing_ai_msg = None
+                ai_msg_id = (outbox.payload or {}).get("ai_message_id") if isinstance(outbox.payload, dict) else None
+                if ai_msg_id:
+                    try:
+                        existing_ai_msg = db.query(TenantMessage).filter(
+                            TenantMessage.tenant_id == outbox.tenant_id,
+                            TenantMessage.id == UUID(str(ai_msg_id)),
+                        ).first()
+                    except Exception:
+                        existing_ai_msg = None
+
+                if existing_ai_msg:
+                    if not existing_ai_msg.provider_message_id:
+                        existing_ai_msg.provider_message_id = sent_id
+                    existing_ai_msg.delivery_status = "SENT"
+                else:
+                    outbound_msg = TenantMessage(
+                        tenant_id=outbox.tenant_id,
+                        conversation_id=conversation.id,
+                        provider_message_id=sent_id,
+                        sender_type="AI_AGENT",
+                        message_type="text",
+                        content=text_body,
+                        delivery_status="SENT"
+                    )
+                    db.add(outbound_msg)
 
             # Record Metered Usage for Outbound WhatsApp Message
             from app.services.billing_service import record_usage_db

@@ -508,3 +508,130 @@ def test_layer4_evolution_interactive_location_and_multibusiness_prompt():
         business_name="Alpha Heart & Medical Centre",
     )
     assert map_url in conf_card
+
+
+def test_single_reply_outbox_deferral_and_no_duplicate_ai_message():
+    from unittest.mock import patch
+    from app.models.communication import TenantConversation, TenantMessage, TenantOutboxMessage
+    from app.models.tenant import ChannelConnection
+    from app.services.ai.supervisor import AiSupervisor
+    from app.services.channel_service import ChannelService
+
+    tid = uuid.UUID("11111111-1111-1111-1111-111111111111")
+    conv_id = uuid.uuid4()
+    conn_id = uuid.uuid4()
+    tpl = BusinessTemplate(
+        id="CLINIC_OPD",
+        name="Clinic OPD",
+        industry_category="HEALTHCARE",
+        allowed_tools=["get_doctor_schedule", "search_knowledge_base"],
+    )
+    tenant = PlatformTenant(
+        id=tid,
+        slug="alpha-clinic",
+        name="Alpha Heart & Medical Centre",
+        business_template_id="CLINIC_OPD",
+        status="ACTIVE",
+        timezone="Asia/Karachi",
+        currency="PKR",
+        settings={"bot_name": "Dr. Shifa", "phone": "042-35780000"},
+    )
+    conn = ChannelConnection(
+        id=conn_id,
+        tenant_id=tid,
+        channel_type="EVOLUTION_GO",
+        phone_number_id="alpha-clinic",
+        display_phone_number="+923127118485",
+        status="CONNECTED",
+    )
+    conv = TenantConversation(id=conv_id, tenant_id=tid, channel_connection_id=conn_id, session_key=f"{tid}:923001112233", status="ACTIVE", ai_paused=False)
+
+    mock_db = MagicMock()
+    added_objs = []
+    def _fake_add(obj):
+        if getattr(obj, "id", None) is None:
+            obj.id = uuid.uuid4()
+        added_objs.append(obj)
+    mock_db.add.side_effect = _fake_add
+
+    def _query_side_effect(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        q.order_by.return_value = q
+        q.limit.return_value = q
+        if model is TenantConversation:
+            q.first.return_value = conv
+        elif model is PlatformTenant:
+            q.first.return_value = tenant
+        elif model is BusinessTemplate:
+            q.first.return_value = tpl
+        elif model is ChannelConnection:
+            q.first.return_value = conn
+        elif model is TenantMessage:
+            q.all.return_value = []
+        else:
+            q.first.return_value = None
+        return q
+    mock_db.query.side_effect = _query_side_effect
+
+    sup = AiSupervisor(groq_client=GroqClient(api_key="gsk_placeholder_key"))
+    before = datetime.now(timezone.utc)
+    with patch("app.services.billing_service.check_entitlement_db", return_value={"allowed": True}), \
+         patch("app.services.billing_service.record_usage_db", return_value=None), \
+         patch("app.services.clinic_service.get_patient_profile_db", return_value=None), \
+         patch("app.services.clinic_service.get_conversation_state_db", return_value={"step": "IDLE", "issued_options": {}}), \
+         patch("app.services.clinic_service.save_conversation_state_db", return_value=None):
+        coro = sup.process_message(
+            db=mock_db,
+            tenant_id=str(tid),
+            conversation_id=str(conv_id),
+            customer_phone="923001112233",
+            user_text="Assalam o Alikum",
+            defer_outbox_seconds=60,
+        )
+        try:
+            coro.send(None)
+            raise AssertionError("Expected synchronous coroutine completion")
+        except StopIteration as stop_exc:
+            res = stop_exc.value
+
+    assert res["status"] == "SUCCESS"
+    outbox_objs = [o for o in added_objs if isinstance(o, TenantOutboxMessage)]
+    ai_msg_objs = [o for o in added_objs if isinstance(o, TenantMessage)]
+    assert len(outbox_objs) == 1
+    assert len(ai_msg_objs) == 1
+    outbox = outbox_objs[0]
+    ai_msg = ai_msg_objs[0]
+    assert outbox.payload.get("ai_message_id") == str(ai_msg.id)
+    assert outbox.next_retry_at >= before + timedelta(seconds=45)
+
+    # 2. If background dispatcher recovers that row, it updates existing AI_AGENT TenantMessage rather than adding a duplicate
+    disp_db = MagicMock()
+    disp_added = []
+    disp_db.add.side_effect = lambda o: disp_added.append(o)
+    def _disp_query(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        if model is TenantOutboxMessage:
+            q.first.return_value = outbox
+        elif model is ChannelConnection:
+            q.first.return_value = conn
+        elif model is TenantConversation:
+            q.first.return_value = conv
+        elif model is TenantMessage:
+            q.first.return_value = ai_msg
+        else:
+            q.first.return_value = None
+        return q
+    disp_db.query.side_effect = _disp_query
+
+    with patch("app.services.channel_service.get_adapter_for_connection") as mock_get_adapter, \
+         patch("app.services.billing_service.record_usage_db", return_value=None):
+        fake_adapter = MagicMock()
+        fake_adapter.send_text_message.return_value = {"success": True, "status_code": 200, "response": {"key": {"id": "EVO_SENT_1"}}}
+        mock_get_adapter.return_value = fake_adapter
+        disp = ChannelService.dispatch_outbox_message(outbox.id, disp_db)
+        assert disp["success"] is True
+
+    assert len([o for o in disp_added if isinstance(o, TenantMessage)]) == 0
+    assert ai_msg.provider_message_id == "EVO_SENT_1"

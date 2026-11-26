@@ -1,7 +1,7 @@
 import json
 import uuid
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -74,7 +74,8 @@ class AiSupervisor:
         tenant_id: str,
         conversation_id: str,
         customer_phone: str,
-        user_text: str
+        user_text: str,
+        defer_outbox_seconds: int = 0,
     ) -> Dict[str, Any]:
         """
         Processes an incoming customer message through the tenant-scoped AI Supervisor:
@@ -342,13 +343,17 @@ class AiSupervisor:
 
         outbox_entry = None
         if connection:
+            retry_at = datetime.now(timezone.utc)
+            if defer_outbox_seconds and defer_outbox_seconds > 0:
+                retry_at = retry_at + timedelta(seconds=int(defer_outbox_seconds))
             outbox_entry = TenantOutboxMessage(
                 tenant_id=tenant.id,
                 channel_connection_id=connection.id,
                 recipient_phone=customer_phone,
                 message_type="text",
-                payload={"text": final_reply},
-                status="PENDING"
+                payload={"text": final_reply, "ai_message_id": str(ai_message.id)},
+                status="PENDING",
+                next_retry_at=retry_at,
             )
             db.add(outbox_entry)
             db.flush()

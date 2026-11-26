@@ -1,6 +1,8 @@
 import re
 import logging
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 from uuid import UUID
@@ -162,27 +164,50 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                 tenant_id=tenant_id,
                 conversation_id=conversation_id,
                 customer_phone=customer_phone,
-                user_text=user_text
+                user_text=user_text,
+                defer_outbox_seconds=60,
             )
             reply_text = ai_turn.get("response_text", "")
             outbox_id = ai_turn.get("outbox_id")
+            ai_message_id = ai_turn.get("ai_message_id")
             if reply_text:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
                 send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
                 logger.info(f"AI response dispatched to {customer_phone}: {send_res.get('status_code')} | Success: {send_res.get('success')}")
-                # Sync outbox state so background dispatcher never double-sends
+                # Sync outbox state atomically under tenant RLS so background dispatcher never double-sends
+                db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
+                now_utc = datetime.now(timezone.utc)
                 if outbox_id:
                     from app.models.communication import TenantOutboxMessage
-                    from datetime import datetime, timezone
-                    outbox_row = db.query(TenantOutboxMessage).filter(TenantOutboxMessage.id == UUID(outbox_id)).first()
+                    outbox_row = db.query(TenantOutboxMessage).filter(
+                        TenantOutboxMessage.tenant_id == UUID(str(tenant_id)),
+                        TenantOutboxMessage.id == UUID(str(outbox_id)),
+                    ).first()
                     if outbox_row:
                         if send_res.get("success"):
                             outbox_row.status = "DISPATCHED"
-                            outbox_row.updated_at = datetime.now(timezone.utc)
+                            outbox_row.updated_at = now_utc
                         else:
                             outbox_row.status = "FAILED"
                             outbox_row.last_error = str(send_res.get("error") or send_res.get("response"))
-                        db.commit()
+                            outbox_row.updated_at = now_utc
+                            outbox_row.next_retry_at = now_utc + timedelta(seconds=60)
+                if send_res.get("success") and ai_message_id:
+                    resp_obj = send_res.get("response") or {}
+                    data_obj = resp_obj.get("data") if isinstance(resp_obj, dict) else {}
+                    sent_id = None
+                    if isinstance(data_obj, dict):
+                        sent_id = (data_obj.get("Info") or {}).get("ID") or (data_obj.get("key") or {}).get("id") or data_obj.get("id")
+                    if not sent_id and isinstance(resp_obj, dict):
+                        sent_id = (resp_obj.get("key") or {}).get("id")
+                    if sent_id:
+                        msg_row = db.query(TenantMessage).filter(
+                            TenantMessage.tenant_id == UUID(str(tenant_id)),
+                            TenantMessage.id == UUID(str(ai_message_id)),
+                        ).first()
+                        if msg_row and not msg_row.provider_message_id:
+                            msg_row.provider_message_id = str(sent_id)
+                db.commit()
                 result["reply_sent"] = reply_text
                 result["send_status"] = send_res.get("success", False)
                 result["tools_executed"] = ai_turn.get("tools_executed", [])
