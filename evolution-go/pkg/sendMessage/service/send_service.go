@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chai2010/webp"
 	config "github.com/evolution-foundation/evolution-go/pkg/config"
 	instance_model "github.com/evolution-foundation/evolution-go/pkg/instance/model"
 	logger_wrapper "github.com/evolution-foundation/evolution-go/pkg/logger"
@@ -1592,13 +1591,12 @@ func convertToWebP(imageData string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to decode image: %v", err)
 	}
 
-	var webpBuffer bytes.Buffer
-	err = webp.Encode(&webpBuffer, img, &webp.Options{Lossless: false, Quality: 80})
+	webpData, err := encodeWebP(img, 80)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode image to WebP: %v", err)
 	}
 
-	return webpBuffer.Bytes(), nil
+	return webpData, nil
 }
 
 func (s *sendService) SendSticker(data *StickerStruct, instance *instance_model.Instance) (*MessageSendStruct, error) {
@@ -2846,7 +2844,7 @@ func (s *sendService) SendMessage(instance *instance_model.Instance, msg *waE2E.
 			data, err = s.clientPointer[instance.Id].Download(context.Background(), sticker)
 
 			webpReader := bytes.NewReader(data)
-			img, err := webp.Decode(webpReader)
+			img, err := decodeWebP(webpReader)
 			if err == nil {
 				var pngBuffer bytes.Buffer
 				err = png.Encode(&pngBuffer, img)
