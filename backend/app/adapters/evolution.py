@@ -7,6 +7,22 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+def parse_lat_lng_from_map_url(map_url: Optional[str]) -> Optional[tuple[float, float]]:
+    """Extracts (latitude, longitude) coordinates from Google Maps query URLs."""
+    if not map_url:
+        return None
+    m = re.search(r"(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)", str(map_url))
+    if not m:
+        return None
+    try:
+        lat, lng = float(m.group(1)), float(m.group(2))
+        if -90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0:
+            return lat, lng
+    except ValueError:
+        pass
+    return None
+
+
 class EvolutionGoAdapter(BaseChannelAdapter):
     """
     Adapter for Evolution Go (Whatsmeow client).
@@ -46,19 +62,28 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if not msg_id:
             return None
 
-        # 5. Extract message text
+        # 5. Extract message text (including interactive button / list replies)
         msg_obj = data.get("Message") or data.get("message") or {}
         if isinstance(msg_obj, str):
             text = msg_obj.strip()
         else:
+            btn_resp = msg_obj.get("buttonsResponseMessage") or {}
+            list_resp = msg_obj.get("listResponseMessage") or {}
+            tpl_btn = msg_obj.get("templateButtonReplyMessage") or {}
             text = str(
-                msg_obj.get("conversation") or 
-                msg_obj.get("extendedTextMessage", {}).get("text") or 
-                msg_obj.get("text") or
-                data.get("caption") or 
-                data.get("text") or
-                body.get("text") or
-                ""
+                msg_obj.get("conversation")
+                or (msg_obj.get("extendedTextMessage") or {}).get("text")
+                or btn_resp.get("selectedDisplayText")
+                or btn_resp.get("selectedButtonId")
+                or list_resp.get("title")
+                or (list_resp.get("singleSelectReply") or {}).get("selectedRowId")
+                or tpl_btn.get("selectedDisplayText")
+                or tpl_btn.get("selectedId")
+                or msg_obj.get("text")
+                or data.get("caption")
+                or data.get("text")
+                or body.get("text")
+                or ""
             ).strip()
         if not text:
             return None
@@ -119,43 +144,62 @@ class EvolutionGoAdapter(BaseChannelAdapter):
 
         return self.api_key
 
-    def send_text_message(self, recipient_phone: str, text: str, **kwargs) -> Dict[str, Any]:
-        """Sends WhatsApp text message via Evolution Go API."""
-        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
-        url = f"{self.api_url}/send/text"
-        
+    def _post_with_token_retry(self, path: str, body: Dict[str, Any], timeout: float = 10.0) -> Dict[str, Any]:
+        url = f"{self.api_url}{path}"
         token = self.get_instance_token()
-        headers = {
-            "apikey": token,
-            "Content-Type": "application/json"
-        }
-        body = {
-            "number": clean_phone,
-            "text": text
-        }
+        headers = {"apikey": token, "Content-Type": "application/json"}
         try:
-            with httpx.Client(timeout=10.0) as client:
+            with httpx.Client(timeout=timeout) as client:
                 resp = client.post(url, json=body, headers=headers)
-                
-                # If 401 Unauthorized, retry once with global API key
                 if resp.status_code == 401 and token != self.api_key:
-                    logger.warning("Token unauthorized on /send/text, retrying with global API key...")
+                    logger.warning(f"Token unauthorized on {path}, retrying with global API key...")
                     headers["apikey"] = self.api_key
                     resp = client.post(url, json=body, headers=headers)
 
-                logger.info(f"Evolution sendText to {clean_phone} -> HTTP {resp.status_code}")
+                logger.info(f"Evolution {path} -> HTTP {resp.status_code}")
                 return {
                     "success": resp.is_success,
                     "status_code": resp.status_code,
-                    "response": resp.json() if resp.is_success else resp.text
+                    "response": resp.json() if resp.is_success else resp.text,
                 }
         except Exception as e:
-            logger.error(f"Failed to send text message via Evolution Go ({url}): {e}")
-            return {
-                "success": False,
-                "status_code": 500,
-                "error": str(e)
-            }
+            logger.error(f"Failed Evolution request ({url}): {e}")
+            return {"success": False, "status_code": 500, "error": str(e)}
+
+    def send_text_message(self, recipient_phone: str, text: str, **kwargs) -> Dict[str, Any]:
+        """Sends WhatsApp text message via Evolution Go API."""
+        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        return self._post_with_token_retry("/send/text", {"number": clean_phone, "text": text})
+
+    def send_location(
+        self,
+        recipient_phone: str,
+        latitude: float,
+        longitude: float,
+        name: str = "",
+        address: str = "",
+    ) -> Dict[str, Any]:
+        """Sends a native WhatsApp location pin via Evolution Go (best-effort; map URL is also in text)."""
+        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        return self._post_with_token_retry(
+            "/send/location",
+            {
+                "number": clean_phone,
+                "latitude": float(latitude),
+                "longitude": float(longitude),
+                "name": name or "Location Pin",
+                "address": address or "",
+            },
+        )
+
+    def send_interactive_options(self, recipient_phone: str, body_text: str, options: Optional[list] = None) -> Dict[str, Any]:
+        """Sends structured WhatsApp choice list cleanly over reliable plain text."""
+        opts = [str(o).strip() for o in (options or []) if str(o).strip()]
+        if not opts:
+            return self.send_text_message(recipient_phone, body_text)
+        numbered = "\n".join(f"{i}. {opt}" for i, opt in enumerate(opts[:10], start=1))
+        full_text = f"{body_text.rstrip()}\n\n{numbered}"
+        return self.send_text_message(recipient_phone, full_text)
 
     def get_connection_status(self) -> Dict[str, Any]:
         url = f"{self.api_url}/instance/status"

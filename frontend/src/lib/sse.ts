@@ -40,6 +40,8 @@ export function useClinicSSE(
 
     const events = [
       "CONNECTED",
+      "BOOKING_CREATED",
+      "HANDOFF_REQUESTED",
       "PATIENT_CHECKED_IN",
       "WALK_IN_ADDED",
       "PATIENT_CALLED",

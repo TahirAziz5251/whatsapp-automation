@@ -5,21 +5,75 @@ from app.services.ai.tools import clinic_tools
 # Master Canonical Tool Definitions (OpenAI / Groq Function Calling Schema)
 CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
     # --- CLINIC / HOSPITAL OPD QUEUE MANAGEMENT TOOLS ---
+    "get_departments": {
+        "type": "function",
+        "function": {
+            "name": "get_departments",
+            "description": "List all active clinic medical departments/specialties available for booking.",
+            "parameters": {"type": "object", "properties": {}, "required": []}
+        }
+    },
     "get_doctor_schedule": {
         "type": "function",
         "function": {
             "name": "get_doctor_schedule",
-            "description": "Check available doctors, specialty, consulting days, operating hours, and open appointment slots.",
+            "description": "Check active doctors, specialty, consulting days, hours, fee, and genuinely open appointment slots for a date.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "doctor_name_or_specialty": {
                         "type": "string",
-                        "description": "Name of the doctor (e.g. 'Dr. Tariq') or medical specialty (e.g. 'Cardiology', 'Pediatrics', 'General Physician')."
+                        "description": "Name of the doctor (e.g. 'Dr. Tariq') or medical specialty (e.g. 'Cardiology', 'Pediatrics', 'General Medicine')."
                     },
                     "date": {
                         "type": "string",
-                        "description": "Preferred date for appointment (e.g. '2026-11-22' or 'Tomorrow')."
+                        "description": "Target date (e.g. 'Today', 'Tomorrow', 'Monday', or 'YYYY-MM-DD')."
+                    },
+                    "preferred_time": {
+                        "type": "string",
+                        "description": "Optional preferred time (e.g. '11:00 AM', '05:00 PM') to check availability and sort nearest slots."
+                    }
+                },
+                "required": []
+            }
+        }
+    },
+    "get_availability": {
+        "type": "function",
+        "function": {
+            "name": "get_availability",
+            "description": "Check open database slots for a department or doctor on a specific date before offering times or booking.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "department_or_doctor": {
+                        "type": "string",
+                        "description": "Medical department/specialty or doctor name."
+                    },
+                    "date": {
+                        "type": "string",
+                        "description": "Preferred date ('Today', 'Tomorrow', weekday, or 'YYYY-MM-DD')."
+                    },
+                    "preferred_time": {
+                        "type": "string",
+                        "description": "Preferred time string if mentioned by the patient."
+                    }
+                },
+                "required": []
+            }
+        }
+    },
+    "get_fees": {
+        "type": "function",
+        "function": {
+            "name": "get_fees",
+            "description": "Fetch exact published consultation fees from clinic database.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "doctor_name_or_specialty": {
+                        "type": "string",
+                        "description": "Optional doctor name or specialty filter."
                     }
                 },
                 "required": []
@@ -30,7 +84,7 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "book_appointment",
-            "description": "Book a verified clinic appointment for a patient and generate a queue token number.",
+            "description": "Book a verified clinic appointment after checking open slots and obtaining explicit patient confirmation.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -44,22 +98,75 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
                     },
                     "doctor_name": {
                         "type": "string",
-                        "description": "Name of the doctor to book with."
+                        "description": "Exact name of the doctor to book with."
                     },
                     "date": {
                         "type": "string",
-                        "description": "Date of appointment (e.g. '2026-11-22')."
+                        "description": "Date of appointment (e.g. 'YYYY-MM-DD', 'Today', or 'Tomorrow')."
                     },
                     "slot_time": {
                         "type": "string",
-                        "description": "Selected time slot (e.g. '11:00 AM')."
+                        "description": "Exact verified open slot time (e.g. '11:00 AM')."
                     },
                     "symptoms": {
                         "type": "string",
-                        "description": "Brief description of the patient's concern or chief complaint."
+                        "description": "Brief description of the patient's concern or visit reason."
+                    },
+                    "patient_age": {
+                        "type": "integer",
+                        "description": "Patient's age in years if provided."
+                    },
+                    "appointment_type": {
+                        "type": "string",
+                        "description": "Visit type: NEW_VISIT or FOLLOW_UP."
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Set true ONLY after the patient has explicitly confirmed the summary of doctor, date, time, patient, and fee."
+                    },
+                    "idempotency_key": {
+                        "type": "string",
+                        "description": "Unique booking turn key to prevent duplicate bookings on retries."
                     }
                 },
-                "required": ["patient_name", "doctor_name", "date", "slot_time"]
+                "required": ["patient_name", "doctor_name", "date", "slot_time", "confirmed"]
+            }
+        }
+    },
+    "get_appointments": {
+        "type": "function",
+        "function": {
+            "name": "get_appointments",
+            "description": "Retrieve upcoming appointments strictly for the sender's authenticated WhatsApp number.",
+            "parameters": {"type": "object", "properties": {}, "required": []}
+        }
+    },
+    "reschedule_appointment": {
+        "type": "function",
+        "function": {
+            "name": "reschedule_appointment",
+            "description": "Reschedule an existing booked appointment to a verified open date and slot time.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": {
+                        "type": "string",
+                        "description": "Existing Booking ID (e.g. 'APT-202611-XXXXXX') or Token."
+                    },
+                    "new_date": {
+                        "type": "string",
+                        "description": "New appointment date ('YYYY-MM-DD' or 'Tomorrow')."
+                    },
+                    "new_slot_time": {
+                        "type": "string",
+                        "description": "Verified open slot time (e.g. '11:30 AM')."
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Set true ONLY after patient explicitly confirmed the reschedule summary."
+                    }
+                },
+                "required": ["appointment_id", "new_date", "new_slot_time", "confirmed"]
             }
         }
     },
@@ -67,13 +174,13 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "get_queue_status",
-            "description": "Check the real-time live OPD queue status, token currently being examined, and estimated wait time.",
+            "description": "Check real-time live OPD queue status, serving token, patients ahead, and estimated wait time.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "appointment_id_or_token": {
                         "type": "string",
-                        "description": "The patient's queue token number (e.g. 'T-A14') or appointment ID."
+                        "description": "The patient's queue token (e.g. 'T-M01') or Booking ID."
                     },
                     "doctor_name": {
                         "type": "string",
@@ -88,20 +195,24 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "cancel_appointment",
-            "description": "Cancel or revoke a scheduled appointment.",
+            "description": "Cancel a scheduled appointment after explicit patient confirmation.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "appointment_id": {
                         "type": "string",
-                        "description": "Unique appointment identifier to cancel."
+                        "description": "Booking ID or Queue Token to cancel."
                     },
                     "reason": {
                         "type": "string",
                         "description": "Reason for cancellation."
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Set true after patient confirms cancellation."
                     }
                 },
-                "required": ["appointment_id"]
+                "required": ["appointment_id", "confirmed"]
             }
         }
     },
@@ -109,16 +220,33 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "check_in_patient",
-            "description": "Mark patient as arrived at the clinic reception desk.",
+            "description": "Check in an arriving patient ('I have arrived') and return live queue token and position.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "appointment_id": {
                         "type": "string",
-                        "description": "Appointment ID of the arriving patient."
+                        "description": "Booking ID or Queue Token of the arriving patient."
                     }
                 },
                 "required": ["appointment_id"]
+            }
+        }
+    },
+    "get_clinic_info": {
+        "type": "function",
+        "function": {
+            "name": "get_clinic_info",
+            "description": "Get published clinic address, Google Maps link, reception phone, timings, and policies.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string",
+                        "description": "Topic such as address, timings, map, or policy."
+                    }
+                },
+                "required": []
             }
         }
     },
@@ -126,16 +254,37 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "search_knowledge_base",
-            "description": "Search clinic FAQs, operating timings, address/location, parking, available lab tests, and fees.",
+            "description": "Search approved clinic FAQs, lab tests, instructions, and policies via hybrid RAG.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The customer's question or search query."
+                        "description": "The customer's informational question or search query."
                     }
                 },
                 "required": ["query"]
+            }
+        }
+    },
+    "handoff_to_human": {
+        "type": "function",
+        "function": {
+            "name": "handoff_to_human",
+            "description": "Escalate conversation to clinic human reception staff and pause automated AI replies.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "Reason why human reception intervention is needed."
+                    },
+                    "priority": {
+                        "type": "string",
+                        "description": "'urgent' for medical emergencies/critical complaints, else 'normal'."
+                    }
+                },
+                "required": ["reason"]
             }
         }
     },
@@ -143,7 +292,7 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "escalate_to_human",
-            "description": "Hand off conversation to human clinic front-desk staff.",
+            "description": "Hand off conversation to human clinic front-desk staff and pause AI replies.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -187,14 +336,25 @@ CANONICAL_TOOLS: Dict[str, Dict[str, Any]] = {
 }
 
 
-# Dispatch Registry
+# Dispatch Registry (13 canonical tools + spec-compatible aliases)
 TOOL_HANDLERS = {
+    "get_departments": clinic_tools.get_departments,
     "get_doctor_schedule": clinic_tools.get_doctor_schedule,
+    "search_doctors": clinic_tools.get_doctor_schedule,
+    "get_availability": clinic_tools.get_availability,
+    "get_fees": clinic_tools.get_fees,
     "book_appointment": clinic_tools.book_appointment,
-    "get_queue_status": clinic_tools.get_queue_status,
+    "create_booking": clinic_tools.book_appointment,
+    "get_appointments": clinic_tools.get_appointments,
+    "reschedule_appointment": clinic_tools.reschedule_appointment,
     "cancel_appointment": clinic_tools.cancel_appointment,
     "check_in_patient": clinic_tools.check_in_patient,
+    "check_in": clinic_tools.check_in_patient,
+    "get_queue_status": clinic_tools.get_queue_status,
+    "get_clinic_info": clinic_tools.get_clinic_info,
     "search_knowledge_base": clinic_tools.search_knowledge_base,
+    "retrieve_knowledge": clinic_tools.search_knowledge_base,
+    "handoff_to_human": clinic_tools.handoff_to_human,
     "escalate_to_human": clinic_tools.escalate_to_human,
 }
 
@@ -245,8 +405,8 @@ def execute_tool(
     if db is not None:
         args["db"] = db
     if customer_phone:
-        # Enforce verified incoming WhatsApp caller number as authoritative patient_phone
-        # unless an explicit valid 10+ digit alternate phone was explicitly provided
+        # Enforce verified incoming WhatsApp caller number as authoritative caller_phone
+        args["caller_phone"] = customer_phone
         explicit_phone = "".join(filter(str.isdigit, str(args.get("patient_phone") or "")))
         if len(explicit_phone) >= 10:
             args["patient_phone"] = explicit_phone

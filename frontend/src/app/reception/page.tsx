@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { clinicApi } from "@/lib/api";
+import { clinicApi, crmApi } from "@/lib/api";
 import { useClinicSSE } from "@/lib/sse";
 import {
   UserCheck,
@@ -37,11 +37,18 @@ export default function ReceptionDashboard() {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
 
-  // Real-time Toast Alert State
+  // Real-time Toast Alert State & Handoff Alert Queue
   const [recentNotification, setRecentNotification] = useState<{
     message: string;
-    type: "new_booking" | "check_in" | "called";
+    type: "new_booking" | "check_in" | "called" | "handoff";
   } | null>(null);
+  const [handoffAlerts, setHandoffAlerts] = useState<Array<{
+    ticket_id: string;
+    priority: string;
+    patient_phone: string;
+    conversation_id?: string | null;
+    reason: string;
+  }>>([]);
 
   // Modals state
   const [showWalkInModal, setShowWalkInModal] = useState<boolean>(false);
@@ -62,12 +69,31 @@ export default function ReceptionDashboard() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [apts, docs] = await Promise.all([
+      const [apts, docs, pausedConvs] = await Promise.all([
         clinicApi.getAppointments(),
-        clinicApi.getDoctors()
+        clinicApi.getDoctors(),
+        crmApi.getConversations(undefined, true).catch(() => []),
       ]);
       setAppointments(apts);
       setDoctors(docs);
+      if (Array.isArray(pausedConvs)) {
+        setHandoffAlerts((prev) => {
+          const existingMap = new Map(prev.map((a) => [a.conversation_id || a.ticket_id, a]));
+          pausedConvs.forEach((c: any) => {
+            const cid = c.conversation_id || c.id;
+            if (cid && !existingMap.has(cid)) {
+              existingMap.set(cid, {
+                ticket_id: `HANDOFF-${String(cid).slice(0, 6).toUpperCase()}`,
+                priority: "normal",
+                patient_phone: c.customer_phone || c.patient_name || "Patient",
+                conversation_id: cid,
+                reason: c.last_message || "AI paused — awaiting human staff reply",
+              });
+            }
+          });
+          return Array.from(existingMap.values());
+        });
+      }
       if (docs.length > 0 && !walkInForm.doctor_id) {
         setWalkInForm(prev => ({ ...prev, doctor_id: docs[0].id }));
         setDelayForm(prev => ({ ...prev, doctor_id: docs[0].id }));
@@ -98,9 +124,50 @@ export default function ReceptionDashboard() {
         type: "called"
       });
       setTimeout(() => setRecentNotification(null), 6000);
+    } else if (event === "HANDOFF_REQUESTED") {
+      const alertItem = {
+        ticket_id: data?.ticket_id || `ESC-${Date.now().toString().slice(-4)}`,
+        priority: String(data?.priority || "normal").toLowerCase(),
+        patient_phone: data?.patient_phone || "WhatsApp Patient",
+        conversation_id: data?.conversation_id || null,
+        reason: data?.reason || "Human reception assistance requested",
+      };
+      setHandoffAlerts((prev) => [
+        alertItem,
+        ...prev.filter((x) => (x.conversation_id || x.ticket_id) !== (alertItem.conversation_id || alertItem.ticket_id)),
+      ]);
+      setRecentNotification({
+        message: `${alertItem.priority === "urgent" ? "URGENT EMERGENCY HANDOFF" : "Human Reception Request"}: +${alertItem.patient_phone} (${alertItem.ticket_id})`,
+        type: "handoff",
+      });
+      setTimeout(() => setRecentNotification(null), 8000);
+    } else if (event === "QUEUE_UPDATED" && data?.status) {
+      setRecentNotification({
+        message: `Booking ${data.appointment_number || data.queue_token || ""} updated: ${data.status}`,
+        type: "check_in",
+      });
+      setTimeout(() => setRecentNotification(null), 5000);
     }
     loadData();
   });
+
+  const handleResumeAi = async (conversationId: string | null | undefined, ticketId: string) => {
+    if (!conversationId) {
+      setHandoffAlerts((prev) => prev.filter((a) => a.ticket_id !== ticketId));
+      return;
+    }
+    try {
+      setActionLoading(`resume-${conversationId}`);
+      await crmApi.resumeAi(conversationId);
+      setHandoffAlerts((prev) => prev.filter((a) => a.conversation_id !== conversationId && a.ticket_id !== ticketId));
+      setRecentNotification({ message: `AI Assistant resumed for thread ${ticketId}`, type: "check_in" });
+      setTimeout(() => setRecentNotification(null), 4000);
+    } catch (err: any) {
+      alert(`Failed to resume AI: ${err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   // Handle 1-Click Check-In
   const handleCheckIn = async (appointmentId: string) => {
@@ -193,6 +260,57 @@ export default function ReceptionDashboard() {
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {/* Urgent Human Handoff / Emergency Alert Banners */}
+      {handoffAlerts.length > 0 && (
+        <div className="space-y-2.5">
+          {handoffAlerts.map((alertItem) => {
+            const isUrgent = alertItem.priority === "urgent";
+            return (
+              <div
+                key={alertItem.conversation_id || alertItem.ticket_id}
+                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border shadow-lg ${
+                  isUrgent
+                    ? "bg-rose-600/95 text-white border-rose-400 shadow-rose-600/30"
+                    : "bg-amber-50 dark:bg-amber-950/60 text-amber-950 dark:text-amber-100 border-amber-300 dark:border-amber-700"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${isUrgent ? "text-white animate-pulse" : "text-amber-600 dark:text-amber-400"}`} />
+                  <div className="text-xs sm:text-sm">
+                    <p className="font-black tracking-tight">
+                      {isUrgent ? "URGENT EMERGENCY HANDOFF" : "HUMAN RECEPTION REQUEST"} • {alertItem.ticket_id}
+                    </p>
+                    <p className={`mt-0.5 ${isUrgent ? "text-rose-100" : "text-amber-800 dark:text-amber-300"}`}>
+                      Patient +{alertItem.patient_phone} — &ldquo;{alertItem.reason}&rdquo; (AI auto-replies paused)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleResumeAi(alertItem.conversation_id, alertItem.ticket_id)}
+                    disabled={actionLoading === `resume-${alertItem.conversation_id}`}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      isUrgent
+                        ? "bg-white text-rose-700 hover:bg-rose-50"
+                        : "bg-amber-600 hover:bg-amber-500 text-white"
+                    }`}
+                  >
+                    {actionLoading === `resume-${alertItem.conversation_id}` ? "Resuming..." : "Resolve & Resume AI"}
+                  </button>
+                  <button
+                    onClick={() => setHandoffAlerts((prev) => prev.filter((x) => x.ticket_id !== alertItem.ticket_id))}
+                    className="p-1.5 rounded-lg hover:bg-black/10 transition"
+                    title="Dismiss banner"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

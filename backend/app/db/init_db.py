@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS business_templates (
 );
 
 INSERT INTO business_templates (id, name, industry_category, description, allowed_tools) VALUES
-('CLINIC_OPD', 'Clinic & Hospital OPD Queue', 'HEALTHCARE', 'Doctor appointments, live queue tracking, patient check-in', '["get_doctor_schedule", "book_appointment", "cancel_appointment", "get_queue_status", "check_in_patient", "search_knowledge_base"]'::jsonb),
+('CLINIC_OPD', 'Clinic & Hospital OPD Queue', 'HEALTHCARE', 'Doctor appointments, live queue tracking, patient check-in', '["get_departments", "get_doctor_schedule", "get_availability", "get_fees", "book_appointment", "get_appointments", "reschedule_appointment", "cancel_appointment", "check_in_patient", "get_queue_status", "get_clinic_info", "search_knowledge_base", "handoff_to_human"]'::jsonb),
 ('BEAUTY_SALON', 'Beauty Salon & Barbershop', 'SERVICE', 'Services, stylist schedules, chairs, appointment bookings', '["search_services", "check_availability", "book_appointment", "reschedule_appointment", "cancel_appointment", "search_knowledge_base"]'::jsonb),
 ('BAKERY_CAKES', 'Bakery & Cake Business', 'RETAIL', 'Custom cakes, sizes, flavors, advance quotations and pickup', '["search_catalog", "request_quote", "create_order", "track_order", "search_knowledge_base"]'::jsonb),
 ('RESTAURANT_DELIVERY', 'Restaurant & Food Delivery', 'RETAIL', 'Menu, food modifiers, cart, kitchen dispatch, takeaway/delivery', '["view_menu", "create_cart", "update_cart", "create_order", "track_delivery", "search_knowledge_base"]'::jsonb),
@@ -82,7 +82,7 @@ VALUES
     'ACTIVE',
     'Asia/Karachi',
     'PKR',
-    '{"bot_name": "Dr. Shifa", "welcome_message": "Assalam-o-Alaikum! Welcome to Alpha Heart & Medical Centre Lahore.", "address": "Plot 45-B, Main Boulevard, Gulberg III, Lahore", "phone": "042-35780000"}'::jsonb
+    '{"bot_name": "Dr. Shifa", "welcome_message": "Assalam-o-Alaikum! Welcome to Alpha Heart & Medical Centre Lahore.", "address": "Plot 45-B, Main Boulevard, Gulberg III, Lahore", "phone": "042-35780000", "map_url": "https://www.google.com/maps?q=29.410876883940837,71.70442811315009", "emergency_number": "1122", "arrival_minutes": 15, "cancellation_window_hours": 2}'::jsonb
 ),
 (
     '33333333-3333-3333-3333-333333333333',

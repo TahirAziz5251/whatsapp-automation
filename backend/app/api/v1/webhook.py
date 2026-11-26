@@ -76,8 +76,13 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
             except Exception as e:
                 logger.error(f"Failed to dispatch emergency WhatsApp message: {e}")
 
-            # Record high-priority audit alert for clinic reception
+            # Record high-priority audit alert, pause AI, and broadcast HANDOFF_REQUESTED to /reception
             try:
+                conv_em = db.query(TenantConversation).filter(TenantConversation.id == UUID(conversation_id)).first()
+                if conv_em:
+                    conv_em.ai_paused = True
+                    conv_em.status = "PAUSED_FOR_HUMAN"
+                esc_id = f"EMG-{str(conversation_id)[:6].upper()}"
                 audit_ev = TenantAuditEvent(
                     tenant_id=UUID(tenant_id),
                     actor_type="SYSTEM",
@@ -85,10 +90,24 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                     action="EMERGENCY_MEDICAL_ESCALATION",
                     resource_type="PATIENT",
                     resource_id=customer_phone,
-                    details={"user_text": user_text, "action_taken": "REDIRECT_RESCUE_1122"}
+                    details={"user_text": user_text, "action_taken": "REDIRECT_RESCUE_1122", "ticket_id": esc_id}
                 )
                 db.add(audit_ev)
                 db.commit()
+
+                from app.services.clinic_event_broadcaster import broadcaster
+                await broadcaster.broadcast(
+                    tenant_id=str(tenant_id),
+                    event_type="HANDOFF_REQUESTED",
+                    data={
+                        "ticket_id": esc_id,
+                        "priority": "urgent",
+                        "patient_phone": customer_phone,
+                        "conversation_id": str(conversation_id),
+                        "reason": user_text,
+                        "ai_paused": True,
+                    },
+                )
             except Exception as e:
                 logger.error(f"Failed to record emergency audit event: {e}")
 
@@ -103,6 +122,7 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                 conv = db.query(TenantConversation).filter(TenantConversation.id == UUID(conversation_id)).first()
                 if conv:
                     conv.ai_paused = True
+                    conv.status = "PAUSED_FOR_HUMAN"
                     db.commit()
 
                 handoff_reply = (
@@ -112,6 +132,21 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
                 send_res = adapter.send_text_message(recipient_phone=customer_phone, text=handoff_reply)
                 logger.info(f"Human handoff message dispatched to {customer_phone}: {send_res}")
+
+                from app.services.clinic_event_broadcaster import broadcaster
+                await broadcaster.broadcast(
+                    tenant_id=str(tenant_id),
+                    event_type="HANDOFF_REQUESTED",
+                    data={
+                        "ticket_id": f"ESC-{str(conversation_id)[:6].upper()}",
+                        "priority": "normal",
+                        "patient_phone": customer_phone,
+                        "conversation_id": str(conversation_id),
+                        "reason": user_text,
+                        "ai_paused": True,
+                    },
+                )
+
                 result["reply_sent"] = handoff_reply
                 result["human_handoff"] = True
                 return result
@@ -152,22 +187,43 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                 result["send_status"] = send_res.get("success", False)
                 result["tools_executed"] = ai_turn.get("tools_executed", [])
 
-            # Emit real-time SSE updates if an appointment was booked or cancelled via WhatsApp
+            # Emit real-time SSE updates & native WhatsApp location pin after committed actions
+            from app.services.clinic_event_broadcaster import broadcaster
+            from app.adapters.evolution import parse_lat_lng_from_map_url
             for exec_item in ai_turn.get("tools_executed", []):
                 t_name = exec_item.get("tool")
                 t_res = exec_item.get("result") or {}
-                if t_name == "book_appointment" and t_res.get("status") == "CONFIRMED":
-                    from app.services.clinic_event_broadcaster import broadcaster
-                    await broadcaster.broadcast(
-                        tenant_id=str(tenant_id),
-                        event_type="BOOKING_CREATED",
-                        data=t_res
-                    )
-                elif t_name == "cancel_appointment" and t_res.get("status") == "CANCELLED":
-                    from app.services.clinic_event_broadcaster import broadcaster
+                t_status = t_res.get("status")
+                if t_name in ("book_appointment", "create_booking") and t_status == "CONFIRMED":
+                    if not t_res.get("idempotent_replay"):
+                        await broadcaster.broadcast(
+                            tenant_id=str(tenant_id),
+                            event_type="BOOKING_CREATED",
+                            data=t_res
+                        )
+                        # Best-effort native WhatsApp location pin (map link is already in text)
+                        coords = parse_lat_lng_from_map_url(t_res.get("map_url"))
+                        if coords:
+                            try:
+                                EvolutionGoAdapter(instance_name=instance_name).send_location(
+                                    recipient_phone=customer_phone,
+                                    latitude=coords[0],
+                                    longitude=coords[1],
+                                    name=t_res.get("business_name", "Clinic Location"),
+                                    address=t_res.get("business_address", ""),
+                                )
+                            except Exception as loc_err:
+                                logger.debug(f"Optional WhatsApp location pin skipped: {loc_err}")
+                elif t_name in ("cancel_appointment", "reschedule_appointment", "check_in_patient", "check_in") and t_status in ("CANCELLED", "RESCHEDULED", "CHECKED_IN"):
                     await broadcaster.broadcast(
                         tenant_id=str(tenant_id),
                         event_type="QUEUE_UPDATED",
+                        data=t_res
+                    )
+                elif t_name in ("handoff_to_human", "escalate_to_human") and t_status == "HANDOFF_ACTIVE":
+                    await broadcaster.broadcast(
+                        tenant_id=str(tenant_id),
+                        event_type="HANDOFF_REQUESTED",
                         data=t_res
                     )
         except Exception as e:

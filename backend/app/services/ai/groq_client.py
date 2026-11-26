@@ -80,8 +80,8 @@ class GroqClient:
                         }
 
                     err_text = response.text or ""
-                    if response.status_code in (400, 404) and ("model" in err_text.lower() or "decommissioned" in err_text.lower()):
-                        logger.warning(f"Groq model '{active_model}' unavailable ({response.status_code}); trying next fallback.")
+                    if response.status_code in (400, 404, 429, 500, 502, 503):
+                        logger.warning(f"Groq model '{active_model}' returned HTTP {response.status_code}; trying next fallback model.")
                         continue
 
                     logger.warning(f"Groq API returned HTTP {response.status_code}: {err_text}")
@@ -162,6 +162,24 @@ class GroqClient:
                 else:
                     content = "Maazrat, is specialty k mutabiq koi doctor dastiyab nahi hain."
 
+            elif result_data.get("status") == "CONFIRMATION_REQUIRED":
+                summ = result_data.get("summary") or {}
+                d_name = summ.get("doctor_name", "Doctor")
+                dt_str = summ.get("appointment_date") or summ.get("new_date", "")
+                tm_str = summ.get("slot_time") or summ.get("new_slot", "")
+                pt_str = summ.get("patient_name", "")
+                fee_str = f"PKR {summ['fee_pkr']:,.0f}" if summ.get("fee_pkr") else ""
+                if lang == "ROMAN_URDU":
+                    content = f"Barah-e-meherbani confirm karein: {d_name} | {dt_str} {tm_str}" + (f" | Mareez: {pt_str}" if pt_str else "") + (f" | Fee: {fee_str}" if fee_str else "") + ". Confirm karne k liye 'Confirm' likhein."
+                else:
+                    content = f"Please confirm: {d_name} | {dt_str} {tm_str}" + (f" | Patient: {pt_str}" if pt_str else "") + (f" | Fee: {fee_str}" if fee_str else "") + ". Reply 'Confirm' to finalize or 'Change' to adjust."
+
+            elif result_data.get("status") == "NOT_CHECKED_IN":
+                if lang == "ROMAN_URDU":
+                    content = "Aap ki booking maujood hai lekin abhi check-in nahi hua. Clinic pohanch kar reception par check-in karwayein."
+                else:
+                    content = "You are booked, but not checked in yet. Please check in when you arrive at clinic reception."
+
             elif result_data.get("status") == "ACTIVE_QUEUE":
                 # Queue status
                 curr = result_data.get("current_token_serving", "T-01")
@@ -169,14 +187,20 @@ class GroqClient:
                 wait = result_data.get("estimated_wait_minutes", 20)
 
                 if lang == "ROMAN_URDU":
-                    content = f"Is waqt live OPD queue mein Token {curr} chal raha hai. Aap se aagay {ahead} mareez hain aur taqreeban {wait} minute intezar mutawaqqe hai."
+                    content = f"Is waqt live OPD queue mein Token {curr} chal raha hai. Aap se aagay {ahead} mareez hain aur taqreeban {wait} minute intezar mutawaqqe hai (Estimate, not a guarantee)."
                 elif lang == "URDU":
-                    content = f"اس وقت او پی ڈی میں ٹوکن {curr} زیر معائنہ ہے۔ آپ سے آگے {ahead} مریض ہیں اور متوقع انتظار {wait} منٹ ہے۔"
+                    content = f"اس وقت او پی ڈی میں ٹوکن {curr} زیر معائنہ ہے۔ آپ سے آگے {ahead} مریض ہیں اور متوقع انتظار {wait} منٹ ہے (تخمینہ)۔"
                 else:
-                    content = f"Currently, token {curr} is being examined. There are {ahead} patients ahead of you with an estimated wait time of {wait} minutes."
+                    content = f"Currently, token {curr} is being examined. There are {ahead} patients ahead of you with an estimated wait time of {wait} minutes (Estimate, not a guarantee)."
+
+            elif result_data.get("status") == "NO_EVIDENCE":
+                if lang == "ROMAN_URDU":
+                    content = "Maazrat, is baray mein tasdeeq shuda clinic maloomat mojood nahi. Kya main aap ko reception se connect kar doon?"
+                else:
+                    content = result_data.get("information", "I do not have verified information on that topic. Would you like to talk to clinic reception?")
 
             else:
-                info = result_data.get("information", "Aap ki darkhwast par amal kiya ja raha hai.")
+                info = result_data.get("information") or result_data.get("message") or "Aap ki darkhwast par amal kiya ja raha hai."
                 content = info
 
             return {
@@ -221,10 +245,52 @@ class GroqClient:
                 "usage": {"prompt_tokens": 80, "completion_tokens": 25, "total_tokens": 105}
             }
 
+        # Confirmation reply for an awaiting booking draft (2-step summary gate)
+        sys_text = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
+        is_confirm_reply = any(
+            user_text.strip() == w or user_text.strip().startswith(w + " ")
+            for w in ("confirm", "yes", "haan", "jee", "ok", "finalize")
+        )
+        if is_confirm_reply and "AWAITING_CONFIRMATION" in sys_text and "book_appointment" in tool_names:
+            draft = {}
+            try:
+                if "Conversation State:" in sys_text:
+                    state_line = sys_text.split("Conversation State:", 1)[1].splitlines()[0].strip()
+                    draft = (json.loads(state_line) or {}).get("draft_booking") or {}
+            except Exception:
+                draft = {}
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_book_confirm_001",
+                            "type": "function",
+                            "function": {
+                                "name": "book_appointment",
+                                "arguments": json.dumps({
+                                    "patient_name": draft.get("patient_name") or "Valued Patient",
+                                    "doctor_name": draft.get("doctor_name") or "Dr. Tariq Mahmood",
+                                    "date": draft.get("appointment_date") or today_str,
+                                    "slot_time": draft.get("slot_time") or "11:00 AM",
+                                    "symptoms": draft.get("symptoms") or "Consultation",
+                                    "confirmed": True,
+                                })
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 90, "completion_tokens": 30, "total_tokens": 120}
+            }
+
         # Explicit booking action
         elif any(w in user_text for w in ["book", "appointment", "booking", "kar do", "leni", "lena", "chahiye", "mil sakta", "checkup", "dikhana"]) and "book_appointment" in tool_names:
             target_doc = "Dr. Ayesha Malik" if "ayesha" in user_text else ("Dr. Bilal Asghar" if ("bilal" in user_text or "child" in user_text or "bacha" in user_text) else "Dr. Tariq Mahmood")
             target_slot = "04:30 PM" if "ayesha" in user_text else ("06:15 PM" if "bilal" in user_text else "11:00 AM")
+            target_date = next((d.title() for d in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "tomorrow") if d in user_text), today_str)
             target_symptom = "Cardiology evaluation" if "tariq" in user_text else ("Pediatric consultation" if ("bilal" in user_text or "child" in user_text) else "General medical consultation")
 
             return {
@@ -241,9 +307,10 @@ class GroqClient:
                                 "arguments": json.dumps({
                                     "patient_name": "Valued Patient",
                                     "doctor_name": target_doc,
-                                    "date": today_str,
+                                    "date": target_date,
                                     "slot_time": target_slot,
-                                    "symptoms": target_symptom
+                                    "symptoms": target_symptom,
+                                    "confirmed": False,
                                 })
                             }
                         }

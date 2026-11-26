@@ -96,8 +96,10 @@ def format_booking_confirmation(
     slot = booking_data.get("slot_time", "11:00 AM")
     fee = float(booking_data.get("fee_pkr", 0) or 0)
     ticket_url = booking_data.get("ticket_url") or get_ticket_url(ref_id)
+    map_url = booking_data.get("map_url") or ""
 
     addr_line = f"📍 {business_address}\n" if business_address else ""
+    map_line = f"🗺️ *Map:* {map_url}\n" if map_url else ""
     phone_line = f"☎️ {business_phone}\n" if business_phone else ""
     fee_line = f"💵 *Fee:* {currency} {fee:,.0f}\n" if fee > 0 else ""
 
@@ -105,7 +107,7 @@ def format_booking_confirmation(
         return (
             f"✅ *{labels['confirmed_ru']}*\n\n"
             f"🏢 *{biz_title}*\n"
-            f"{addr_line}{phone_line}"
+            f"{addr_line}{map_line}{phone_line}"
             f"👤 *{labels['provider_label']}:* {provider_display}\n"
             f"📅 *Date:* {apt_date}\n"
             f"⏰ *Time:* {slot}\n"
@@ -122,7 +124,7 @@ def format_booking_confirmation(
         return (
             f"✅ *{labels['confirmed_ur']}*\n\n"
             f"🏢 *{biz_title}*\n"
-            f"{addr_line}{phone_line}"
+            f"{addr_line}{map_line}{phone_line}"
             f"👤 *{labels['provider_label']}:* {provider_display}\n"
             f"📅 *تاریخ:* {apt_date}\n"
             f"⏰ *وقت:* {slot}\n"
@@ -138,7 +140,7 @@ def format_booking_confirmation(
         return (
             f"✅ *{labels['confirmed_en']}*\n\n"
             f"🏢 *{biz_title}*\n"
-            f"{addr_line}{phone_line}"
+            f"{addr_line}{map_line}{phone_line}"
             f"👤 *{labels['provider_label']}:* {provider_display}\n"
             f"📅 *Date:* {apt_date}\n"
             f"⏰ *Time:* {slot}\n"

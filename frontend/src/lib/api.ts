@@ -155,6 +155,14 @@ export const crmApi = {
   getAuditEvents: (tenantId: string = DEFAULT_TENANT_ID) =>
     fetchFromApi<any[]>("/crm/audit-events", { method: "GET" }, tenantId),
 
-  getConversations: (tenantId: string = DEFAULT_TENANT_ID) =>
-    fetchFromApi<any[]>("/crm/conversations", { method: "GET" }, tenantId)
+  getConversations: (tenantId: string = DEFAULT_TENANT_ID, aiPaused?: boolean) => {
+    const qs = aiPaused !== undefined ? `?ai_paused=${String(aiPaused)}` : "";
+    return fetchFromApi<any[]>(`/crm/conversations${qs}`, { method: "GET" }, tenantId);
+  },
+
+  pauseAi: (conversationId: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi(`/crm/conversations/${conversationId}/pause-ai`, { method: "POST" }, tenantId),
+
+  resumeAi: (conversationId: string, tenantId: string = DEFAULT_TENANT_ID) =>
+    fetchFromApi(`/crm/conversations/${conversationId}/resume-ai`, { method: "POST" }, tenantId),
 };

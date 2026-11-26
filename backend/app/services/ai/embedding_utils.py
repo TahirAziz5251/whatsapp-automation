@@ -8,7 +8,7 @@ clinic/business semantic concept anchors without heavy ML runtime dependencies.
 import hashlib
 import math
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
 
 EMBEDDING_DIMS = 384
 
@@ -68,11 +68,95 @@ def format_pgvector_literal(vec: List[float]) -> str:
     return "[" + ",".join(f"{v:.6f}" for v in vec) + "]"
 
 
+_QUERY_STOPWORDS = {
+    "a", "an", "the", "is", "are", "was", "were", "be", "been", "do", "does", "did",
+    "can", "could", "will", "would", "should", "may", "might", "what", "which", "who",
+    "when", "where", "why", "how", "this", "that", "these", "those", "there", "here",
+    "you", "your", "we", "our", "they", "me", "my", "i", "it", "its",
+    "in", "on", "at", "by", "for", "with", "from", "to", "of", "and", "or", "if",
+    "have", "has", "had", "any", "all", "some", "please", "tell", "about", "get",
+    "ka", "ki", "ke", "ko", "mein", "me", "se", "par", "pe", "tak", "hai", "hain",
+    "ho", "tha", "thi", "kya", "liye", "leay", "aur", "ya", "ye", "wo", "hum", "aap",
+    "kuch", "koi", "mil", "sakta", "sakti", "chahiye", "bataein", "batao", "kar", "karein",
+    "alpha", "clinic", "hospital", "centre", "center", "medical",
+}
+
+_QUERY_SYNONYMS: Dict[str, str] = {
+    "kahan": "address location gulberg map",
+    "kidhar": "address location gulberg map",
+    "jagah": "address location",
+    "pata": "address location",
+    "waqt": "timing hours schedule",
+    "khula": "open timing hours",
+    "kab": "timing schedule hours",
+    "baje": "timing hours",
+    "paise": "fee charges payment pkr",
+    "kharcha": "fee charges pkr",
+    "kitne": "fee charges",
+    "khoon": "blood lab diagnostic cbc",
+    "test": "lab diagnostic test report",
+    "nahar": "fasting empty stomach prep",
+    "roza": "fasting empty stomach prep",
+    "bhuka": "fasting empty stomach",
+    "mansookh": "cancel cancellation policy",
+    "tabdeel": "reschedule change slot",
+    "dawai": "pharmacy medicine",
+    "gadi": "parking vehicle car",
+    "parking": "parking vehicle car",
+    "card": "card payment debit credit",
+    "cash": "cash payment counter",
+    "jazzcash": "jazzcash payment counter",
+    "easypaisa": "easypaisa payment counter",
+}
+
+
+def normalize_rag_query(query: str) -> Dict[str, Any]:
+    """
+    Normalizes Roman Urdu, Urdu script, and English queries for hybrid RAG:
+    - removes stopwords and generic brand boilerplate tokens
+    - tracks distinctive concept groups for threshold coverage verification
+    - expands Roman Urdu / clinic synonyms into canonical bilingual terms
+    """
+    raw = (query or "").strip()
+    cleaned = re.sub(r"[^a-z0-9\u0600-\u06ff\s]", " ", raw.lower())
+    all_tokens = [t for t in cleaned.split() if len(t) >= 2]
+    substantive = [t for t in all_tokens if t not in _QUERY_STOPWORDS and not t.isdigit()]
+    if not substantive:
+        substantive = [t for t in all_tokens if t not in _QUERY_STOPWORDS]
+
+    expanded: List[str] = []
+    concept_groups: List[List[str]] = []
+    seen = set()
+    for tok in substantive:
+        group = [tok]
+        if tok not in seen:
+            expanded.append(tok)
+            seen.add(tok)
+        syn = _QUERY_SYNONYMS.get(tok)
+        if syn:
+            for s_tok in syn.split():
+                group.append(s_tok)
+                if s_tok not in seen:
+                    expanded.append(s_tok)
+                    seen.add(s_tok)
+        concept_groups.append(group)
+
+    return {
+        "raw": raw,
+        "cleaned": " ".join(substantive) or " ".join(all_tokens),
+        "normalized_text": " ".join(expanded),
+        "tokens": substantive,
+        "expanded_tokens": expanded,
+        "concept_groups": concept_groups,
+    }
+
+
 ALPHA_CLINIC_KB_SEED = [
     {
         "doc_title": "OPD Clinic Timings & Specialty Directory",
         "doc_type": "POLICY",
         "business_code": "HOSP_HEALTH",
+        "metadata": {"valid_from": "2026-01-01T00:00:00Z", "published": True},
         "chunks": [
             (
                 "Doctor OPD Clinic Days, Rooms & Hours",
@@ -82,28 +166,53 @@ ALPHA_CLINIC_KB_SEED = [
                 "Dr. Bilal Asghar (Pediatrics, MBBS FCPS, Room 103) — Monday 06:00 PM to 09:00 PM (Fee PKR 2,000)."
             ),
             (
-                "Alpha Clinic Address & Operating Hours",
+                "Alpha Clinic Address, Map & Operating Hours",
                 "Alpha Clinic & Diagnostic Centre is located at Plot 45-B, Main Boulevard, Gulberg III, Lahore (near Kalma Chowk). "
-                "OPD clinic operates Monday to Saturday 09:00 AM - 09:00 PM. Reception Phone: 042-35889900."
+                "Google Maps Pin: https://www.google.com/maps?q=29.410876883940837,71.70442811315009 . "
+                "OPD clinic operates Monday to Saturday 09:00 AM - 09:00 PM. Reception Desk Phone: 042-35780000."
+            ),
+            (
+                "Patient Parking & Wheelchair Accessibility",
+                "Free dedicated patient car and motorbike parking is available in front of Alpha Clinic Plot 45-B Gulberg III with security staff and step-free wheelchair access to Ground Floor Reception and OPD Rooms 101-103."
             ),
         ],
     },
     {
-        "doc_title": "Consultation Fees & Emergency Policy",
+        "doc_title": "Consultation Fees, Payment & Emergency Policy",
         "doc_type": "POLICY",
         "business_code": "HOSP_HEALTH",
+        "metadata": {"valid_from": "2026-01-01T00:00:00Z", "published": True},
         "chunks": [
             (
-                "Consultation Fees, Diagnostics Lab & Emergency Wing",
+                "Consultation Fees & Counter Payment Methods",
                 "Consultation fees at Alpha Clinic: General Physician (Dr. Ayesha Malik) PKR 1,800; Pediatrics (Dr. Bilal Asghar) PKR 2,000; "
-                "Cardiology (Dr. Tariq Mahmood) PKR 2,500. In-house Diagnostic Lab (CBC, Blood Sugar, Lipid Profile, LFT) and Ultrasound "
-                "operate 08:00 AM to 08:00 PM. Emergency Care & Pharmacy are open 24/7. Call Rescue 1122 for critical emergencies."
+                "Cardiology (Dr. Tariq Mahmood) PKR 2,500. Payment is collected at the clinic reception counter upon arrival — Cash, Debit/Credit Card, JazzCash, and EasyPaisa are accepted (no online prepayment required)."
             ),
             (
-                "WhatsApp Booking, Queue Token & Digital Ticket Policy",
-                "Patients receive an instant Digital Ticket link and queue token (e.g. T-01) upon WhatsApp booking. "
-                "Appointments can be rescheduled or cancelled anytime using the self-service Digital Ticket link or via WhatsApp chat. "
-                "Reception front desk checks patients in on arrival for real-time queue updates."
+                "WhatsApp Booking, Arrival, Reschedule & Cancellation Policy",
+                "Patients receive a Booking ID and Digital Ticket link upon confirmation. Please arrive 10-15 minutes before your appointment slot and check in at reception (or reply I have arrived). "
+                "Rescheduling and cancellation are free with at least 2 hours advance notice via WhatsApp or the Digital Ticket link."
+            ),
+            (
+                "24/7 Emergency Wing & In-House Pharmacy",
+                "Alpha Clinic Emergency Stabilization Wing and In-House Pharmacy are open 24/7, including Sundays and public holidays. For life-threatening emergencies (chest pain, breathing distress, heavy bleeding, unconsciousness), call Rescue 1122 or visit the nearest hospital ER immediately."
+            ),
+        ],
+    },
+    {
+        "doc_title": "Diagnostic Lab, Imaging & Preparation Instructions",
+        "doc_type": "FAQ",
+        "business_code": "HOSP_HEALTH",
+        "metadata": {"valid_from": "2026-01-01T00:00:00Z", "published": True},
+        "chunks": [
+            (
+                "In-House Lab Tests, Ultrasound & ECG Timings",
+                "Alpha Clinic Diagnostic Lab offers CBC, Blood Sugar (Fasting/Random), HbA1c, Lipid Profile, Liver Function (LFT), Renal Function (RFT), ECG, and Ultrasound daily from 08:00 AM to 08:00 PM. Same-day digital reports are delivered at reception or via clinic desk."
+            ),
+            (
+                "Fasting & Test Preparation Instructions",
+                "Preparation instructions: Lipid Profile and Fasting Blood Sugar (FBS) require 8 to 12 hours overnight fasting (plain water is allowed). "
+                "Abdominal ultrasound requires 6 hours fasting, while pelvic/kidney ultrasound requires a full bladder (drink 3-4 glasses of water 45 minutes before the scan)."
             ),
         ],
     },
@@ -113,12 +222,14 @@ ALPHA_CLINIC_KB_SEED = [
 def sync_knowledge_base_embeddings(conn: object) -> Dict[str, int]:
     """
     Ensures Alpha Clinic (HOSP_HEALTH) knowledge_documents/knowledge_chunks reflect
-    accurate doctor fees/timings and backfills vector(384) embeddings for all chunks.
+    accurate clinic FAQs & policies with validity metadata and backfills vector(384) embeddings.
     """
+    import json
     from sqlalchemy import text
 
     seeded_chunks = 0
     for doc_spec in ALPHA_CLINIC_KB_SEED:
+        meta_json = json.dumps(doc_spec.get("metadata") or {"valid_from": "2026-01-01T00:00:00Z", "published": True})
         existing_doc = conn.execute(
             text(
                 "SELECT id FROM knowledge_documents "
@@ -131,9 +242,9 @@ def sync_knowledge_base_embeddings(conn: object) -> Dict[str, int]:
             doc_id = existing_doc[0]
             conn.execute(
                 text(
-                    "UPDATE knowledge_documents SET status = 'ACTIVE', updated_at = NOW() WHERE id = :doc_id"
+                    "UPDATE knowledge_documents SET status = 'ACTIVE', metadata = CAST(:meta AS jsonb), updated_at = NOW() WHERE id = :doc_id"
                 ),
-                {"doc_id": doc_id},
+                {"doc_id": doc_id, "meta": meta_json},
             )
             conn.execute(
                 text("DELETE FROM knowledge_chunks WHERE document_id = :doc_id"),
@@ -144,7 +255,7 @@ def sync_knowledge_base_embeddings(conn: object) -> Dict[str, int]:
                 text(
                     "INSERT INTO knowledge_documents "
                     "(business_code, namespace, source, title, doc_type, version, status, content, metadata) "
-                    "VALUES (:bcode, 'default', 'alpha_clinic_seed', :title, :dtype, '2.0', 'ACTIVE', :content, CAST('{}' AS jsonb)) "
+                    "VALUES (:bcode, 'default', 'alpha_clinic_seed', :title, :dtype, '2.0', 'ACTIVE', :content, CAST(:meta AS jsonb)) "
                     "RETURNING id"
                 ),
                 {
@@ -152,6 +263,7 @@ def sync_knowledge_base_embeddings(conn: object) -> Dict[str, int]:
                     "title": doc_spec["doc_title"],
                     "dtype": doc_spec["doc_type"],
                     "content": "\n\n".join(txt for _, txt in doc_spec["chunks"]),
+                    "meta": meta_json,
                 },
             ).fetchone()
             doc_id = inserted_doc[0]

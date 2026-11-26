@@ -105,17 +105,33 @@ class ChannelService:
         ).first()
 
         if not contact:
+            raw_push = (normalized.push_name or "").strip()
+            init_meta = {}
+            if raw_push and raw_push.lower() not in ("customer", "patient", "user"):
+                init_meta["patient_profile"] = {
+                    "full_name": raw_push,
+                    "full_name_confirmed": False,
+                }
             contact = PlatformContact(
                 tenant_id=tenant_id,
                 customer_phone=normalized.customer_phone,
-                full_name=normalized.push_name,
-                push_name=normalized.push_name
+                full_name=raw_push or None,
+                push_name=raw_push or None,
+                metadata_=init_meta,
             )
             db.add(contact)
             db.flush()
         else:
             if normalized.push_name and contact.push_name != normalized.push_name:
                 contact.push_name = normalized.push_name
+                meta = dict(contact.metadata_ or {})
+                prof = dict(meta.get("patient_profile") or {})
+                if not prof.get("full_name_confirmed") and not contact.full_name:
+                    contact.full_name = normalized.push_name
+                    prof.setdefault("full_name", normalized.push_name)
+                    prof.setdefault("full_name_confirmed", False)
+                    meta["patient_profile"] = prof
+                    contact.metadata_ = meta
                 db.flush()
 
         # Step 6: Upsert Tenant Conversation
