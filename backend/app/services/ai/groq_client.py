@@ -286,8 +286,42 @@ class GroqClient:
                 "usage": {"prompt_tokens": 90, "completion_tokens": 30, "total_tokens": 120}
             }
 
-        # Explicit booking action
-        elif any(w in user_text for w in ["book", "appointment", "booking", "kar do", "leni", "lena", "chahiye", "mil sakta", "checkup", "dikhana"]) and "book_appointment" in tool_names:
+        # Progressive booking initiation: if booking for another person or without specific doctor/slot,
+        # ask for the patient's full name first instead of immediately triggering a blind mock booking or questionnaire
+        is_booking_intent = any(w in user_text for w in ["book", "appointment", "booking", "kar do", "leni", "lena", "chahiye", "mil sakta", "checkup", "dikhana"])
+        is_third_party = any(w in user_text for w in ["mother", "walida", "ammi", "father", "walid", "abbu", "child", "bacha", "baby", "daughter", "son", "beta", "beti", "wife", "husband"])
+        has_specific_doctor_or_slot = any(w in user_text for w in ["tariq", "ayesha", "bilal", "cardio", "pediatric", "04:", "05:", "06:", "10:", "11:"])
+
+        if is_booking_intent and (is_third_party or not has_specific_doctor_or_slot) and "book_appointment" in tool_names:
+            from app.services.ai.prompt_engine import detect_language_and_script
+            lang = detect_language_and_script(user_text)["language"]
+            if any(w in user_text for w in ["mother", "walida", "ammi"]):
+                if lang == "ROMAN_URDU":
+                    ask_name = "Jee zaroor! Main aap ki walida k checkup k liye appointment schedule karne mein madad kar sakti hoon. Un ka mukammal naam kya hai?"
+                elif lang == "URDU":
+                    ask_name = "جی بالکل! میں آپ کی والدہ کے چیک اپ کے لیے اپائنٹمنٹ شیڈول کرنے میں مدد کر سکتی ہوں۔ ان کا مکمل نام کیا ہے؟"
+                else:
+                    ask_name = "Sure! I would be glad to help schedule a check-up for your mother. What is her full name?"
+            else:
+                if lang == "ROMAN_URDU":
+                    ask_name = "Jee zaroor! Main appointment schedule karne mein madad kar sakti hoon. Mareez ka mukammal naam kya hai?"
+                elif lang == "URDU":
+                    ask_name = "جی بالکل! میں اپائنٹمنٹ شیڈول کرنے میں آپ کی مدد کر سکتی ہوں۔ مریض کا مکمل نام کیا ہے؟"
+                else:
+                    ask_name = "Sure! I would be glad to help schedule your appointment. What is the patient's full name?"
+
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": ask_name
+                },
+                "finish_reason": "stop",
+                "usage": {"prompt_tokens": 80, "completion_tokens": 20, "total_tokens": 100}
+            }
+
+        # Explicit booking action with known doctor or slot
+        elif is_booking_intent and "book_appointment" in tool_names:
             target_doc = "Dr. Ayesha Malik" if "ayesha" in user_text else ("Dr. Bilal Asghar" if ("bilal" in user_text or "child" in user_text or "bacha" in user_text) else "Dr. Tariq Mahmood")
             target_slot = "04:30 PM" if "ayesha" in user_text else ("06:15 PM" if "bilal" in user_text else "11:00 AM")
             target_date = next((d.title() for d in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "tomorrow") if d in user_text), today_str)

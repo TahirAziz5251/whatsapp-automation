@@ -635,3 +635,91 @@ def test_single_reply_outbox_deferral_and_no_duplicate_ai_message():
 
     assert len([o for o in disp_added if isinstance(o, TenantMessage)]) == 0
     assert ai_msg.provider_message_id == "EVO_SENT_1"
+
+
+def test_progressive_booking_flow_and_anti_boilerplate():
+    """
+    Verifies that:
+    1. System prompt strictly mandates progressive disclosure (asking for name first, no questionnaire dumps).
+    2. Zero robotic parentheticals: strips / forbids (as it should appear on the booking), (if any), etc.
+    3. Visit-type is not appended as a repetitive footer on each turn.
+    4. Mock completions for general third-party booking requests return a single warm question asking for the name.
+    5. Output validator cleans any inadvertent boilerplate parentheticals or premature visit-type footers.
+    """
+    tenant = PlatformTenant(
+        id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+        slug="alpha-clinic",
+        name="Alpha Heart & Medical Centre",
+        business_template_id="CLINIC_OPD",
+        timezone="Asia/Karachi",
+        currency="PKR",
+        settings={
+            "bot_name": "Dr. Shifa",
+            "welcome_message": "Assalam-o-Alaikum!",
+            "address": "Plot 45-B, Gulberg III, Lahore",
+            "phone": "042-35780000",
+        },
+    )
+    tpl = BusinessTemplate(
+        id="CLINIC_OPD",
+        name="Clinic & Hospital OPD Queue",
+        industry_category="HEALTHCARE",
+        allowed_tools=["get_doctor_schedule", "book_appointment"],
+    )
+    prompt = build_system_prompt(tenant, tpl)
+
+    # 1. Prompt Assertions
+    assert "PROGRESSIVE BOOKING PROTOCOL (ONE STEP AT A TIME, ZERO QUESTION DUMPS)" in prompt
+    assert "First ask ONLY for the patient's full name warmly in one short sentence" in prompt
+    assert "NEVER dump a multi-item questionnaire in a single message" in prompt
+    assert "ZERO ROBOTIC PARENTHETICALS" in prompt
+    assert "(as it should appear on the booking)" in prompt  # Mentioned in forbidden list
+    assert "TIMING OF VISIT TYPE" in prompt
+
+    # 2. Mock Completion for Third-Party Booking (English)
+    gc = GroqClient(api_key="gsk_placeholder_key")
+    tools = [
+        {"type": "function", "function": {"name": "book_appointment"}},
+        {"type": "function", "function": {"name": "get_doctor_schedule"}},
+    ]
+
+    res_en = gc._mock_completion(
+        messages=[{"role": "user", "content": "I want to book my appointment for my mother checkup"}],
+        tools=tools,
+    )
+    msg_en = res_en["message"]["content"]
+    assert "tool_calls" not in res_en["message"] or res_en["message"]["tool_calls"] is None
+    assert "mother" in msg_en.lower()
+    assert "full name" in msg_en.lower()
+    assert "1." not in msg_en
+    assert "2." not in msg_en
+    assert "(as it should appear" not in msg_en
+    assert "(if any)" not in msg_en
+    assert "first visit" not in msg_en.lower()
+
+    # 3. Mock Completion for Third-Party Booking (Roman Urdu)
+    res_ur = gc._mock_completion(
+        messages=[{"role": "user", "content": "meri ammi k checkup k liye appointment book karni hai"}],
+        tools=tools,
+    )
+    msg_ur = res_ur["message"]["content"]
+    assert "walida" in msg_ur.lower() or "ammi" in msg_ur.lower()
+    assert "naam" in msg_ur.lower()
+    assert "1." not in msg_ur
+
+    # 4. Output Validator Sanitization of Boilerplate & Repetitive Footers
+    raw_noisy_reply = (
+        "Sure! I can help you schedule a check-up for your mother. Could you please share her full name (as it should appear on the booking)?\n\n"
+        "Also, let me know if this is her first visit — or a follow-up — so I can set the correct visit type. 🌸"
+    )
+    val_res = validate_ai_response(
+        reply_text=raw_noisy_reply,
+        tools_executed=[],
+        state_json={"step": "IDLE"},
+        language="ENGLISH",
+    )
+    cleaned_out = val_res["sanitized_text"]
+    assert "(as it should appear on the booking)" not in cleaned_out
+    assert "first visit — or a follow-up" not in cleaned_out
+    assert "🌸" not in cleaned_out
+    assert "Could you please share her full name" in cleaned_out

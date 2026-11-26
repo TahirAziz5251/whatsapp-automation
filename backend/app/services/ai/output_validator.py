@@ -89,6 +89,24 @@ def validate_ai_response(
     cleaned = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
     cleaned = re.sub(r"(?im)^#\s*(DATA INTEGRITY|NON-NEGOTIABLE|PHASE \d+|OUTPUT CONTRACT).*$", "", cleaned).strip()
 
+    # 1.1 Strip robotic parenthetical form hints
+    cleaned = re.sub(
+        r"\s*\(\s*(?:as it should appear on the booking|if any)\s*\)",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+
+    # 1.2 Strip premature or repetitive visit-type footers from intermediate/initial turns
+    lower_check = cleaned.lower()
+    if not any(k in lower_check for k in ("please confirm", "barah-e-meherbani confirm", "confirm karein", "reply 'confirm'")):
+        cleaned = re.sub(
+            r"(?:\n\s*)?Also,\s*let\s+me\s+know\s+if\s+this\s+is\s+(?:her|his|your)\s+first\s+visit\s*[-–—\s]+or\s+a\s+follow[-‑\s]*up[^\n.]*[\.\🌸\🌺\✨\s]*",
+            "",
+            cleaned,
+            flags=re.IGNORECASE,
+        ).strip()
+
     grounded = _collect_grounded_values(tools_executed, state_json)
     ops = grounded["succeeded_ops"]
     lower = cleaned.lower()
