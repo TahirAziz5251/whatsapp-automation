@@ -259,8 +259,15 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             return self.send_interactive_options(recipient_phone, question, clean_opts)
 
         q_text = (question or "Please select an option:").strip()
-        if len(q_text) > 240:
-            # Send full rich text (e.g. long confirmation/ticket links) first, then concise Poll choices
+        # Keep every conversational message at identical standard body font size & support *bold* highlights:
+        # WhatsApp Poll titles render larger and ignore *bold*, so dispatch rich/conversational text cleanly first.
+        is_substantive_msg = (
+            len(q_text) > 48
+            or "*" in q_text
+            or "\n" in q_text
+            or "http" in q_text.lower()
+        )
+        if is_substantive_msg:
             self.send_text_message(recipient_phone, q_text)
             q_text = "Choose an option:"
 

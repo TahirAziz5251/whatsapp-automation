@@ -151,14 +151,16 @@ class GroqClient:
                     spec = doc.get("specialty", "Specialist")
                     hours = doc.get("consulting_hours")
                     fee = doc.get("fee")
-                    slots = ", ".join(doc.get("open_slots", [])[:3])
+                    room = doc.get("room_number")
+                    slots = ", ".join(f"*{s}*" for s in (doc.get("open_slots") or [])[:3])
+                    room_str = f" ({room})" if room else ""
 
                     if lang == "ROMAN_URDU":
-                        content = f"Jee zaroor! {name} ({spec}) OPD mein dastiyab hain. Un k timings {hours} hain aur consultation fees {fee} hai. Open slots: {slots}. Kya main aap k liye appointment book kar doon?"
+                        content = f"Jee zaroor! *{name}* ({spec}{room_str}) OPD mein dastiyab hain. Timings *{hours}* hain aur fee *{fee}* hai. Open slots: {slots}. Kya main aap k liye appointment book kar doon?"
                     elif lang == "URDU":
-                        content = f"جی بالکل! {name} ({spec}) دستیاب ہیں۔ ان کے اوقات {hours} ہیں اور فیس {fee} ہے۔ دستیاب سلاٹس: {slots}۔ کیا میں آپ کی اپائنٹمنٹ بک کر دوں؟"
+                        content = f"جی بالکل! *{name}* ({spec}{room_str}) دستیاب ہیں۔ اوقات *{hours}* ہیں اور فیس *{fee}* ہے۔ دستیاب سلاٹس: {slots}۔ کیا میں آپ کی اپائنٹمنٹ بک کر دوں؟"
                     else:
-                        content = f"Yes, {name} ({spec}) is available ({hours}). Consultation fee is {fee}. Available slots: {slots}. Would you like me to book this slot for you?"
+                        content = f"Yes, *{name}* ({spec}{room_str}) is available (*{hours}*). Consultation fee is *{fee}*. Available slots: {slots}. Would you like me to book this slot for you?"
                 else:
                     content = "Maazrat, is specialty k mutabiq koi doctor dastiyab nahi hain."
 
@@ -168,17 +170,18 @@ class GroqClient:
                 dt_str = summ.get("appointment_date") or summ.get("new_date", "")
                 tm_str = summ.get("slot_time") or summ.get("new_slot", "")
                 pt_str = summ.get("patient_name", "")
+                loc_str = summ.get("room_number", "")
                 fee_str = f"PKR {summ['fee_pkr']:,.0f}" if summ.get("fee_pkr") else ""
                 if lang == "ROMAN_URDU":
-                    content = f"Barah-e-meherbani confirm karein: {d_name} | {dt_str} {tm_str}" + (f" | Mareez: {pt_str}" if pt_str else "") + (f" | Fee: {fee_str}" if fee_str else "") + ". Confirm karne k liye 'Confirm' likhein."
+                    content = f"Barah-e-meherbani confirm karein: *{d_name}* | *{dt_str}* *{tm_str}*" + (f" | Mareez: *{pt_str}*" if pt_str else "") + (f" | Location: *{loc_str}*" if loc_str else "") + (f" | Fee: *{fee_str}*" if fee_str else "") + ". Confirm karne k liye *Confirm* likhein."
                 else:
-                    content = f"Please confirm: {d_name} | {dt_str} {tm_str}" + (f" | Patient: {pt_str}" if pt_str else "") + (f" | Fee: {fee_str}" if fee_str else "") + ". Reply 'Confirm' to finalize or 'Change' to adjust."
+                    content = f"Please confirm: *{d_name}* | *{dt_str}* *{tm_str}*" + (f" | Patient: *{pt_str}*" if pt_str else "") + (f" | Location: *{loc_str}*" if loc_str else "") + (f" | Fee: *{fee_str}*" if fee_str else "") + ". Reply *Confirm* to finalize or *Change* to adjust."
 
             elif result_data.get("status") == "NOT_CHECKED_IN":
                 if lang == "ROMAN_URDU":
-                    content = "Aap ki booking maujood hai lekin abhi check-in nahi hua. Clinic pohanch kar reception par check-in karwayein."
+                    content = "Aap ki booking maujood hai lekin abhi *check-in* nahi hua. Clinic pohanch kar *Reception* par check-in karwayein."
                 else:
-                    content = "You are booked, but not checked in yet. Please check in when you arrive at clinic reception."
+                    content = "You are booked, but not checked in yet. Please check in when you arrive at *Clinic Reception*."
 
             elif result_data.get("status") == "ACTIVE_QUEUE":
                 # Queue status
@@ -187,11 +190,11 @@ class GroqClient:
                 wait = result_data.get("estimated_wait_minutes", 20)
 
                 if lang == "ROMAN_URDU":
-                    content = f"Is waqt live OPD queue mein Token {curr} chal raha hai. Aap se aagay {ahead} mareez hain aur taqreeban {wait} minute intezar mutawaqqe hai (Estimate, not a guarantee)."
+                    content = f"Is waqt live OPD queue mein *Token {curr}* chal raha hai. Aap se aagay *{ahead} mareez* hain aur taqreeban *{wait} minute* intezar mutawaqqe hai (Estimate, not a guarantee)."
                 elif lang == "URDU":
-                    content = f"اس وقت او پی ڈی میں ٹوکن {curr} زیر معائنہ ہے۔ آپ سے آگے {ahead} مریض ہیں اور متوقع انتظار {wait} منٹ ہے (تخمینہ)۔"
+                    content = f"اس وقت او پی ڈی میں *ٹوکن {curr}* زیر معائنہ ہے۔ آپ سے آگے *{ahead} مریض* ہیں اور متوقع انتظار *{wait} منٹ* ہے (تخمینہ)۔"
                 else:
-                    content = f"Currently, token {curr} is being examined. There are {ahead} patients ahead of you with an estimated wait time of {wait} minutes (Estimate, not a guarantee)."
+                    content = f"Currently, *Token {curr}* is being examined. There are *{ahead} patients* ahead of you with an estimated wait time of *{wait} minutes* (Estimate, not a guarantee)."
 
             elif "departments" in result_data:
                 depts = result_data.get("departments") or []

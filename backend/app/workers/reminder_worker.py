@@ -89,13 +89,13 @@ def process_24h_reminders_db(
         clinic_title = tenant_obj.name if tenant_obj else "Clinic"
 
         msg_body = (
-            f"Assalam-o-Alaikum {patient_name}!\n\n"
-            f"Yeh {clinic_title} ki taraf se reminder hai ke kal ({date_str}) ko {slot_str} baje "
-            f"aapki appointment {doctor.name} ({doctor.specialty}, {doctor.room_number}) ke saath muqarrar hai.\n\n"
-            f"Aapka Token Number: {apt.queue_token}\n\n"
-            f"Apna live queue status aur reschedule/cancel options is link per check karein:\n"
+            f"Assalam-o-Alaikum *{patient_name}*!\n\n"
+            f"Yeh *{clinic_title}* ki taraf se reminder hai ke kal (*{date_str}*) ko *{slot_str}* baje "
+            f"aapki appointment *{doctor.name}* ({doctor.specialty}, *{doctor.room_number}*) ke saath muqarrar hai.\n\n"
+            f"🎫 Token Number: *{apt.queue_token}*\n\n"
+            f"📲 Apna live queue status aur reschedule/cancel options is link per check karein:\n"
             f"{get_ticket_url(apt.appointment_number)}\n\n"
-            f"Agar aap cancel karna chahein to 'Cancel' likh kar reply karein. Shukriya!"
+            f"Agar aap cancel karna chahein to *Cancel* likh kar reply karein. Shukriya!"
         )
 
         if conn:
@@ -187,10 +187,11 @@ def process_2h_reminders_db(
         clinic_title = tenant_obj.name if tenant_obj else "Clinic"
 
         msg_body = (
-            f"Assalam-o-Alaikum {patient_name}!\n\n"
-            f"Aapki appointment {doctor.name} ke saath aaj {slot_str} baje (taqreeban 2 ghante mein) hai.\n\n"
-            f"Baraye meherbani waqt per {clinic_title} tashreef layen aur reception per apna Token {apt.queue_token} dikha kar check-in karwayen.\n\n"
-            f"Live OPD Queue Tracker:\n"
+            f"Assalam-o-Alaikum *{patient_name}*!\n\n"
+            f"Aapki appointment *{doctor.name}* ke saath aaj *{slot_str}* baje (taqreeban 2 ghante mein) hai.\n\n"
+            f"📍 Location: *{clinic_title}* (*{doctor.room_number}*)\n"
+            f"🎫 Token Number: *{apt.queue_token}*\n\n"
+            f"📲 Live OPD Queue Tracker:\n"
             f"{get_ticket_url(apt.appointment_number)}"
         )
 

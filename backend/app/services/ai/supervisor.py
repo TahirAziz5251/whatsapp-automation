@@ -244,13 +244,13 @@ class AiSupervisor:
 
         if is_fresh_greeting:
             if lang_info["language"] == "URDU":
-                final_reply = f"وعلیکم السلام! {tenant.name} میں خوش آمدید۔ آج میں آپ کی کیا مدد کر سکتی ہوں؟"
+                final_reply = f"وعلیکم السلام! *{tenant.name}* میں خوش آمدید۔ آج میں آپ کی کیا مدد کر سکتی ہوں؟"
             elif lang_info["language"] == "ROMAN_URDU":
-                final_reply = f"Walaikum Assalam! {tenant.name} mein khush-amdeed. Aaj main aap ki kya madad kar sakti hoon?"
+                final_reply = f"Walaikum Assalam! *{tenant.name}* mein khush-amdeed. Aaj main aap ki kya madad kar sakti hoon?"
             elif re.search(r"\b(assalam|salam|aoa)\b", user_text or "", re.IGNORECASE):
-                final_reply = f"Walaikum Assalam! Welcome to {tenant.name}. How can I help you today?"
+                final_reply = f"Walaikum Assalam! Welcome to *{tenant.name}*. How can I help you today?"
             else:
-                final_reply = f"Welcome to {tenant.name}! How can I help you today?"
+                final_reply = f"Welcome to *{tenant.name}*! How can I help you today?"
 
         for _round in range(0 if final_reply else 4):
             llm_response = await self.groq_client.chat_completion(
@@ -332,6 +332,11 @@ class AiSupervisor:
             state_json=state_json,
             language=lang_info["language"],
             reception_phone=str(t_settings.get("phone") or ""),
+            extra_entities={
+                "business_name": tenant.name,
+                "business_address": t_settings.get("address", ""),
+                "patient_name": None if is_fresh_greeting else (patient_profile or {}).get("full_name"),
+            },
         )
         if not validation["valid"]:
             logger.warning(f"Output validator blocked ungrounded reply ({validation['violations']}) for tenant={tenant.id}")
@@ -350,9 +355,9 @@ class AiSupervisor:
                 t_url = res.get("ticket_url")
                 m_url = res.get("map_url") or t_settings.get("map_url")
                 if t_url and t_url not in (final_reply or ""):
-                    final_reply = f"{final_reply}\n\n📲 Live Digital Ticket & Self-Service Link:\n{t_url}".strip()
+                    final_reply = f"{final_reply}\n\n📲 *Live Digital Ticket & Self-Service Link:*\n{t_url}".strip()
                 if m_url and m_url not in (final_reply or ""):
-                    final_reply = f"{final_reply}\n🗺️ Clinic Google Maps Location:\n{m_url}".strip()
+                    final_reply = f"{final_reply}\n🗺️ *Clinic Google Maps Location:*\n{m_url}".strip()
 
         usage_meta = {"total_tokens": total_usage_tokens}
 

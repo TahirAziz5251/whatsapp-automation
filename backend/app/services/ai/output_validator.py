@@ -69,12 +69,246 @@ def _safe_fallback_reply(reason: str, language: str, reception_phone: str = "") 
     return f"I could not verify those details from clinic records right now. Please try again or contact Reception{rec}."
 
 
+def _extract_entity_hints(
+    tools_executed: List[Dict[str, Any]],
+    state_json: Optional[Dict[str, Any]] = None,
+    extra_entities: Optional[Dict[str, Any]] = None,
+) -> Dict[str, List[str]]:
+    """Collects verified entity names/IDs/locations from tools and state for safe highlighting."""
+    patient_names: List[str] = []
+    doctor_names: List[str] = []
+    tokens: List[str] = []
+    booking_refs: List[str] = []
+    locations: List[str] = []
+
+    def _add(target: List[str], val: Any) -> None:
+        s = str(val or "").strip()
+        if s and len(s) >= 2 and s not in target:
+            target.append(s)
+
+    if isinstance(extra_entities, dict):
+        _add(patient_names, extra_entities.get("patient_name"))
+        _add(doctor_names, extra_entities.get("doctor_name"))
+        _add(locations, extra_entities.get("business_name"))
+        _add(locations, extra_entities.get("business_address"))
+        _add(locations, extra_entities.get("room_number"))
+
+    if isinstance(state_json, dict):
+        draft = state_json.get("draft_booking") or {}
+        if isinstance(draft, dict):
+            _add(patient_names, draft.get("patient_name"))
+            _add(doctor_names, draft.get("doctor_name"))
+            _add(locations, draft.get("room_number"))
+        issued = state_json.get("issued_options") or {}
+        if isinstance(issued, dict):
+            for d in issued.get("doctors") or []:
+                _add(doctor_names, d)
+            for ref in issued.get("appointments") or []:
+                _add(booking_refs, ref)
+
+    for item in tools_executed or []:
+        res = item.get("result") or {}
+        if not isinstance(res, dict):
+            continue
+        _add(patient_names, res.get("patient_name"))
+        _add(doctor_names, res.get("doctor_name"))
+        _add(locations, res.get("room_number"))
+        _add(locations, res.get("business_name"))
+        _add(locations, res.get("business_address"))
+        for k in ("queue_token", "current_token_serving", "your_token"):
+            _add(tokens, res.get(k))
+        for k in ("appointment_number", "ticket_id"):
+            _add(booking_refs, res.get(k))
+        if isinstance(res.get("summary"), dict):
+            s = res["summary"]
+            _add(patient_names, s.get("patient_name"))
+            _add(doctor_names, s.get("doctor_name"))
+            _add(locations, s.get("room_number"))
+            _add(booking_refs, s.get("appointment_number"))
+        for doc in res.get("doctors") or []:
+            if isinstance(doc, dict):
+                _add(doctor_names, doc.get("name"))
+                _add(locations, doc.get("room_number"))
+        for apt in res.get("appointments") or []:
+            if isinstance(apt, dict):
+                _add(patient_names, apt.get("patient_name"))
+                _add(doctor_names, apt.get("doctor_name"))
+                _add(tokens, apt.get("queue_token"))
+                _add(booking_refs, apt.get("appointment_number"))
+                _add(locations, apt.get("room_number"))
+
+    return {
+        "patient_names": sorted(patient_names, key=len, reverse=True),
+        "doctor_names": sorted(doctor_names, key=len, reverse=True),
+        "tokens": sorted(tokens, key=len, reverse=True),
+        "booking_refs": sorted(booking_refs, key=len, reverse=True),
+        "locations": sorted(locations, key=len, reverse=True),
+    }
+
+
+def _unicode_fancy_to_ascii(text: str) -> str:
+    """Normalizes mathematical styled Unicode letters/digits (U+1D400-U+1D7FF) to standard ASCII for uniform font size."""
+    out = []
+    # Ranges: Bold(0), Italic(26), BoldItalic(52), Script, Fraktur, Sans, SansBold, SansItalic, SansBoldItalic, Monospace...
+    upper_starts = (0x1D400, 0x1D434, 0x1D468, 0x1D49C, 0x1D4D0, 0x1D504, 0x1D538, 0x1D56C, 0x1D5A0, 0x1D5D4, 0x1D608, 0x1D63C, 0x1D670)
+    lower_starts = (0x1D41A, 0x1D44E, 0x1D482, 0x1D4B6, 0x1D4EA, 0x1D51E, 0x1D552, 0x1D586, 0x1D5BA, 0x1D5EE, 0x1D622, 0x1D656, 0x1D68A)
+    digit_starts = (0x1D7CE, 0x1D7D8, 0x1D7E2, 0x1D7EC, 0x1D7F6)
+    for ch in text:
+        cp = ord(ch)
+        if 0x1D400 <= cp <= 0x1D7FF:
+            replaced = None
+            for base in upper_starts:
+                if base <= cp < base + 26:
+                    replaced = chr(ord("A") + (cp - base))
+                    break
+            if replaced is None:
+                for base in lower_starts:
+                    if base <= cp < base + 26:
+                        replaced = chr(ord("a") + (cp - base))
+                        break
+            if replaced is None:
+                for base in digit_starts:
+                    if base <= cp < base + 10:
+                        replaced = chr(ord("0") + (cp - base))
+                        break
+            out.append(replaced if replaced is not None else ch)
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+def _apply_outside_bold_and_urls(text: str, pattern: str, repl, flags: int = 0) -> str:
+    """Applies regex substitution ONLY to plain text spans (never inside *bold* spans or __URL_N__ placeholders)."""
+    parts = re.split(r"(\*[^*\n]+\*|__URL_\d+__)", text)
+    for i in range(0, len(parts), 2):
+        if parts[i]:
+            parts[i] = re.sub(pattern, repl, parts[i], flags=flags)
+    return "".join(parts)
+
+
+def format_whatsapp_uniform_text(text: str, entity_hints: Optional[Dict[str, List[str]]] = None) -> str:
+    """
+    Enforces SaaS production WhatsApp typography:
+    - Guarantees uniform body font size across every message (strips #, ##, ### headings, backticks/code blocks, blockquotes, HTML, and Unicode math fonts)
+    - Normalizes **bold** and <b>bold</b> to native WhatsApp *bold*
+    - Highlights key clinical/SaaS points (patient name, Token Number, doctor name, slot time, date, location/room, Booking ID, fee) without touching URLs
+    """
+    if not text:
+        return ""
+
+    # 1. Mask URLs verbatim so regex rules never alter ticket or map links
+    urls: List[str] = []
+
+    def _mask_url(m: re.Match) -> str:
+        idx = len(urls)
+        urls.append(m.group(0))
+        return f"__URL_{idx}__"
+
+    out = re.sub(r"https?://[^\s<>()]+", _mask_url, text)
+
+    # 2. Uniform font normalization
+    out = _unicode_fancy_to_ascii(out)
+    out = re.sub(r"<br\s*/?>", "\n", out, flags=re.IGNORECASE)
+    out = re.sub(r"</?(?:b|strong)\s*>", "*", out, flags=re.IGNORECASE)
+    out = re.sub(r"</?[a-zA-Z][^>]*>", "", out)
+    # Remove fenced code blocks & inline backticks (WhatsApp monospace shrinks/changes font size)
+    out = re.sub(r"```[a-zA-Z0-9_-]*\n?", "", out)
+    out = out.replace("```", "")
+    out = re.sub(r"`([^`\n]+)`", r"\1", out)
+    # Convert **CommonMark bold** -> *WhatsApp bold*
+    out = re.sub(r"\*\*([^*\n]+)\*\*", r"*\1*", out)
+    # Strip Markdown heading prefixes (#, ##, ###) and render as normal-size *bold*
+    out = re.sub(r"(?m)^\s{0,3}#{1,6}\s+(.+?)\s*$", lambda m: f"*{m.group(1).strip('* ')}*", out)
+    # Strip blockquote '>' prefix
+    out = re.sub(r"(?m)^\s*>\s+", "", out)
+
+    # 3. Bold verified dynamic entities (if present in hints)
+    hints = entity_hints or {}
+    for literal in (
+        list(hints.get("booking_refs") or [])
+        + list(hints.get("doctor_names") or [])
+        + list(hints.get("patient_names") or [])
+        + list(hints.get("tokens") or [])
+        + list(hints.get("locations") or [])
+    ):
+        escaped = re.escape(literal)
+        out = _apply_outside_bold_and_urls(out, rf"(?<!\w){escaped}(?!\w)", lambda m: f"*{m.group(0)}*")
+
+    # 4. Bold canonical SaaS entities safely outside existing *bold* spans and URLs
+    # Booking / Ticket References
+    out = _apply_outside_bold_and_urls(out, r"\b(?:APT|ALP|TKT|ORD|SRV)-[A-Z0-9-]{4,}\b", lambda m: f"*{m.group(0)}*")
+    # Token Numbers (e.g. Token T-M01, Token Number: T-A08, T-M01, token 14)
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\b(?:Token(?:\s+(?:Number|No\.?))?(?:\s*[:#]\s*|\s+)(?:[A-Z]-[A-Z]?\d+|[A-Z]{1,2}\d+|\d{1,4})|T-[A-Z]{1,2}\d{1,4})\b",
+        lambda m: f"*{m.group(0)}*",
+        flags=re.IGNORECASE,
+    )
+    # Doctor / Provider Names (e.g. Dr. Tariq Mahmood)
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\bDr\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}",
+        lambda m: f"*{m.group(0)}*",
+    )
+    # Patient Names with title or greeting context (e.g. Ms. Naseem Mai, Thank you, Aizal.)
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\b(?:Mr|Mrs|Ms|Miss|Master)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}",
+        lambda m: f"*{m.group(0)}*",
+    )
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"(\bThank you,\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})(?=[.,!\s]|$)",
+        lambda m: f"{m.group(1)}*{m.group(2)}*",
+    )
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"(\bPatient\s*:\s*)([A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,2})",
+        lambda m: f"{m.group(1)}*{m.group(2)}*",
+    )
+    # Slot Times & Date Ranges (e.g. 10:30 AM, 04:00 PM - 08:00 PM, 2026-11-28)
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\b\d{1,2}:\d{2}\s*(?:AM|PM)(?:\s*[-–—to]+\s*\d{1,2}:\d{2}\s*(?:AM|PM))?\b",
+        lambda m: f"*{m.group(0)}*",
+        flags=re.IGNORECASE,
+    )
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}-[A-Za-z]{3}-\d{4})\b",
+        lambda m: f"*{m.group(0)}*",
+    )
+    # Clinic Room / Location designations
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\b(?:Room|Cabin|Counter|Suite|Bench|Floor|Desk)\s+[A-Z0-9-]+\b",
+        lambda m: f"*{m.group(0)}*",
+    )
+    # Currency Fees
+    out = _apply_outside_bold_and_urls(
+        out,
+        r"\b(?:PKR|Rs\.?)\s*[\d,]+(?:\.\d+)?\b",
+        lambda m: f"*{m.group(0)}*",
+        flags=re.IGNORECASE,
+    )
+
+    # Collapse accidental double-asterisks created by adjacent wraps
+    out = re.sub(r"\*{2,}", "*", out)
+
+    # 5. Restore exact URLs verbatim
+    for idx, url in enumerate(urls):
+        out = out.replace(f"__URL_{idx}__", url)
+
+    return out.strip()
+
+
 def validate_ai_response(
     reply_text: str,
     tools_executed: List[Dict[str, Any]],
     state_json: Optional[Dict[str, Any]] = None,
     language: str = "ENGLISH",
     reception_phone: str = "",
+    extra_entities: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Sanitizes and validates an AI response for zero hallucination:
@@ -212,6 +446,9 @@ def validate_ai_response(
                 pass
             return m.group(0)
         cleaned = re.sub(r"\b((?:PKR|Rs\.?)\s*)([\d,]+(?:\.\d+)?)", _replace_wrong_fee, cleaned, flags=re.IGNORECASE)
+
+    entity_hints = _extract_entity_hints(tools_executed, state_json, extra_entities)
+    cleaned = format_whatsapp_uniform_text(cleaned, entity_hints=entity_hints)
 
     return {
         "valid": True,

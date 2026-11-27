@@ -1078,15 +1078,15 @@ def test_fresh_greeting_never_leaks_mother_and_validator_enforces_db_fee():
     assert "for example" not in val_clean["sanitized_text"].lower()
     assert "tariq mahmood" not in val_clean["sanitized_text"].lower()
     assert "this will help me find" not in val_clean["sanitized_text"].lower()
-    assert "Thank you, Ms. Naseem Mai." in val_clean["sanitized_text"]
+    assert "*Ms. Naseem Mai*" in val_clean["sanitized_text"]
 
 
 def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
     """
     Verifies:
     1. When Evolution Go / WhatsApp returns error 405 on /send/button, EvolutionGoAdapter
-       remembers the instance and sends a native single-select Poll (/send/poll, maxAnswer=1)
-       containing all clickable options cleanly.
+       remembers the instance and sends conversational text at uniform body font size (/send/text)
+       followed by a native single-select Poll (/send/poll, maxAnswer=1) containing all clickable options.
     2. Inbound PollUpdateMessage webhook is resolved via SHA-256 hash matching back to plaintext option.
     """
     import hashlib
@@ -1099,11 +1099,12 @@ def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
     with patch.object(adapter, "_post_with_token_retry") as mock_post:
         mock_post.side_effect = [
             {"success": False, "status_code": 500, "response": '{"error":"server returned error 405"}'},
+            {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "TXT_MSG_100"}}}},
             {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "POLL_MSG_101"}}}},
         ]
         res = adapter.send_button_groups(
             recipient_phone="923348076760",
-            text="Walaikum Assalam! Welcome to Alpha Heart & Medical Centre. How can I help you today?",
+            text="Walaikum Assalam! Welcome to *Alpha Heart & Medical Centre*. How can I help you today?",
             groups=[
                 {"buttons": [{"displayText": "Book appointment"}, {"displayText": "My appointments"}, {"displayText": "Queue status"}]},
                 {"buttons": [{"displayText": "Talk to reception"}]},
@@ -1112,8 +1113,11 @@ def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
         assert res["success"] is True
         assert "poll-test-inst" in EvolutionGoAdapter._unsupported_buttons_instances
         assert res["poll_options"] == ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
-        assert mock_post.call_args_list[1][0][0] == "/send/poll"
-        assert mock_post.call_args_list[1][0][1]["maxAnswer"] == 1
+        assert mock_post.call_args_list[1][0][0] == "/send/text"
+        assert "*Alpha Heart & Medical Centre*" in mock_post.call_args_list[1][0][1]["text"]
+        assert mock_post.call_args_list[2][0][0] == "/send/poll"
+        assert mock_post.call_args_list[2][0][1]["question"] == "Choose an option:"
+        assert mock_post.call_args_list[2][0][1]["maxAnswer"] == 1
 
     # Verify inbound PollUpdateMessage normalization + SHA-256 resolution
     inbound = adapter.normalize_inbound({
@@ -1153,3 +1157,93 @@ def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
         assert resolved == "General Physician"
 
     EvolutionGoAdapter._unsupported_buttons_instances.discard("poll-test-inst")
+
+
+def test_uniform_conversation_font_size_and_saas_bold_highlights():
+    """
+    Verifies SaaS production typography requirements:
+    1. Uniform font size: strips ### headings, backticks (` / ```), HTML tags, and Unicode math fonts.
+    2. Highlights critical booking entities (*Patient Name*, *Token Number*, *Doctor Name*, *Slot Time*, *Location*, *Booking ID*, *Fee*).
+    3. Keeps clickable Digital Ticket and Google Maps URLs completely intact without stray asterisks.
+    """
+    from app.services.ai.output_validator import validate_ai_response
+
+    sample_url = "http://192.168.1.31:3000/ticket/APT-202611-AB12CD"
+    raw_llm = (
+        "### Booking Confirmation\n"
+        "Patient: **Ms. Naseem Mai**\n"
+        "Doctor: `Dr. Tariq Mahmood`\n"
+        "Token Number: 𝐓-𝐌𝟎𝟏\n"
+        "Appointment Date: 2026-11-28 | Slot Time: 10:30 AM\n"
+        "Location: Room 101, Alpha Heart & Medical Centre\n"
+        "Fee: PKR 2,500\n"
+        "Booking ID: APT-202611-AB12CD\n"
+        f"Ticket Link: {sample_url}"
+    )
+
+    val = validate_ai_response(
+        reply_text=raw_llm,
+        tools_executed=[
+            {
+                "tool": "book_appointment",
+                "result": {
+                    "status": "CONFIRMED",
+                    "appointment_number": "APT-202611-AB12CD",
+                    "queue_token": "T-M01",
+                    "patient_name": "Ms. Naseem Mai",
+                    "doctor_name": "Dr. Tariq Mahmood",
+                    "room_number": "Room 101",
+                    "fee_pkr": 2500,
+                },
+            }
+        ],
+        extra_entities={"business_name": "Alpha Heart & Medical Centre"},
+    )
+    out = val["sanitized_text"]
+    assert val["valid"] is True
+    assert "###" not in out
+    assert "`" not in out
+    assert "**" not in out
+    assert "𝐓" not in out
+    assert "*Booking Confirmation*" in out
+    assert "*Ms. Naseem Mai*" in out
+    assert "*Dr. Tariq Mahmood*" in out
+    assert "*T-M01*" in out
+    assert "*2026-11-28*" in out
+    assert "*10:30 AM*" in out
+    assert "*Room 101*" in out
+    assert "*Alpha Heart & Medical Centre*" in out
+    assert "*PKR 2,500*" in out
+    assert "*APT-202611-AB12CD*" in out
+    assert sample_url in out
+
+    # Verify template_formatter includes & bolds all SaaS confirmation values
+    card = format_booking_confirmation(
+        booking_data={
+            "patient_name": "Ms. Naseem Mai",
+            "appointment_number": "APT-202611-AB12CD",
+            "queue_token": "T-M01",
+            "doctor_name": "Dr. Tariq Mahmood",
+            "specialty": "Cardiology",
+            "room_number": "Room 101",
+            "appointment_date": "2026-11-28",
+            "slot_time": "10:30 AM",
+            "fee_pkr": 2500,
+        },
+        language="ENGLISH",
+        business_name="Alpha Heart & Medical Centre",
+        business_address="Gulberg III, Lahore",
+    )
+    for expected in (
+        "*Alpha Heart & Medical Centre*",
+        "*Gulberg III, Lahore*",
+        "*Ms. Naseem Mai*",
+        "*Dr. Tariq Mahmood*",
+        "*2026-11-28*",
+        "*10:30 AM*",
+        "*Room 101*",
+        "*T-M01*",
+        "*APT-202611-AB12CD*",
+        "*PKR 2,500*",
+    ):
+        assert expected in card, f"Missing bold highlight in confirmation card: {expected}"

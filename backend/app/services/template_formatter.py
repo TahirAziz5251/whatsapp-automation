@@ -88,9 +88,10 @@ def format_booking_confirmation(
     biz_title = business_name or booking_data.get("business_name") or "GlimsTech AI Business"
     ref_id = booking_data.get("appointment_number") or booking_data.get("appointment_id") or "APT-1001"
     token = booking_data.get("queue_token", "T-01")
+    patient_name = (booking_data.get("patient_name") or "").strip()
     provider = booking_data.get("doctor_name", "Consultant")
     specialty = booking_data.get("specialty", "")
-    provider_display = f"{provider} ({specialty})" if specialty else provider
+    provider_display = f"*{provider}*" + (f" ({specialty})" if specialty else "")
     location = booking_data.get("room_number", "Front Desk")
     apt_date = booking_data.get("appointment_date", "Today")
     slot = booking_data.get("slot_time", "11:00 AM")
@@ -98,58 +99,64 @@ def format_booking_confirmation(
     ticket_url = booking_data.get("ticket_url") or get_ticket_url(ref_id)
     map_url = booking_data.get("map_url") or ""
 
-    addr_line = f"📍 {business_address}\n" if business_address else ""
-    map_line = f"🗺️ *Map:* {map_url}\n" if map_url else ""
-    phone_line = f"☎️ {business_phone}\n" if business_phone else ""
-    fee_line = f"💵 *Fee:* {currency} {fee:,.0f}\n" if fee > 0 else ""
+    addr_line = f"📍 Location: *{business_address}*\n" if business_address else ""
+    map_line = f"🗺️ Map: {map_url}\n" if map_url else ""
+    phone_line = f"☎️ Helpline: *{business_phone}*\n" if business_phone else ""
+    fee_line = f"💵 Fee: *{currency} {fee:,.0f}*\n" if fee > 0 else ""
 
     if language == "ROMAN_URDU":
+        patient_line = f"🧑 Patient Name: *{patient_name}*\n" if patient_name else ""
         return (
             f"✅ *{labels['confirmed_ru']}*\n\n"
             f"🏢 *{biz_title}*\n"
             f"{addr_line}{map_line}{phone_line}"
-            f"👤 *{labels['provider_label']}:* {provider_display}\n"
-            f"📅 *Date:* {apt_date}\n"
-            f"⏰ *Time:* {slot}\n"
-            f"🚪 *{labels['location_label']}:* {location}\n"
-            f"🎫 *{labels['token_label']}:* {token}\n"
-            f"🆔 *{labels['ref_label']}:* {ref_id}\n"
+            f"{patient_line}"
+            f"👤 {labels['provider_label']}: {provider_display}\n"
+            f"📅 Date: *{apt_date}*\n"
+            f"⏰ Slot Time: *{slot}*\n"
+            f"🚪 {labels['location_label']}: *{location}*\n"
+            f"🎫 {labels['token_label']}: *{token}*\n"
+            f"🆔 {labels['ref_label']}: *{ref_id}*\n"
             f"{fee_line}\n"
             f"📲 *Live Queue & Digital Ticket Link:*\n"
             f"{ticket_url}\n\n"
-            f"⚙️ *Manage Booking:* Is link par aap live wait time dekh sakte hain, slot *Reschedule* ya *Cancel* kar sakte hain.\n"
+            f"⚙️ Manage Booking: Is link par aap live wait time dekh sakte hain, slot *Reschedule* ya *Cancel* kar sakte hain.\n"
             f"⚠️ {labels['note_ru']}"
         )
     elif language == "URDU":
+        patient_line = f"🧑 مریض کا نام: *{patient_name}*\n" if patient_name else ""
         return (
             f"✅ *{labels['confirmed_ur']}*\n\n"
             f"🏢 *{biz_title}*\n"
             f"{addr_line}{map_line}{phone_line}"
-            f"👤 *{labels['provider_label']}:* {provider_display}\n"
-            f"📅 *تاریخ:* {apt_date}\n"
-            f"⏰ *وقت:* {slot}\n"
-            f"🚪 *{labels['location_label']}:* {location}\n"
-            f"🎫 *ٹوکن نمبر:* {token}\n"
-            f"🆔 *بکنگ آئی ڈی:* {ref_id}\n"
+            f"{patient_line}"
+            f"👤 {labels['provider_label']}: {provider_display}\n"
+            f"📅 تاریخ: *{apt_date}*\n"
+            f"⏰ وقت: *{slot}*\n"
+            f"🚪 {labels['location_label']}: *{location}*\n"
+            f"🎫 ٹوکن نمبر: *{token}*\n"
+            f"🆔 بکنگ آئی ڈی: *{ref_id}*\n"
             f"{fee_line}\n"
             f"📲 *لائیو ٹوکن اور ٹریکنگ لنک:*\n"
             f"{ticket_url}\n\n"
             f"⚠️ {labels['note_ur']}"
         )
     else:
+        patient_line = f"🧑 Patient Name: *{patient_name}*\n" if patient_name else ""
         return (
             f"✅ *{labels['confirmed_en']}*\n\n"
             f"🏢 *{biz_title}*\n"
             f"{addr_line}{map_line}{phone_line}"
-            f"👤 *{labels['provider_label']}:* {provider_display}\n"
-            f"📅 *Date:* {apt_date}\n"
-            f"⏰ *Time:* {slot}\n"
-            f"🚪 *{labels['location_label']}:* {location}\n"
-            f"🎫 *{labels['token_label']}:* {token}\n"
-            f"🆔 *{labels['ref_label']}:* {ref_id}\n"
+            f"{patient_line}"
+            f"👤 {labels['provider_label']}: {provider_display}\n"
+            f"📅 Date: *{apt_date}*\n"
+            f"⏰ Slot Time: *{slot}*\n"
+            f"🚪 {labels['location_label']}: *{location}*\n"
+            f"🎫 {labels['token_label']}: *{token}*\n"
+            f"🆔 {labels['ref_label']}: *{ref_id}*\n"
             f"{fee_line}\n"
             f"📲 *Live Digital Ticket & Queue Tracker:*\n"
             f"{ticket_url}\n\n"
-            f"⚙️ *Self-Service:* Open the link above to track your live turn, reschedule, or cancel anytime.\n"
-            f"⚠️ *Note:* {labels['note_en']}"
+            f"⚙️ Self-Service: Open the link above to track your live turn, reschedule, or cancel anytime.\n"
+            f"⚠️ Note: {labels['note_en']}"
         )

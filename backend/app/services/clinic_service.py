@@ -1005,11 +1005,13 @@ def cancel_appointment_db(
     tenant_obj = db.query(PlatformTenant).filter(PlatformTenant.id == tenant_uuid).first()
     biz_name = tenant_obj.name if tenant_obj else "Clinic"
     if conn and contact.customer_phone:
+        p_name = (contact.full_name or contact.push_name or "Patient").strip()
         msg_text = (
             f"❌ *Booking Cancelled — {biz_name}*\n\n"
-            f"Booking ID: {apt.appointment_number} (Token {apt.queue_token})\n"
-            f"With: {doctor.name}\n"
-            f"Reason: {apt.cancellation_reason}\n\n"
+            f"🧑 Patient Name: *{p_name}*\n"
+            f"🆔 Booking ID: *{apt.appointment_number}* (Token: *{apt.queue_token}*)\n"
+            f"👤 Doctor: *{doctor.name}*\n"
+            f"📝 Reason: {apt.cancellation_reason}\n\n"
             f"Whenever you would like to book again, just send us a message here on WhatsApp."
         )
         db.add(TenantOutboxMessage(
@@ -1148,6 +1150,7 @@ def reschedule_appointment_db(
     if conn and contact.customer_phone:
         msg_text = format_booking_confirmation(
             booking_data={
+                "patient_name": contact.full_name or contact.push_name or "",
                 "appointment_number": apt.appointment_number,
                 "queue_token": apt.queue_token,
                 "doctor_name": doctor.name,
@@ -1817,13 +1820,19 @@ def call_next_patient_db(
 
     if conn and contact.customer_phone:
         from app.models.communication import TenantOutboxMessage
+        p_name = (contact.full_name or contact.push_name or "Patient").strip()
+        loc_name = (doctor.room_number or "Room").strip()
         outbox = TenantOutboxMessage(
             tenant_id=tenant_uuid,
             channel_connection_id=conn.id,
             recipient_phone=contact.customer_phone,
             message_type="text",
             payload={
-                "text": f"Assalam-o-Alaikum {contact.full_name or 'Patient'}! Your token {apt.queue_token} has been called. Please proceed inside {doctor.name}'s cabin ({doctor.room_number or 'Room'}).",
+                "text": (
+                    f"📢 Assalam-o-Alaikum *{p_name}*!\n"
+                    f"Your Token Number *{apt.queue_token}* has been called.\n"
+                    f"Please proceed to *{doctor.name}* at *{loc_name}*."
+                ),
                 "queue_call": True,
                 "token": apt.queue_token
             },
@@ -2135,10 +2144,11 @@ def delay_broadcast_db(
     broadcast_reason = reason or "Unforeseen clinical emergency"
 
     for apt, contact in active_apts:
+        p_name = (contact.full_name or contact.push_name or "Patient").strip()
         msg_text = (
-            f"Assalam-o-Alaikum {contact.full_name or 'Patient'}, "
-            f"{doctor.name} is experiencing a delay of approximately {delay_minutes} minutes ({broadcast_reason}). "
-            f"Your token is {apt.queue_token}. Thank you for your patience."
+            f"⏳ Assalam-o-Alaikum *{p_name}*,\n"
+            f"*{doctor.name}* is experiencing a delay of approximately *{delay_minutes} minutes* ({broadcast_reason}).\n"
+            f"🎫 Your Token Number is *{apt.queue_token}*. Thank you for your patience."
         )
 
         if conn:

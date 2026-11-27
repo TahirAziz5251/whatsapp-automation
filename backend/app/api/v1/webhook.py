@@ -65,11 +65,11 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
         emergency_pattern = r"\b(1122|emergency|heart attack|chest pain|stroke|unconscious|behosh|khoon|bleeding|severe pain|breath|saans|choking|accident)\b"
         if re.search(emergency_pattern, user_text, re.IGNORECASE):
             emergency_reply = (
-                "🚨 EMERGENCY ADVISORY:\n\n"
+                "🚨 *EMERGENCY ADVISORY:*\n\n"
                 "If you or the patient are experiencing a life-threatening medical emergency, "
-                "please call Rescue 1122 immediately or proceed to the nearest hospital Emergency Department.\n\n"
+                "please call *Rescue 1122* immediately or proceed to the nearest hospital *Emergency Department*.\n\n"
                 "• Our clinic AI assistant does NOT provide emergency medical diagnosis or treatment.\n"
-                "• Clinic reception has been notified of your emergency message."
+                "• *Clinic Reception* has been notified of your emergency message."
             )
             try:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
