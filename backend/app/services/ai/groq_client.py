@@ -143,7 +143,7 @@ class GroqClient:
                 )
 
             elif "doctors" in result_data:
-                # Doctor schedule
+                # Doctor schedule — show verified DB metadata + clean prompt so clickable DB Poll slots render cleanly
                 docs = result_data.get("doctors", [])
                 if docs:
                     doc = docs[0]
@@ -152,15 +152,23 @@ class GroqClient:
                     hours = doc.get("consulting_hours")
                     fee = doc.get("fee")
                     room = doc.get("room_number")
-                    slots = ", ".join(f"*{s}*" for s in (doc.get("open_slots") or [])[:3])
-                    room_str = f" ({room})" if room else ""
+                    open_slots = doc.get("open_slots") or []
+                    next_date = doc.get("next_available_date")
+                    q_date = result_data.get("query_date") or doc.get("query_date") or "Today"
+                    room_str = f", *{room}*" if room else ""
 
-                    if lang == "ROMAN_URDU":
-                        content = f"Jee zaroor! *{name}* ({spec}{room_str}) OPD mein dastiyab hain. Timings *{hours}* hain aur fee *{fee}* hai. Open slots: {slots}. Kya main aap k liye appointment book kar doon?"
-                    elif lang == "URDU":
-                        content = f"جی بالکل! *{name}* ({spec}{room_str}) دستیاب ہیں۔ اوقات *{hours}* ہیں اور فیس *{fee}* ہے۔ دستیاب سلاٹس: {slots}۔ کیا میں آپ کی اپائنٹمنٹ بک کر دوں؟"
+                    if open_slots:
+                        slots_bold = ", ".join(f"*{s}*" for s in open_slots[:6])
+                        if lang == "ROMAN_URDU":
+                            content = f"*{name}* ({spec}{room_str}) *{q_date}* ({hours}) ko dastiyab hain. Fee: *{fee}*.\nDastiyab slots: {slots_bold}.\nBarah-e-meherbani apna preferred time slot muntakhab karein:"
+                        elif lang == "URDU":
+                            content = f"*{name}* ({spec}{room_str}) *{q_date}* ({hours}) کو دستیاب ہیں۔ فیس: *{fee}*۔\nدستیاب سلاٹس: {slots_bold}۔\nبرائے مہربانی اپنا وقت منتخب کریں:"
+                        else:
+                            content = f"*{name}* ({spec}{room_str}) is available on *{q_date}* (*{hours}*). Fee: *{fee}*.\nAvailable slots: {slots_bold}.\n\nPlease choose an available time slot:"
+                    elif next_date:
+                        content = f"*{name}* ({spec}{room_str}) has no remaining open slots for *{q_date}*. Next available date is *{next_date}*. Please choose a slot:"
                     else:
-                        content = f"Yes, *{name}* ({spec}{room_str}) is available (*{hours}*). Consultation fee is *{fee}*. Available slots: {slots}. Would you like me to book this slot for you?"
+                        content = f"*{name}* ({spec}{room_str}) currently has no open slots available. Would you like to check another doctor or contact *Clinic Reception*?"
                 else:
                     content = "Maazrat, is specialty k mutabiq koi doctor dastiyab nahi hain."
 
@@ -240,6 +248,43 @@ class GroqClient:
 
         from datetime import datetime
         today_str = datetime.now().strftime("%Y-%m-%d")
+
+        is_tomorrow_click = user_text.strip() in ("tomorrow slots", "kal ke slots", "tomorrow")
+        specialty_click_map = {
+            "general physician": "General Medicine",
+            "general medicine": "General Medicine",
+            "cardiology": "Cardiology",
+            "pediatrics": "Pediatrics",
+            "dermatology": "Dermatology",
+        }
+        matched_spec_click = specialty_click_map.get(user_text.strip())
+        if (is_tomorrow_click or matched_spec_click) and "get_doctor_schedule" in tool_names:
+            history_blob = " ".join(m.get("content", "").lower() for m in messages[:-1])
+            target_spec = matched_spec_click or (
+                "Cardiology" if ("cardio" in history_blob or "tariq" in history_blob) else (
+                    "Pediatrics" if ("pediatric" in history_blob or "bilal" in history_blob) else "General Medicine"
+                )
+            )
+            target_dt = "Tomorrow" if is_tomorrow_click else today_str
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_sched_spec_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_doctor_schedule",
+                                "arguments": json.dumps({"doctor_name_or_specialty": target_spec, "date": target_dt})
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 80, "completion_tokens": 25, "total_tokens": 105}
+            }
 
         is_availability_query = any(w in user_text for w in ["which slot", "which slots", "available", "dastiyab", "timing", "timings", "schedule", "kab"]) and not any(w in user_text for w in ["book", "kar do", "leni", "lena", "confirm"])
 

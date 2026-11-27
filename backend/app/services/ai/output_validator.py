@@ -353,6 +353,20 @@ def validate_ai_response(
             flags=re.IGNORECASE,
         ).strip()
 
+    # 1.3 When schedule/slot tools executed with open_slots, strip any hallucinated/duplicate numbered slot menu
+    has_sched_slots = any(
+        isinstance((item.get("result") or {}).get("doctors"), list)
+        and any(d.get("open_slots") for d in (item.get("result") or {}).get("doctors") or [])
+        for item in (tools_executed or [])
+        if item.get("tool") in ("get_doctor_schedule", "search_doctors", "get_availability")
+    )
+    if has_sched_slots:
+        cleaned = re.sub(
+            r"(?im)^\s*\d+\.\s*(?:\*{0,2}\d{1,2}:\d{2}\s*(?:AM|PM)\*{0,2}|\*{0,2}Tomorrow slots\*{0,2}).*$\n?",
+            "",
+            cleaned,
+        ).strip()
+
     grounded = _collect_grounded_values(tools_executed, state_json)
     ops = grounded["succeeded_ops"]
     lower = cleaned.lower()

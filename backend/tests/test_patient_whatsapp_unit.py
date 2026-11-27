@@ -842,13 +842,13 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
         assert "Cardiology" in spec_buttons
         assert "Pediatrics" in spec_buttons
 
-    # 3. Doctor Details & Open Slots -> Slot buttons from doctors[0]["open_slots"]
+    # 3. Doctor Details & Open Slots -> All real DB open_slots (never truncated to 2!) + Tomorrow slots
     res_slots = generate_interactive_elements(
         db=mock_db,
         tenant_id=tenant_id,
         tenant_name=tenant_name,
         user_text="General Physician",
-        reply_text="Available today (27 Nov):\nDr. Ayesha Malik - MBBS, MRCP\nFee: Rs 1,800",
+        reply_text="Dr. Ayesha Malik (General Medicine, Room 102) is available today (04:00 PM - 08:00 PM). Fee: PKR 1,800.",
         tools_executed=[
             {
                 "tool": "get_doctor_schedule",
@@ -866,11 +866,9 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
         state_json={"step": "SELECT_SLOT"},
     )
     assert res_slots is not None
-    assert res_slots["type"] == "buttons"
-    slot_btns = [b["displayText"] for b in res_slots["buttons"]]
-    assert "04:30 PM" in slot_btns
-    assert "05:00 PM" in slot_btns
-    assert "Tomorrow slots" in slot_btns
+    assert res_slots["type"] == "button_groups"
+    slot_btns = [b["displayText"] for g in res_slots["groups"] for b in g["buttons"]]
+    assert slot_btns == ["04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "Tomorrow slots"]
 
     # 4. Confirmation Summary Gate -> [ Confirm ] and [ Change ]
     res_confirm = generate_interactive_elements(
@@ -1247,3 +1245,90 @@ def test_uniform_conversation_font_size_and_saas_bold_highlights():
         "*PKR 2,500*",
     ):
         assert expected in card, f"Missing bold highlight in confirmation card: {expected}"
+
+
+def test_real_db_slots_never_show_shift_end_boundaries_0400_0800():
+    """
+    Reproduces exact screenshot bug where consulting hours 'from 04:00 PM to 08:00 PM' caused
+    1. 04:00 PM and 2. 08:00 PM to be offered instead of real DB open_slots (05:15 PM .. 07:00 PM).
+    Verifies:
+    1. interactive_formatter returns ALL genuine DB open_slots (up to 11 + Tomorrow slots).
+    2. Text fallback strips consulting-hours ranges so 04:00 PM / 08:00 PM are NEVER mistaken as slots.
+    3. validate_ai_response strips fake duplicate numbered slot lists (1. 04:00 PM, 2. 08:00 PM).
+    """
+    from unittest.mock import MagicMock
+    from app.services.ai.interactive_formatter import generate_interactive_elements
+    from app.services.ai.output_validator import validate_ai_response
+
+    real_open_slots = [
+        "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM",
+        "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM",
+    ]
+    tool_result = {
+        "status": "SUCCESS",
+        "query_date": "2026-11-27",
+        "doctors": [
+            {
+                "name": "Dr. Ayesha Malik",
+                "specialty": "General Medicine",
+                "room_number": "Room 102",
+                "consulting_hours": "04:00 PM - 08:00 PM",
+                "fee_pkr": 1800.0,
+                "open_slots": real_open_slots,
+            }
+        ],
+    }
+
+    mock_db = MagicMock()
+    tid = "11111111-1111-1111-1111-111111111111"
+
+    # 1. With tool result -> ALL 8 real open_slots + Tomorrow slots attached in button_groups (clickable Poll)
+    res_real = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tid,
+        tenant_name="Alpha Clinic",
+        user_text="General Physician",
+        reply_text="Dr. Ayesha Malik (General Medicine, Room 102) is available today from 04:00 PM to 08:00 PM. Which time would you prefer for Ms. Naseem Mai?",
+        tools_executed=[{"tool": "get_doctor_schedule", "result": tool_result}],
+        state_json={"step": "SLOTS_SHOWN", "issued_options": {"slots": real_open_slots}},
+    )
+    assert res_real is not None
+    assert res_real["type"] == "button_groups"
+    flat_slots = [b["displayText"] for g in res_real["groups"] for b in g["buttons"]]
+    assert flat_slots == real_open_slots + ["Tomorrow slots"]
+    assert "04:00 PM" not in flat_slots
+    assert "08:00 PM" not in flat_slots
+
+    # 2. Even if tools_executed is empty & reply mentions "from 04:00 PM to 08:00 PM", NEVER offer 04:00 PM / 08:00 PM
+    res_fallback = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tid,
+        tenant_name="Alpha Clinic",
+        user_text="show slots",
+        reply_text="Dr. Ayesha Malik is available today from 04:00 PM to 08:00 PM. Which time would you prefer? Available: 05:15 PM, 05:30 PM",
+        tools_executed=[],
+        state_json={"step": "IDLE", "issued_options": {}},
+    )
+    assert res_fallback is not None
+    fb_slots = [b["displayText"] for b in (res_fallback.get("buttons") or [b for g in res_fallback.get("groups", []) for b in g["buttons"]])]
+    assert "04:00 PM" not in fb_slots
+    assert "08:00 PM" not in fb_slots
+    assert fb_slots == ["05:15 PM", "05:30 PM", "Tomorrow slots"]
+
+    # 3. Output validator strips redundant numbered slot menus from LLM prose when DB schedule returned open_slots
+    val = validate_ai_response(
+        reply_text=(
+            "Dr. Ayesha Malik (General Medicine, Room 102) is available today from 04:00 PM to 08:00 PM.\n"
+            "Which time would you prefer for Ms. Naseem Mai?\n\n"
+            "1. 04:00 PM\n"
+            "2. 08:00 PM\n"
+            "3. Tomorrow slots\n"
+        ),
+        tools_executed=[{"tool": "get_doctor_schedule", "result": tool_result}],
+        state_json={"issued_options": {"slots": real_open_slots}},
+    )
+    assert "1. *04:00 PM*" not in val["sanitized_text"]
+    assert "2. *08:00 PM*" not in val["sanitized_text"]
+    assert "Tomorrow slots" not in val["sanitized_text"]
+    assert "*Dr. Ayesha Malik*" in val["sanitized_text"]
+    assert "*Ms. Naseem Mai*" in val["sanitized_text"]

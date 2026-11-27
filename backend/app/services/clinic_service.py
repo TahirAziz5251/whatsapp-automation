@@ -340,7 +340,7 @@ def get_doctor_schedule_db(
             "consulting_hours": timings,
             "available_days": seen_days,
             "query_date": target_date.isoformat(),
-            "open_slots": nearest_slots[:8],
+            "open_slots": nearest_slots[:11],
             "total_open_slots": len(open_slots),
             "preferred_time_available": (pref_formatted in open_slots) if pref_formatted else None,
             "next_available_date": next_avail_date,

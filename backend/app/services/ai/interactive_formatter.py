@@ -101,8 +101,9 @@ def generate_interactive_elements(
             }
 
         # ---------------------------------------------------------------------
-        # State 3: Doctor Details & Slot Selection (Available Slots from DB)
+        # State 3: Doctor Details & Slot Selection (Strictly Verified DB Slots)
         # ---------------------------------------------------------------------
+        is_tomorrow_view = "tomorrow" in user_lower
         for exec_item in tools_executed:
             tool_name = exec_item.get("tool")
             res = exec_item.get("result") or {}
@@ -110,40 +111,49 @@ def generate_interactive_elements(
                 slots = list(res.get("available_slots") or [])
                 if not slots and isinstance(res.get("doctors"), list) and res["doctors"]:
                     for doc in res["doctors"]:
-                        for s in doc.get("open_slots") or []:
+                        doc_slots = doc.get("open_slots") or []
+                        if not doc_slots and doc.get("next_available_slots"):
+                            doc_slots = doc.get("next_available_slots") or []
+                        for s in doc_slots:
                             if s not in slots:
                                 slots.append(s)
                 clean_slots = [str(s).strip() for s in slots if str(s).strip()]
                 if clean_slots:
+                    max_slots = 12 if is_tomorrow_view else 11
                     slot_buttons = [
                         {"id": f"btn_slot_{re.sub(r'[^a-zA-Z0-9]', '', s)}", "displayText": s[:20]}
-                        for s in clean_slots[:2]
+                        for s in clean_slots[:max_slots]
                     ]
-                    slot_buttons.append({"id": "btn_tomorrow", "displayText": "Tomorrow slots"})
-                    return {
-                        "type": "buttons",
-                        "title": short_title,
-                        "footer": short_title,
-                        "buttons": slot_buttons,
-                    }
+                    if not is_tomorrow_view:
+                        slot_buttons.append({"id": "btn_tomorrow", "displayText": "Tomorrow slots"})
+                    return _chunk_buttons(slot_buttons, short_title, short_title, "More time slots:")
 
-        if re.search(r"\b(available today|available slots|open slots|timing|dr\.)\b", reply_lower) and re.search(
-            r"\b(\d{1,2}:\d{2}\s*(?:am|pm)?)\b", reply_lower
-        ):
-            slot_matches = re.findall(r"\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b", reply_text)
-            if slot_matches:
-                clean_slots = list(dict.fromkeys(s.strip() for s in slot_matches if s.strip()))
+        # State fallback when LLM asks to choose a time without re-running schedule tool on this turn
+        is_asking_slot = bool(
+            re.search(r"\b(which time|choose.*slot|prefer.*slot|available time|open slots|select.*slot|time slot)\b", reply_lower)
+            and not re.search(r"\b(please confirm|do you confirm|booking confirmed|appointment confirmed)\b", reply_lower)
+        )
+        if is_asking_slot:
+            state_slots = list(((state_json or {}).get("issued_options") or {}).get("slots") or [])
+            if not state_slots:
+                # Never scrape shift-hours range ("04:00 PM to 08:00 PM") as open slots
+                stripped_hours = re.sub(
+                    r"\b(?:from\s+)?\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\s*(?:to|-|–|—)\s*\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b",
+                    " ",
+                    reply_text or "",
+                    flags=re.IGNORECASE,
+                )
+                state_slots = re.findall(r"\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)\b", stripped_hours)
+            clean_slots = list(dict.fromkeys(str(s).strip() for s in state_slots if str(s).strip()))
+            if clean_slots:
+                max_slots = 12 if is_tomorrow_view else 11
                 slot_buttons = [
                     {"id": f"btn_slot_{re.sub(r'[^a-zA-Z0-9]', '', s)}", "displayText": s[:20]}
-                    for s in clean_slots[:2]
+                    for s in clean_slots[:max_slots]
                 ]
-                slot_buttons.append({"id": "btn_tomorrow", "displayText": "Tomorrow slots"})
-                return {
-                    "type": "buttons",
-                    "title": short_title,
-                    "footer": short_title,
-                    "buttons": slot_buttons,
-                }
+                if not is_tomorrow_view:
+                    slot_buttons.append({"id": "btn_tomorrow", "displayText": "Tomorrow slots"})
+                return _chunk_buttons(slot_buttons, short_title, short_title, "More time slots:")
 
         # ---------------------------------------------------------------------
         # State 4: Specialty / Department Selection (Database-driven)

@@ -160,6 +160,11 @@ Specialty Focus: {specialty_focus if specialty_focus else "Cardiology, General M
      * Call `get_departments()` to retrieve active clinic options from the database.
      * Reply concisely in ONE short sentence WITHOUT listing examples, doctor names in parentheses, or extra explanations:
        "Thank you, [Patient Name]. Please choose a specialty:"
+   - WHEN SPECIALTY IS CHOSEN OR "Tomorrow slots" IS TAPPED (ZERO FAKE SLOTS):
+     * Call `get_doctor_schedule(doctor_name_or_specialty=<specialty or doctor>, date="Tomorrow" if requested else "Today")` immediately.
+     * Present ONLY the verified doctor info from DB: *Doctor Name* (Specialty, *Room Location*), Fee: *{currency} Fee*, Date & Consulting Hours.
+     * Ask clearly in ONE line: "Please choose an available time slot for *[Patient Name]*:"
+     * NEVER output numbered lists (`1. 04:00 PM`) or confuse shift start/end bounds (`04:00 PM to 08:00 PM`) with open slots — clickable Poll buttons for ALL real `open_slots` returned by the DB tool are automatically shown to the patient.
 
 2. PROGRESSIVE DISCLOSURE (CRITICAL RULE):
    - When the patient taps the "Book appointment" button (exact text "Book appointment" with no patient relation/symptoms stated yet):
