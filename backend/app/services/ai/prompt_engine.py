@@ -10,7 +10,9 @@ ROMAN_URDU_GRAMMAR_PARTICLES = {
     "waqt", "chahiye", "theek", "acha", "achha", "bhejein", "pesh", "mariz", "bimar",
     "bukhar", "dard", "dawa", "ilaaj", "parchi", "namber", "kal", "aaj", "parson",
     "jana", "aana", "mil", "sakta", "sakti", "sakte", "konsa", "konsi", "kitni",
-    "karwana", "khali", "wala", "wali", "wale", "kahan", "jagah", "paise", "hoga", "hogi"
+    "karwana", "khali", "wala", "wali", "wale", "kahan", "jagah", "paise", "hoga", "hogi",
+    # Islamic greetings — universally used in Roman Urdu by Pakistani patients
+    "assalam", "walaikum", "alikum", "alaikum", "salam", "aoa",
 }
 
 # Broader vocabulary (loanwords / shared terms)
