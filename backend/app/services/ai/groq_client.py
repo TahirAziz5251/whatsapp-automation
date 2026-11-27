@@ -292,6 +292,33 @@ class GroqClient:
         is_third_party = any(w in user_text for w in ["mother", "walida", "ammi", "father", "walid", "abbu", "child", "bacha", "baby", "daughter", "son", "beta", "beti", "wife", "husband"])
         has_specific_doctor_or_slot = any(w in user_text for w in ["tariq", "ayesha", "bilal", "cardio", "pediatric", "04:", "05:", "06:", "10:", "11:"])
 
+        # Check if the user is answering with a patient name after being asked for a name
+        prev_assistant_msg = next((m.get("content", "") for m in reversed(messages[:-1]) if m.get("role") == "assistant" and m.get("content")), "")
+        history_user_text = " ".join(m.get("content", "").lower() for m in messages if m.get("role") == "user")
+        is_answering_name = any(w in prev_assistant_msg.lower() for w in ["full name", "naam kya hai", "patient's name", "child's full name", "mother's full name"])
+
+        if is_answering_name and "get_doctor_schedule" in tool_names:
+            target_spec = "Pediatrics" if any(w in history_user_text for w in ["child", "bacha", "baby", "kid", "son", "daughter"]) else ("Cardiology" if any(w in history_user_text for w in ["heart", "dil", "cardio", "chest"]) else "General Medicine")
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_sched_from_name_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_doctor_schedule",
+                                "arguments": json.dumps({"doctor_name_or_specialty": target_spec, "date": today_str})
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+            }
+
         if is_booking_intent and (is_third_party or not has_specific_doctor_or_slot) and "book_appointment" in tool_names:
             from app.services.ai.prompt_engine import detect_language_and_script
             lang = detect_language_and_script(user_text)["language"]

@@ -89,9 +89,9 @@ def validate_ai_response(
     cleaned = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
     cleaned = re.sub(r"(?im)^#\s*(DATA INTEGRITY|NON-NEGOTIABLE|PHASE \d+|OUTPUT CONTRACT).*$", "", cleaned).strip()
 
-    # 1.1 Strip robotic parenthetical form hints
+    # 1.1 Strip robotic parenthetical form hints and (e.g., ...) clauses
     cleaned = re.sub(
-        r"\s*\(\s*(?:as it should appear on the booking|if any)\s*\)",
+        r"\s*\(\s*(?:e\.g\.?|for example|as it should appear|if any)[^)]*\)",
         "",
         cleaned,
         flags=re.IGNORECASE,

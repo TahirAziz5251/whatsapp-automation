@@ -1,4 +1,5 @@
 import asyncio
+import json
 import sys
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
@@ -723,3 +724,55 @@ def test_progressive_booking_flow_and_anti_boilerplate():
     assert "first visit — or a follow-up" not in cleaned_out
     assert "🌸" not in cleaned_out
     assert "Could you please share her full name" in cleaned_out
+
+    # 5. Output Validator Sanitization of (e.g., ...) parentheticals
+    raw_eg_reply = "Which department or doctor would you like Aizal to see (e.g., Cardiology, General Medicine, Pediatrics, or a specific doctor’s name)?"
+    val_eg = validate_ai_response(
+        reply_text=raw_eg_reply,
+        tools_executed=[],
+        state_json={"step": "IDLE"},
+        language="ENGLISH",
+    )
+    cleaned_eg = val_eg["sanitized_text"]
+    assert "(e.g." not in cleaned_eg
+    assert "Cardiology, General Medicine" not in cleaned_eg
+    assert "Which department or doctor would you like Aizal to see" in cleaned_eg
+
+    # 6. Continuous Context: Providing name after "for my child" invokes get_doctor_schedule("Pediatrics")
+    history_child = [
+        {"role": "user", "content": "I want to book my appointment for my child"},
+        {"role": "assistant", "content": "Sure! I'd be happy to schedule a check-up for your child. Could you please share your child's full name?"},
+        {"role": "user", "content": "Aizal"},
+    ]
+    res_child_name = gc._mock_completion(messages=history_child, tools=tools)
+    assert res_child_name["message"]["tool_calls"] is not None
+    fn_call = res_child_name["message"]["tool_calls"][0]["function"]
+    assert fn_call["name"] == "get_doctor_schedule"
+    call_args = json.loads(fn_call["arguments"])
+    assert call_args["doctor_name_or_specialty"] == "Pediatrics"
+
+    # 7. Synthesizing Doctor Recommendation from Live Tool Result
+    tool_sched_result = {
+        "status": "SUCCESS",
+        "doctors": [
+            {
+                "doctor_id": "dddddddd-1111-0000-0000-000000000003",
+                "name": "Dr. Bilal Asghar",
+                "specialty": "Pediatrics",
+                "fee": "PKR 2,000",
+                "consulting_hours": "06:00 PM - 09:00 PM",
+                "open_slots": ["06:15 PM", "06:45 PM", "07:30 PM"],
+            }
+        ]
+    }
+    history_with_tool = history_child + [
+        res_child_name["message"],
+        {"role": "tool", "name": "get_doctor_schedule", "content": json.dumps(tool_sched_result)},
+    ]
+    res_sched_synth = gc._mock_completion(messages=history_with_tool, tools=tools)
+    synth_text = res_sched_synth["message"]["content"]
+    assert "Dr. Bilal Asghar" in synth_text
+    assert "Pediatrics" in synth_text
+    assert "PKR 2,000" in synth_text
+    assert "06:15 PM" in synth_text
+    assert "(e.g." not in synth_text

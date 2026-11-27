@@ -125,6 +125,33 @@ def _compute_slots_for_day(
     return open_slots, day_schedules
 
 
+SPECIALTY_SYNONYM_MAP: Dict[str, str] = {
+    "child": "Pediatrics",
+    "children": "Pediatrics",
+    "kid": "Pediatrics",
+    "kids": "Pediatrics",
+    "baby": "Pediatrics",
+    "bacha": "Pediatrics",
+    "bachay": "Pediatrics",
+    "bachon": "Pediatrics",
+    "infant": "Pediatrics",
+    "pediatric": "Pediatrics",
+    "pediatrician": "Pediatrics",
+    "heart": "Cardiology",
+    "cardio": "Cardiology",
+    "dil": "Cardiology",
+    "bp": "Cardiology",
+    "hypertension": "Cardiology",
+    "cardiologist": "Cardiology",
+    "physician": "General Medicine",
+    "medicine": "General Medicine",
+    "general": "General Medicine",
+    "fever": "General Medicine",
+    "flu": "General Medicine",
+    "bukhar": "General Medicine",
+}
+
+
 def _resolve_doctor_strict(
     db: Session,
     tenant_uuid: uuid.UUID,
@@ -152,6 +179,13 @@ def _resolve_doctor_strict(
         return {"status": "AMBIGUOUS", "doctors": by_name}
 
     by_spec = doc_query.filter(ClinicDoctor.specialty.ilike(q)).all()
+    if not by_spec:
+        raw_lower = raw.lower()
+        for syn_k, syn_v in SPECIALTY_SYNONYM_MAP.items():
+            if syn_k in raw_lower:
+                by_spec = doc_query.filter(ClinicDoctor.specialty.ilike(f"%{syn_v}%")).all()
+                break
+
     if len(by_spec) == 1:
         return {"status": "MATCHED", "doctor": by_spec[0]}
     if len(by_spec) > 1:
@@ -194,7 +228,20 @@ def get_doctor_schedule_db(
 
     if doctor_name_or_specialty:
         q = f"%{doctor_name_or_specialty.strip()}%"
-        query = query.filter((ClinicDoctor.name.ilike(q)) | (ClinicDoctor.specialty.ilike(q)))
+        raw_lower = doctor_name_or_specialty.strip().lower()
+        mapped_spec = None
+        for syn_k, syn_v in SPECIALTY_SYNONYM_MAP.items():
+            if syn_k in raw_lower:
+                mapped_spec = syn_v
+                break
+        if mapped_spec:
+            query = query.filter(
+                (ClinicDoctor.name.ilike(q)) |
+                (ClinicDoctor.specialty.ilike(q)) |
+                (ClinicDoctor.specialty.ilike(f"%{mapped_spec}%"))
+            )
+        else:
+            query = query.filter((ClinicDoctor.name.ilike(q)) | (ClinicDoctor.specialty.ilike(q)))
 
     doctors = query.order_by(ClinicDoctor.name.asc()).all()
 
@@ -1187,7 +1234,20 @@ def get_fees_db(
     q_obj = db.query(ClinicDoctor).filter(ClinicDoctor.tenant_id == tenant_uuid, ClinicDoctor.is_active == True)
     if doctor_name_or_specialty:
         pat = f"%{doctor_name_or_specialty.strip()}%"
-        q_obj = q_obj.filter((ClinicDoctor.name.ilike(pat)) | (ClinicDoctor.specialty.ilike(pat)))
+        raw_lower = doctor_name_or_specialty.strip().lower()
+        mapped_spec = None
+        for syn_k, syn_v in SPECIALTY_SYNONYM_MAP.items():
+            if syn_k in raw_lower:
+                mapped_spec = syn_v
+                break
+        if mapped_spec:
+            q_obj = q_obj.filter(
+                (ClinicDoctor.name.ilike(pat)) |
+                (ClinicDoctor.specialty.ilike(pat)) |
+                (ClinicDoctor.specialty.ilike(f"%{mapped_spec}%"))
+            )
+        else:
+            q_obj = q_obj.filter((ClinicDoctor.name.ilike(pat)) | (ClinicDoctor.specialty.ilike(pat)))
     docs = q_obj.order_by(ClinicDoctor.name.asc()).all()
     if not docs:
         return {"status": "NOT_FOUND", "message": f"No published fee found matching '{doctor_name_or_specialty}'.", "fees": []}
