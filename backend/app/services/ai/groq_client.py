@@ -193,6 +193,24 @@ class GroqClient:
                 else:
                     content = f"Currently, token {curr} is being examined. There are {ahead} patients ahead of you with an estimated wait time of {wait} minutes (Estimate, not a guarantee)."
 
+            elif "departments" in result_data:
+                depts = result_data.get("departments") or []
+                dept_names = ", ".join(d.get("name") for d in depts) if depts else "General Medicine, Cardiology, Pediatrics"
+                if lang == "ROMAN_URDU":
+                    content = f"Hamare clinic mein darj zail specialties dastiyab hain: {dept_names}. Please choose a specialty."
+                else:
+                    content = f"Please choose a specialty: {dept_names}."
+
+            elif "appointments" in result_data:
+                apts = result_data.get("appointments") or []
+                if apts:
+                    items = []
+                    for a in apts[:3]:
+                        items.append(f"{a.get('appointment_number')}: Dr. {a.get('doctor_name')} ({a.get('appointment_date')} at {a.get('slot_time')})")
+                    content = "Here are your upcoming appointments:\n" + "\n".join(items)
+                else:
+                    content = "You have no upcoming appointments booked with this number. Would you like to book one?"
+
             elif result_data.get("status") == "NO_EVIDENCE":
                 if lang == "ROMAN_URDU":
                     content = "Maazrat, is baray mein tasdeeq shuda clinic maloomat mojood nahi. Kya main aap ko reception se connect kar doon?"
@@ -381,8 +399,64 @@ class GroqClient:
                 "usage": {"prompt_tokens": 90, "completion_tokens": 30, "total_tokens": 120}
             }
 
-        elif any(w in user_text for w in ["dr", "doctor", "tariq", "ayesha", "schedule", "timing", "available", "dastiyab"]) and "get_doctor_schedule" in tool_names:
-            doc_target = "Dr. Tariq" if "tariq" in user_text else ("Dr. Ayesha" if "ayesha" in user_text else "")
+        elif any(w in user_text for w in ["specialty", "specialties", "department", "departments", "choose a specialty"]) and "get_departments" in tool_names:
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_dept_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_departments",
+                                "arguments": "{}"
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 70, "completion_tokens": 20, "total_tokens": 90}
+            }
+
+        elif any(w in user_text for w in ["my appointment", "my appointments", "meri appointment", "active booking"]) and "get_appointments" in tool_names:
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_apt_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_appointments",
+                                "arguments": "{}"
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 70, "completion_tokens": 20, "total_tokens": 90}
+            }
+
+        elif any(w in user_text for w in ["dr", "doctor", "tariq", "ayesha", "bilal", "general physician", "general medicine", "cardiology", "pediatrics", "schedule", "timing", "available", "dastiyab"]) and "get_doctor_schedule" in tool_names:
+            if "general" in user_text:
+                doc_target = "General Medicine"
+            elif "cardio" in user_text:
+                doc_target = "Cardiology"
+            elif "pediatric" in user_text or "child" in user_text:
+                doc_target = "Pediatrics"
+            elif "ayesha" in user_text:
+                doc_target = "Dr. Ayesha"
+            elif "bilal" in user_text:
+                doc_target = "Dr. Bilal"
+            elif "tariq" in user_text:
+                doc_target = "Dr. Tariq"
+            else:
+                doc_target = ""
+
             return {
                 "status": "SUCCESS",
                 "message": {
@@ -394,7 +468,7 @@ class GroqClient:
                             "type": "function",
                             "function": {
                                 "name": "get_doctor_schedule",
-                                "arguments": json.dumps({"doctor_name_or_specialty": doc_target, "date": "Tomorrow"})
+                                "arguments": json.dumps({"doctor_name_or_specialty": doc_target, "date": today_str})
                             }
                         }
                     ]

@@ -170,9 +170,34 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
             reply_text = ai_turn.get("response_text", "")
             outbox_id = ai_turn.get("outbox_id")
             ai_message_id = ai_turn.get("ai_message_id")
+            interactive_data = ai_turn.get("interactive")
             if reply_text:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
-                send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
+                if interactive_data and isinstance(interactive_data, dict):
+                    itype = interactive_data.get("type")
+                    title = interactive_data.get("title")
+                    footer = interactive_data.get("footer")
+                    if itype == "buttons" and interactive_data.get("buttons"):
+                        send_res = adapter.send_button_message(
+                            recipient_phone=customer_phone,
+                            text=reply_text,
+                            buttons=interactive_data.get("buttons"),
+                            title=title,
+                            footer=footer,
+                        )
+                    elif itype == "list" and interactive_data.get("sections"):
+                        send_res = adapter.send_list_message(
+                            recipient_phone=customer_phone,
+                            text=reply_text,
+                            sections=interactive_data.get("sections"),
+                            button_text=interactive_data.get("button_text", "Select Option"),
+                            title=title,
+                            footer=footer,
+                        )
+                    else:
+                        send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
+                else:
+                    send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
                 logger.info(f"AI response dispatched to {customer_phone}: {send_res.get('status_code')} | Success: {send_res.get('success')}")
                 # Sync outbox state atomically under tenant RLS so background dispatcher never double-sends
                 db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))

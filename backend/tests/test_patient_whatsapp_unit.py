@@ -629,7 +629,10 @@ def test_single_reply_outbox_deferral_and_no_duplicate_ai_message():
     with patch("app.services.channel_service.get_adapter_for_connection") as mock_get_adapter, \
          patch("app.services.billing_service.record_usage_db", return_value=None):
         fake_adapter = MagicMock()
-        fake_adapter.send_text_message.return_value = {"success": True, "status_code": 200, "response": {"key": {"id": "EVO_SENT_1"}}}
+        mock_ret = {"success": True, "status_code": 200, "response": {"key": {"id": "EVO_SENT_1"}}}
+        fake_adapter.send_text_message.return_value = mock_ret
+        fake_adapter.send_list_message.return_value = mock_ret
+        fake_adapter.send_button_message.return_value = mock_ret
         mock_get_adapter.return_value = fake_adapter
         disp = ChannelService.dispatch_outbox_message(outbox.id, disp_db)
         assert disp["success"] is True
@@ -776,3 +779,192 @@ def test_progressive_booking_flow_and_anti_boilerplate():
     assert "PKR 2,000" in synth_text
     assert "06:15 PM" in synth_text
     assert "(e.g." not in synth_text
+
+
+def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
+    """
+    Verifies end-to-end interactive WhatsApp button and list generation:
+    1. Greeting generates 4-item Main Menu list (Book appointment, My appointments, Queue status, Talk to reception).
+    2. Specialty prompt generates database-backed specialty buttons (General Physician, Cardiology, Pediatrics).
+    3. Doctor schedule response attaches live open slot buttons (e.g. 10:00 AM, 10:15 AM, Tomorrow slots).
+    4. Confirmation gate attaches [ Confirm ] and [ Change ] buttons.
+    5. Confirmed booking attaches [ Reschedule ], [ Cancel appointment ], [ Queue status ].
+    6. Queue status inquiry attaches [ Refresh status ], [ Talk to reception ].
+    7. EvolutionGoAdapter formats and dispatches buttons / lists with seamless text fallback.
+    """
+    from unittest.mock import patch, MagicMock
+    from app.services.ai.interactive_formatter import generate_interactive_elements
+    from app.adapters.evolution import EvolutionGoAdapter
+
+    mock_db = MagicMock()
+    tenant_id = "11111111-1111-1111-1111-111111111111"
+    tenant_name = "Alpha Heart & Medical Centre"
+
+    # 1. Greeting -> 4-item list menu
+    res_welcome = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tenant_id,
+        tenant_name=tenant_name,
+        user_text="Assalam o Alaikum",
+        reply_text="Walaikum Assalam! Welcome to Alpha Heart & Medical Centre Lahore. How can I help you today?",
+        tools_executed=[],
+        state_json={"step": "IDLE"},
+    )
+    assert res_welcome is not None
+    assert res_welcome["type"] == "list"
+    assert res_welcome["button_text"] == "Main Menu"
+    rows = res_welcome["sections"][0]["rows"]
+    row_titles = [r["title"] for r in rows]
+    assert "Book appointment" in row_titles
+    assert "My appointments" in row_titles
+    assert "Queue status" in row_titles
+    assert "Talk to reception" in row_titles
+
+    # 2. Specialty Selection -> DB-driven buttons
+    with patch("app.services.ai.interactive_formatter.get_departments_db") as mock_get_depts:
+        mock_get_depts.return_value = {
+            "status": "SUCCESS",
+            "departments": [
+                {"department_id": "general_medicine", "name": "General Medicine", "min_fee_pkr": 1800.0, "doctor_count": 1},
+                {"department_id": "cardiology", "name": "Cardiology", "min_fee_pkr": 2500.0, "doctor_count": 1},
+                {"department_id": "pediatrics", "name": "Pediatrics", "min_fee_pkr": 2000.0, "doctor_count": 1},
+            ],
+        }
+        res_spec = generate_interactive_elements(
+            db=mock_db,
+            tenant_id=tenant_id,
+            tenant_name=tenant_name,
+            user_text="Book appointment",
+            reply_text="Please choose a specialty for your consultation:",
+            tools_executed=[],
+            state_json={"step": "SELECT_SPECIALTY"},
+        )
+        assert res_spec is not None
+        assert res_spec["type"] == "buttons"
+        spec_buttons = [b["displayText"] for b in res_spec["buttons"]]
+        assert "General Physician" in spec_buttons
+        assert "Cardiology" in spec_buttons
+        assert "Pediatrics" in spec_buttons
+
+    # 3. Doctor Details & Open Slots -> Slot buttons
+    res_slots = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tenant_id,
+        tenant_name=tenant_name,
+        user_text="General Physician",
+        reply_text="Available today (27 Nov):\nDr. Ayesha Malik - MBBS, MRCP\nFee: Rs 1,800",
+        tools_executed=[
+            {
+                "tool": "get_doctor_schedule",
+                "result": {
+                    "status": "SUCCESS",
+                    "available_slots": ["04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM"],
+                    "doctor_name": "Dr. Ayesha Malik",
+                },
+            }
+        ],
+        state_json={"step": "SELECT_SLOT"},
+    )
+    assert res_slots is not None
+    assert res_slots["type"] == "buttons"
+    slot_btns = [b["displayText"] for b in res_slots["buttons"]]
+    assert "04:30 PM" in slot_btns
+    assert "05:00 PM" in slot_btns
+    assert "Tomorrow slots" in slot_btns
+
+    # 4. Confirmation Summary Gate -> [ Confirm ] and [ Change ]
+    res_confirm = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tenant_id,
+        tenant_name=tenant_name,
+        user_text="05:00 PM",
+        reply_text="Please confirm: Dr. Ayesha Malik | Today, 05:00 PM | Patient: Ali Raza | Fee: Rs 1,800",
+        tools_executed=[],
+        state_json={"step": "AWAITING_CONFIRMATION"},
+    )
+    assert res_confirm is not None
+    assert res_confirm["type"] == "buttons"
+    confirm_btns = [b["displayText"] for b in res_confirm["buttons"]]
+    assert confirm_btns == ["Confirm", "Change"]
+
+    # 5. Confirmed Booking -> [ Reschedule ], [ Cancel appointment ], [ Queue status ]
+    res_booked = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tenant_id,
+        tenant_name=tenant_name,
+        user_text="Confirm",
+        reply_text="Booked. Appointment confirmed. Booking ID: APT-0042\nDr. Ayesha Malik\nToday, 05:00 PM",
+        tools_executed=[
+            {
+                "tool": "book_appointment",
+                "result": {
+                    "status": "CONFIRMED",
+                    "appointment_number": "APT-0042",
+                    "doctor_name": "Dr. Ayesha Malik",
+                },
+            }
+        ],
+        state_json={"step": "BOOKED"},
+    )
+    assert res_booked is not None
+    assert res_booked["type"] == "buttons"
+    booked_btns = [b["displayText"] for b in res_booked["buttons"]]
+    assert booked_btns == ["Reschedule", "Cancel appointment", "Queue status"]
+
+    # 6. Queue Status Inquiry -> [ Refresh status ], [ Talk to reception ]
+    res_queue = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tenant_id,
+        tenant_name=tenant_name,
+        user_text="Queue status",
+        reply_text="You are not checked in yet. Please check in when you arrive.",
+        tools_executed=[
+            {
+                "tool": "get_queue_status",
+                "result": {"status": "NOT_CHECKED_IN", "message": "You are not checked in yet."},
+            }
+        ],
+        state_json={"step": "IDLE"},
+    )
+    assert res_queue is not None
+    assert res_queue["type"] == "buttons"
+    queue_btns = [b["displayText"] for b in res_queue["buttons"]]
+    assert queue_btns == ["Refresh status", "Talk to reception"]
+
+    # 7. EvolutionGoAdapter Button & List Dispatch + Fallback
+    adapter = EvolutionGoAdapter(instance_name="alpha-clinic", api_url="http://mock-evo:4000", api_key="test-key")
+    with patch.object(adapter, "_post_with_token_retry") as mock_post:
+        # Success case for buttons
+        mock_post.return_value = {"success": True, "status_code": 200, "response": {"key": {"id": "BTN_MSG_1"}}}
+        btn_resp = adapter.send_button_message(
+            recipient_phone="923001234567",
+            text="Please confirm appointment",
+            buttons=[{"displayText": "Confirm"}, {"displayText": "Change"}],
+            title="Alpha Clinic",
+        )
+        assert btn_resp["success"] is True
+        mock_post.assert_called_with(
+            "/send/button",
+            {
+                "number": "923001234567",
+                "title": "Alpha Clinic",
+                "description": "Please confirm appointment",
+                "footer": "Alpha Clinic",
+                "buttons": [
+                    {"type": "reply", "displayText": "Confirm", "id": "btn_1_confirm"},
+                    {"type": "reply", "displayText": "Change", "id": "btn_2_change"},
+                ],
+            },
+        )
+
+        # Fallback case for buttons when API fails
+        mock_post.side_effect = [
+            {"success": False, "status_code": 500, "error": "Internal Server Error"},
+            {"success": True, "status_code": 200, "response": {"key": {"id": "FALLBACK_TXT"}}},
+        ]
+        fallback_resp = adapter.send_button_message(
+            recipient_phone="923001234567",
+            text="Choose an option",
+            buttons=["Option A", "Option B"],
+        )
+        assert fallback_resp["success"] is True

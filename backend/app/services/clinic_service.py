@@ -144,6 +144,7 @@ SPECIALTY_SYNONYM_MAP: Dict[str, str] = {
     "hypertension": "Cardiology",
     "cardiologist": "Cardiology",
     "physician": "General Medicine",
+    "general physician": "General Medicine",
     "medicine": "General Medicine",
     "general": "General Medicine",
     "fever": "General Medicine",

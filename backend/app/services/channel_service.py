@@ -269,8 +269,33 @@ class ChannelService:
 
         adapter = get_adapter_for_connection(connection)
         text_body = outbox.payload.get("text", "")
+        interactive_data = outbox.payload.get("interactive") if isinstance(outbox.payload, dict) else None
 
-        dispatch_result = adapter.send_text_message(outbox.recipient_phone, text_body)
+        if interactive_data and hasattr(adapter, "send_button_message") and hasattr(adapter, "send_list_message"):
+            itype = interactive_data.get("type")
+            title = interactive_data.get("title")
+            footer = interactive_data.get("footer")
+            if itype == "buttons" and interactive_data.get("buttons"):
+                dispatch_result = adapter.send_button_message(
+                    recipient_phone=outbox.recipient_phone,
+                    text=text_body,
+                    buttons=interactive_data.get("buttons"),
+                    title=title,
+                    footer=footer,
+                )
+            elif itype == "list" and interactive_data.get("sections"):
+                dispatch_result = adapter.send_list_message(
+                    recipient_phone=outbox.recipient_phone,
+                    text=text_body,
+                    sections=interactive_data.get("sections"),
+                    button_text=interactive_data.get("button_text", "Select Option"),
+                    title=title,
+                    footer=footer,
+                )
+            else:
+                dispatch_result = adapter.send_text_message(outbox.recipient_phone, text_body)
+        else:
+            dispatch_result = adapter.send_text_message(outbox.recipient_phone, text_body)
 
         if dispatch_result.get("success"):
             outbox.status = "DISPATCHED"

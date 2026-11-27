@@ -12,6 +12,7 @@ from app.services.ai.prompt_engine import build_system_prompt, detect_language_a
 from app.services.ai.tool_registry import get_allowed_tool_schemas, execute_tool
 from app.services.ai.groq_client import GroqClient
 from app.services.ai.output_validator import validate_ai_response
+from app.services.ai.interactive_formatter import generate_interactive_elements
 
 logger = logging.getLogger(__name__)
 
@@ -331,6 +332,21 @@ class AiSupervisor:
             metadata={"conversation_id": str(conversation_id), "model": self.groq_client.model}
         )
 
+        # Step 8.5: Generate dynamic database-driven WhatsApp interactive controls (zero hallucination)
+        interactive_payload = None
+        try:
+            interactive_payload = generate_interactive_elements(
+                db=db,
+                tenant_id=str(tenant.id),
+                tenant_name=str(tenant.name or "Alpha Heart & Medical Centre"),
+                user_text=user_text,
+                reply_text=final_reply,
+                tools_executed=tools_executed,
+                state_json=state_json,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to generate interactive payload: {e}")
+
         # Step 9: Enqueue to Transactional Outbox for Delivery
         connection = db.query(ChannelConnection).filter(
             ChannelConnection.tenant_id == tenant.id,
@@ -346,12 +362,16 @@ class AiSupervisor:
             retry_at = datetime.now(timezone.utc)
             if defer_outbox_seconds and defer_outbox_seconds > 0:
                 retry_at = retry_at + timedelta(seconds=int(defer_outbox_seconds))
+            outbox_payload = {"text": final_reply, "ai_message_id": str(ai_message.id)}
+            if interactive_payload:
+                outbox_payload["interactive"] = interactive_payload
+
             outbox_entry = TenantOutboxMessage(
                 tenant_id=tenant.id,
                 channel_connection_id=connection.id,
                 recipient_phone=customer_phone,
                 message_type="text",
-                payload={"text": final_reply, "ai_message_id": str(ai_message.id)},
+                payload=outbox_payload,
                 status="PENDING",
                 next_retry_at=retry_at,
             )
@@ -366,6 +386,7 @@ class AiSupervisor:
             "conversation_id": str(conversation_id),
             "language_detected": lang_info,
             "response_text": final_reply,
+            "interactive": interactive_payload,
             "tools_executed": tools_executed,
             "ai_message_id": str(ai_message.id),
             "outbox_id": str(outbox_entry.id) if outbox_entry else None,

@@ -192,6 +192,105 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             },
         )
 
+    def send_button_message(
+        self,
+        recipient_phone: str,
+        text: str,
+        buttons: list,
+        title: Optional[str] = None,
+        footer: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Sends native WhatsApp quick reply buttons (up to 3) via Evolution Go POST /send/button.
+        Falls back to formatted plain text if button dispatch fails.
+        """
+        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        formatted_buttons = []
+        for idx, b in enumerate(buttons[:3], start=1):
+            if isinstance(b, str):
+                disp = b.strip()[:20]
+                b_id = f"btn_{idx}_{re.sub(r'[^a-zA-Z0-9_]', '', disp.lower().replace(' ', '_'))}"
+            elif isinstance(b, dict):
+                disp = str(b.get("displayText") or b.get("title") or b.get("label") or f"Option {idx}").strip()[:20]
+                b_id = str(b.get("id") or f"btn_{idx}_{re.sub(r'[^a-zA-Z0-9_]', '', disp.lower().replace(' ', '_'))}")
+            else:
+                continue
+            formatted_buttons.append({"type": "reply", "displayText": disp, "id": b_id})
+
+        if not formatted_buttons:
+            return self.send_text_message(recipient_phone, text)
+
+        body_payload = {
+            "number": clean_phone,
+            "title": title or "Healthcare Assistant",
+            "description": text,
+            "footer": footer or (title or "Healthcare Assistant"),
+            "buttons": formatted_buttons,
+        }
+
+        res = self._post_with_token_retry("/send/button", body_payload)
+        if res.get("success"):
+            return res
+
+        logger.warning(f"Evolution /send/button failed ({res.get('status_code')}), falling back to text options.")
+        opts = [b["displayText"] for b in formatted_buttons]
+        return self.send_interactive_options(recipient_phone, text, opts)
+
+    def send_list_message(
+        self,
+        recipient_phone: str,
+        text: str,
+        sections: list,
+        button_text: str = "Select Option",
+        title: Optional[str] = None,
+        footer: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Sends an interactive single-select list menu via Evolution Go POST /send/list.
+        Falls back to formatted plain text if list dispatch fails.
+        """
+        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        formatted_sections = []
+        flat_options = []
+        for sec_idx, sec in enumerate(sections):
+            sec_title = str(sec.get("title") or f"Section {sec_idx + 1}")[:24]
+            raw_rows = sec.get("rows") or []
+            rows = []
+            for row_idx, r in enumerate(raw_rows):
+                if isinstance(r, str):
+                    r_title = r.strip()[:24]
+                    r_desc = ""
+                    r_id = f"row_{sec_idx}_{row_idx}_{re.sub(r'[^a-zA-Z0-9_]', '', r_title.lower().replace(' ', '_'))}"
+                elif isinstance(r, dict):
+                    r_title = str(r.get("title") or f"Option {row_idx + 1}").strip()[:24]
+                    r_desc = str(r.get("description") or "").strip()[:72]
+                    r_id = str(r.get("rowId") or r.get("id") or f"row_{sec_idx}_{row_idx}")
+                else:
+                    continue
+                rows.append({"title": r_title, "description": r_desc, "rowId": r_id})
+                flat_options.append(f"{r_title} - {r_desc}" if r_desc else r_title)
+            if rows:
+                formatted_sections.append({"title": sec_title, "rows": rows})
+
+        if not formatted_sections:
+            return self.send_text_message(recipient_phone, text)
+
+        body_payload = {
+            "number": clean_phone,
+            "title": title or "Healthcare Assistant",
+            "description": text,
+            "buttonText": (button_text or "Select Option")[:20],
+            "footerText": footer or (title or "Healthcare Assistant"),
+            "sections": formatted_sections,
+        }
+
+        res = self._post_with_token_retry("/send/list", body_payload)
+        if res.get("success"):
+            return res
+
+        logger.warning(f"Evolution /send/list failed ({res.get('status_code')}), falling back to text options.")
+        return self.send_interactive_options(recipient_phone, text, flat_options)
+
     def send_interactive_options(self, recipient_phone: str, body_text: str, options: Optional[list] = None) -> Dict[str, Any]:
         """Sends structured WhatsApp choice list cleanly over reliable plain text."""
         opts = [str(o).strip() for o in (options or []) if str(o).strip()]
