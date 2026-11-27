@@ -247,8 +247,29 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                                     "type": interactive_data.get("type"),
                                     "fallback_reason": send_res.get("interactive_fallback_reason"),
                                     "status_code": send_res.get("status_code"),
+                                    "poll_options": send_res.get("poll_options"),
                                 }
                                 msg_row.metadata_ = meta
+                    if sent_id and send_res.get("poll_options"):
+                        try:
+                            from app.models.contact import PlatformContact
+                            contact_row = db.query(PlatformContact).filter(
+                                PlatformContact.tenant_id == UUID(str(tenant_id)),
+                                PlatformContact.customer_phone.like(f"%{customer_phone[-10:]}"),
+                            ).first()
+                            if contact_row:
+                                c_meta = dict(contact_row.metadata_ or {})
+                                c_state = dict(c_meta.get("conversation_state") or {})
+                                p_map = dict(c_state.get("poll_options_by_msg_id") or {})
+                                p_map[str(sent_id)] = list(send_res["poll_options"])
+                                if len(p_map) > 10:
+                                    for old_k in list(p_map.keys())[:-10]:
+                                        p_map.pop(old_k, None)
+                                c_state["poll_options_by_msg_id"] = p_map
+                                c_meta["conversation_state"] = c_state
+                                contact_row.metadata_ = c_meta
+                        except Exception as pe:
+                            logger.warning(f"Failed storing poll options map: {pe}")
                 db.commit()
                 result["reply_sent"] = reply_text
                 result["send_status"] = send_res.get("success", False)

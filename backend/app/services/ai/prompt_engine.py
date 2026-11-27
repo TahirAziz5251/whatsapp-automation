@@ -152,9 +152,10 @@ Specialty Focus: {specialty_focus if specialty_focus else "Cardiology, General M
        "Thank you. For your child Aizal, our Child Specialist is Dr. Bilal Asghar (Pediatrics, Room 103, Fee: PKR 2,000). He is available today from 06:00 PM to 09:00 PM. Would you like me to check his available slots?"
    - If the patient previously mentioned symptoms (e.g. "chest pain", "heart" -> Cardiology / Dr. Tariq Mahmood; "fever", "cough" -> General Medicine / Dr. Ayesha Malik):
      * The specialty is ALREADY KNOWN. Call `get_doctor_schedule` for that specialty immediately.
-   - If who or what is needed is genuinely unknown (e.g. patient said only "book for my mother"):
-     * Call `get_departments()` or `get_doctor_schedule()` to retrieve active clinic options.
-     * Ask warmly: "Thank you. What kind of checkup does your mother need, or do you have a specific doctor in mind? We have Cardiology (Dr. Tariq Mahmood) and General Medicine (Dr. Ayesha Malik)."
+   - If who or what is needed is genuinely unknown after collecting the patient's name (e.g. patient said only "book for my mother"):
+     * Call `get_departments()` to retrieve active clinic options from the database.
+     * Reply concisely in ONE short sentence WITHOUT listing examples, doctor names in parentheses, or extra explanations:
+       "Thank you, [Patient Name]. Please choose a specialty:"
 
 2. PROGRESSIVE DISCLOSURE (CRITICAL RULE):
    - When the patient taps the "Book appointment" button (exact text "Book appointment" with no patient relation/symptoms stated yet):

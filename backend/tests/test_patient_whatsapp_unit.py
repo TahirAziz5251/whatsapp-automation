@@ -1065,3 +1065,91 @@ def test_fresh_greeting_never_leaks_mother_and_validator_enforces_db_fee():
     )
     assert "PKR 1,800" in val["sanitized_text"]
     assert "1,500" not in val["sanitized_text"]
+
+    # Output validator removes standalone "For example, ..." and slot filler sentences
+    val_clean = validate_ai_response(
+        reply_text=(
+            "Thank you, Ms. Naseem Mai. Could you let me know what type of consultation she needs or if she has a preferred doctor? "
+            "For example, Cardiology (Dr. Tariq Mahmood), General Medicine (Dr. Ayesha Malik), or any other specialty. "
+            "This will help me find the right available slots for her."
+        ),
+        tools_executed=[],
+    )
+    assert "for example" not in val_clean["sanitized_text"].lower()
+    assert "tariq mahmood" not in val_clean["sanitized_text"].lower()
+    assert "this will help me find" not in val_clean["sanitized_text"].lower()
+    assert "Thank you, Ms. Naseem Mai." in val_clean["sanitized_text"]
+
+
+def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
+    """
+    Verifies:
+    1. When Evolution Go / WhatsApp returns error 405 on /send/button, EvolutionGoAdapter
+       remembers the instance and sends a native single-select Poll (/send/poll, maxAnswer=1)
+       containing all clickable options cleanly.
+    2. Inbound PollUpdateMessage webhook is resolved via SHA-256 hash matching back to plaintext option.
+    """
+    import hashlib
+    from unittest.mock import patch
+    from app.adapters.evolution import EvolutionGoAdapter
+
+    EvolutionGoAdapter._unsupported_buttons_instances.discard("poll-test-inst")
+    adapter = EvolutionGoAdapter(instance_name="poll-test-inst", api_url="http://mock-evo:4000", api_key="test-key")
+
+    with patch.object(adapter, "_post_with_token_retry") as mock_post:
+        mock_post.side_effect = [
+            {"success": False, "status_code": 500, "response": '{"error":"server returned error 405"}'},
+            {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "POLL_MSG_101"}}}},
+        ]
+        res = adapter.send_button_groups(
+            recipient_phone="923348076760",
+            text="Walaikum Assalam! Welcome to Alpha Heart & Medical Centre. How can I help you today?",
+            groups=[
+                {"buttons": [{"displayText": "Book appointment"}, {"displayText": "My appointments"}, {"displayText": "Queue status"}]},
+                {"buttons": [{"displayText": "Talk to reception"}]},
+            ],
+        )
+        assert res["success"] is True
+        assert "poll-test-inst" in EvolutionGoAdapter._unsupported_buttons_instances
+        assert res["poll_options"] == ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
+        assert mock_post.call_args_list[1][0][0] == "/send/poll"
+        assert mock_post.call_args_list[1][0][1]["maxAnswer"] == 1
+
+    # Verify inbound PollUpdateMessage normalization + SHA-256 resolution
+    inbound = adapter.normalize_inbound({
+        "instanceName": "poll-test-inst",
+        "data": {
+            "ID": "VOTE_999",
+            "Info": {"Chat": "923348076760@s.whatsapp.net", "Sender": "923348076760@s.whatsapp.net", "PushName": "Tahir"},
+            "Message": {
+                "pollUpdateMessage": {
+                    "pollCreationMessageKey": {"ID": "POLL_MSG_101"}
+                }
+            },
+        },
+    })
+    assert inbound is not None
+    assert inbound.message_type == "poll_vote"
+    assert inbound.text == "__POLL_VOTE__:POLL_MSG_101"
+
+    expected_hash = hashlib.sha256(b"General Physician").hexdigest()
+    with patch.object(adapter, "_get_with_token_retry") as mock_get, \
+         patch("app.adapters.evolution.time.sleep", return_value=None):
+        mock_get.return_value = {
+            "success": True,
+            "status_code": 200,
+            "response": {
+                "votes": [
+                    {"voteMessageId": "VOTE_999", "voterPhone": "923348076760", "selectedOptions": [expected_hash]}
+                ]
+            },
+        }
+        resolved = adapter.resolve_poll_vote_option(
+            poll_message_id="POLL_MSG_101",
+            vote_message_id="VOTE_999",
+            voter_phone="923348076760",
+            candidate_options=["Cardiology", "General Physician", "Pediatrics"],
+        )
+        assert resolved == "General Physician"
+
+    EvolutionGoAdapter._unsupported_buttons_instances.discard("poll-test-inst")

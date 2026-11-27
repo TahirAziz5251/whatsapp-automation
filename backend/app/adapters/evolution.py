@@ -1,4 +1,6 @@
 import re
+import time
+import hashlib
 import logging
 import httpx
 from typing import Optional, Dict, Any
@@ -28,6 +30,8 @@ class EvolutionGoAdapter(BaseChannelAdapter):
     Adapter for Evolution Go (Whatsmeow client).
     Provides WhatsApp messaging for the GlimsTech AI Healthcare Platform.
     """
+    _unsupported_buttons_instances: set = set()
+
     def __init__(self, instance_name: str = "alpha-clinic", api_url: Optional[str] = None, api_key: Optional[str] = None):
         self.instance_name = instance_name
         self.api_url = (api_url or getattr(settings, "EVOLUTION_API_URL", "http://evolution-go:4000")).rstrip("/")
@@ -62,10 +66,19 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if not msg_id:
             return None
 
-        # 5. Extract message text (including interactive button / list / nativeFlow replies)
+        # 5. Extract message text (including interactive button / list / nativeFlow / poll vote replies)
         msg_obj = data.get("Message") or data.get("message") or {}
+        message_type = "text"
         if isinstance(msg_obj, str):
             text = msg_obj.strip()
+        elif isinstance(msg_obj, dict) and msg_obj.get("pollUpdateMessage"):
+            poll_upd = msg_obj.get("pollUpdateMessage") or {}
+            poll_key = poll_upd.get("pollCreationMessageKey") or {}
+            poll_id = str(poll_key.get("ID") or poll_key.get("id") or "").strip()
+            if not poll_id:
+                return None
+            text = f"__POLL_VOTE__:{poll_id}"
+            message_type = "poll_vote"
         else:
             btn_resp = msg_obj.get("buttonsResponseMessage") or {}
             list_resp = msg_obj.get("listResponseMessage") or {}
@@ -123,7 +136,7 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             provider_message_id=msg_id,
             customer_phone=clean_phone,
             push_name=push_name,
-            message_type="text",
+            message_type=message_type,
             text=text,
             raw_payload=payload
         )
@@ -207,6 +220,111 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             },
         )
 
+    def _get_with_token_retry(self, path: str, timeout: float = 5.0) -> Dict[str, Any]:
+        url = f"{self.api_url}{path}"
+        token = self.get_instance_token()
+        headers = {"apikey": token}
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                resp = client.get(url, headers=headers)
+                if resp.status_code == 401 and token != self.api_key:
+                    headers["apikey"] = self.api_key
+                    resp = client.get(url, headers=headers)
+                return {
+                    "success": resp.is_success,
+                    "status_code": resp.status_code,
+                    "response": resp.json() if resp.is_success else resp.text,
+                }
+        except Exception as e:
+            logger.error(f"Failed Evolution GET ({url}): {e}")
+            return {"success": False, "status_code": 500, "error": str(e)}
+
+    def send_poll_message(
+        self,
+        recipient_phone: str,
+        question: str,
+        options: list,
+        max_answer: int = 1,
+    ) -> Dict[str, Any]:
+        """
+        Sends an interactive single-select WhatsApp Poll via Evolution Go POST /send/poll.
+        Renders clickable choices across Desktop, Web, Android, and iOS even when WhatsApp blocks /send/button (405).
+        """
+        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        clean_opts = [str(o).strip()[:100] for o in (options or []) if str(o).strip()]
+        # Deduplicate preserving order
+        clean_opts = list(dict.fromkeys(clean_opts))[:12]
+
+        if len(clean_opts) < 2:
+            return self.send_interactive_options(recipient_phone, question, clean_opts)
+
+        q_text = (question or "Please select an option:").strip()
+        if len(q_text) > 240:
+            # Send full rich text (e.g. long confirmation/ticket links) first, then concise Poll choices
+            self.send_text_message(recipient_phone, q_text)
+            q_text = "Choose an option:"
+
+        poll_payload = {
+            "number": clean_phone,
+            "question": q_text,
+            "options": clean_opts,
+            "maxAnswer": int(max_answer),
+        }
+        res = self._post_with_token_retry("/send/poll", poll_payload)
+        if res.get("success"):
+            res["poll_options"] = clean_opts
+            return res
+
+        logger.warning(f"Evolution /send/poll failed ({res.get('status_code')}): {res.get('response') or res.get('error')} — falling back to text options.")
+        fb = self.send_interactive_options(recipient_phone, question, clean_opts)
+        fb["interactive_fallback_reason"] = f"Poll HTTP {res.get('status_code')}: {res.get('response') or res.get('error')}"
+        return fb
+
+    def resolve_poll_vote_option(
+        self,
+        poll_message_id: str,
+        vote_message_id: str,
+        voter_phone: str,
+        candidate_options: list,
+    ) -> Optional[str]:
+        """
+        Resolves a decrypted WhatsApp poll vote SHA-256 hash back to its plaintext option label
+        by querying Evolution Go's /polls/{pollMessageId}/results endpoint.
+        """
+        if not poll_message_id:
+            return None
+
+        hash_map = {
+            hashlib.sha256(str(opt).strip().encode("utf-8")).hexdigest().lower(): str(opt).strip()
+            for opt in (candidate_options or [])
+            if str(opt).strip()
+        }
+        if not hash_map:
+            return None
+
+        clean_voter = re.sub(r"[^0-9]", "", voter_phone or "")[-10:]
+        for delay in (0.15, 0.25, 0.4, 0.6):
+            time.sleep(delay)
+            res = self._get_with_token_retry(f"/polls/{poll_message_id}/results")
+            if not res.get("success") or not isinstance(res.get("response"), dict):
+                continue
+            votes = res["response"].get("votes") or []
+            matched_vote = None
+            for v in reversed(votes):
+                if vote_message_id and v.get("voteMessageId") == vote_message_id:
+                    matched_vote = v
+                    break
+                v_ph = re.sub(r"[^0-9]", "", str(v.get("voterPhone") or ""))[-10:]
+                if clean_voter and v_ph == clean_voter:
+                    matched_vote = v
+            if matched_vote:
+                sel_opts = matched_vote.get("selectedOptions") or []
+                for h_val in sel_opts:
+                    h_key = str(h_val).strip().lower()
+                    if h_key in hash_map:
+                        return hash_map[h_key]
+        return None
+
     def send_button_message(
         self,
         recipient_phone: str,
@@ -217,41 +335,52 @@ class EvolutionGoAdapter(BaseChannelAdapter):
     ) -> Dict[str, Any]:
         """
         Sends native WhatsApp quick reply buttons (up to 3) via Evolution Go POST /send/button.
-        Falls back to formatted plain text if button dispatch fails.
+        Automatically uses single-select interactive WhatsApp Poll (/send/poll) when WhatsApp rejects
+        button stanzas with 405 on QR-linked multi-device sessions.
         """
         clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
         formatted_buttons = []
         for idx, b in enumerate(buttons[:3], start=1):
             if isinstance(b, str):
-                disp = b.strip()[:20]
+                disp = b.strip()[:24]
                 b_id = f"btn_{idx}_{re.sub(r'[^a-zA-Z0-9_]', '', disp.lower().replace(' ', '_'))}"
             elif isinstance(b, dict):
-                disp = str(b.get("displayText") or b.get("title") or b.get("label") or f"Option {idx}").strip()[:20]
+                disp = str(b.get("displayText") or b.get("title") or b.get("label") or f"Option {idx}").strip()[:24]
                 b_id = str(b.get("id") or f"btn_{idx}_{re.sub(r'[^a-zA-Z0-9_]', '', disp.lower().replace(' ', '_'))}")
             else:
                 continue
-            formatted_buttons.append({"type": "reply", "displayText": disp, "id": b_id})
+            formatted_buttons.append({"type": "reply", "displayText": disp[:20], "fullText": disp, "id": b_id})
 
         if not formatted_buttons:
             return self.send_text_message(recipient_phone, text)
+
+        opts_labels = [b["fullText"] for b in formatted_buttons]
+
+        # If this instance already returned WhatsApp error 405 on buttons, dispatch clickable Poll directly
+        if self.instance_name in self._unsupported_buttons_instances:
+            return self.send_poll_message(recipient_phone, text, opts_labels, max_answer=1)
 
         body_payload = {
             "number": clean_phone,
             "title": title or "Healthcare Assistant",
             "description": text,
             "footer": footer or (title or "Healthcare Assistant"),
-            "buttons": formatted_buttons,
+            "buttons": [{"type": b["type"], "displayText": b["displayText"], "id": b["id"]} for b in formatted_buttons],
         }
 
         res = self._post_with_token_retry("/send/button", body_payload)
         if res.get("success"):
             return res
 
-        logger.warning(f"Evolution /send/button failed ({res.get('status_code')}): {res.get('response') or res.get('error')} — falling back to text options.")
-        opts = [b["displayText"] for b in formatted_buttons]
-        fb = self.send_interactive_options(recipient_phone, text, opts)
-        fb["interactive_fallback_reason"] = f"HTTP {res.get('status_code')}: {res.get('response') or res.get('error')}"
-        return fb
+        err_blob = str(res.get("response") or res.get("error") or "")
+        if res.get("status_code") == 405 or "405" in err_blob:
+            self._unsupported_buttons_instances.add(self.instance_name)
+
+        logger.warning(f"Evolution /send/button failed ({res.get('status_code')}): {err_blob} — routing via clickable WhatsApp Poll.")
+        poll_res = self.send_poll_message(recipient_phone, text, opts_labels, max_answer=1)
+        if "interactive_fallback_reason" not in poll_res:
+            poll_res["interactive_fallback_reason"] = f"Button HTTP {res.get('status_code')} -> switched to Poll"
+        return poll_res
 
     def send_button_groups(
         self,
@@ -262,28 +391,61 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         footer: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Sends 4+ clickable options using sequential native WhatsApp quick-reply button messages
-        (up to 3 reply buttons per message via /send/button, avoiding fragile ListMessage rendering).
+        Sends 4+ clickable options cleanly:
+        - If buttons are unsupported (WhatsApp 405), sends all options in ONE unified clickable Poll.
+        - Otherwise attempts sequential quick-reply button bubbles (combining into a Poll on failure).
         """
         valid_groups = [g for g in (groups or []) if isinstance(g, dict) and g.get("buttons")]
         if not valid_groups:
             return self.send_text_message(recipient_phone, text)
 
-        first_res: Optional[Dict[str, Any]] = None
-        last_res: Optional[Dict[str, Any]] = None
-        for idx, g in enumerate(valid_groups):
-            g_text = text if idx == 0 else str(g.get("text") or "More options:")
-            res = self.send_button_message(
-                recipient_phone=recipient_phone,
-                text=g_text,
-                buttons=g.get("buttons") or [],
-                title=g.get("title") or title,
-                footer=g.get("footer") or footer,
-            )
-            if first_res is None:
-                first_res = res
-            last_res = res
-        return first_res or last_res or {"success": False, "status_code": 500}
+        all_labels = []
+        for g in valid_groups:
+            for b in g.get("buttons") or []:
+                lbl = b.strip() if isinstance(b, str) else str(b.get("displayText") or b.get("title") or "").strip()
+                if lbl and lbl not in all_labels:
+                    all_labels.append(lbl)
+
+        if self.instance_name in self._unsupported_buttons_instances and len(all_labels) >= 2:
+            return self.send_poll_message(recipient_phone, text, all_labels, max_answer=1)
+
+        # Try first group as /send/button; if it succeeds, send remaining groups; if 405/fallback -> send ONE Poll with all options
+        first_g = valid_groups[0]
+        first_btns = first_g.get("buttons") or []
+        first_payload_btns = []
+        for idx, b in enumerate(first_btns[:3], start=1):
+            disp = b.strip()[:20] if isinstance(b, str) else str(b.get("displayText") or b.get("title") or f"Option {idx}").strip()[:20]
+            b_id = f"btn_{idx}" if isinstance(b, str) else str(b.get("id") or f"btn_{idx}")
+            first_payload_btns.append({"type": "reply", "displayText": disp, "id": b_id})
+
+        clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        probe_res = self._post_with_token_retry(
+            "/send/button",
+            {
+                "number": clean_phone,
+                "title": first_g.get("title") or title or "Healthcare Assistant",
+                "description": text,
+                "footer": first_g.get("footer") or footer or title or "Healthcare Assistant",
+                "buttons": first_payload_btns,
+            },
+        )
+        if probe_res.get("success"):
+            for g in valid_groups[1:]:
+                self.send_button_message(
+                    recipient_phone=recipient_phone,
+                    text=str(g.get("text") or "More options:"),
+                    buttons=g.get("buttons") or [],
+                    title=g.get("title") or title,
+                    footer=g.get("footer") or footer,
+                )
+            return probe_res
+
+        err_blob = str(probe_res.get("response") or probe_res.get("error") or "")
+        if probe_res.get("status_code") == 405 or "405" in err_blob:
+            self._unsupported_buttons_instances.add(self.instance_name)
+
+        logger.warning(f"Evolution /send/button group failed ({probe_res.get('status_code')}): {err_blob} — dispatching single unified Poll.")
+        return self.send_poll_message(recipient_phone, text, all_labels, max_answer=1)
 
     def send_list_message(
         self,
@@ -295,12 +457,12 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         footer: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Sends an interactive single-select list menu via Evolution Go POST /send/list.
-        Falls back to formatted plain text if list dispatch fails.
+        Sends an interactive single-select list menu via Evolution Go POST /send/list,
+        automatically falling back to clickable single-select Poll (/send/poll) on 405.
         """
         clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
         formatted_sections = []
-        flat_options = []
+        flat_titles = []
         for sec_idx, sec in enumerate(sections):
             sec_title = str(sec.get("title") or f"Section {sec_idx + 1}")[:24]
             raw_rows = sec.get("rows") or []
@@ -317,12 +479,15 @@ class EvolutionGoAdapter(BaseChannelAdapter):
                 else:
                     continue
                 rows.append({"title": r_title, "description": r_desc, "rowId": r_id})
-                flat_options.append(f"{r_title} - {r_desc}" if r_desc else r_title)
+                flat_titles.append(r_title)
             if rows:
                 formatted_sections.append({"title": sec_title, "rows": rows})
 
         if not formatted_sections:
             return self.send_text_message(recipient_phone, text)
+
+        if self.instance_name in self._unsupported_buttons_instances and len(flat_titles) >= 2:
+            return self.send_poll_message(recipient_phone, text, flat_titles, max_answer=1)
 
         body_payload = {
             "number": clean_phone,
@@ -337,8 +502,12 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if res.get("success"):
             return res
 
-        logger.warning(f"Evolution /send/list failed ({res.get('status_code')}), falling back to text options.")
-        return self.send_interactive_options(recipient_phone, text, flat_options)
+        err_blob = str(res.get("response") or res.get("error") or "")
+        if res.get("status_code") == 405 or "405" in err_blob:
+            self._unsupported_buttons_instances.add(self.instance_name)
+
+        logger.warning(f"Evolution /send/list failed ({res.get('status_code')}): {err_blob} — routing via clickable WhatsApp Poll.")
+        return self.send_poll_message(recipient_phone, text, flat_titles, max_answer=1)
 
     def send_interactive_options(self, recipient_phone: str, body_text: str, options: Optional[list] = None) -> Dict[str, Any]:
         """Sends structured WhatsApp choice list cleanly over reliable plain text."""

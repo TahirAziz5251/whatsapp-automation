@@ -148,6 +148,54 @@ class ChannelService:
                     contact.metadata_ = meta
                 db.flush()
 
+        # Step 5.5: Resolve interactive WhatsApp Poll vote SHA-256 hash to plaintext option label
+        if normalized.message_type == "poll_vote" and normalized.text.startswith("__POLL_VOTE__:"):
+            poll_id = normalized.text.split(":", 1)[1].strip()
+            c_meta = dict(contact.metadata_ or {})
+            c_state = dict(c_meta.get("conversation_state") or {})
+            poll_map = dict(c_state.get("poll_options_by_msg_id") or {})
+            issued = dict(c_state.get("issued_options") or {})
+
+            candidates = list(poll_map.get(poll_id) or [])
+            candidates.extend(issued.get("slots") or [])
+            candidates.extend(issued.get("departments") or [])
+            candidates.extend([
+                "Book appointment", "My appointments", "Queue status", "Talk to reception",
+                "General Physician", "Cardiology", "Pediatrics", "Dermatology",
+                "Tomorrow slots", "Confirm", "Change",
+                "Reschedule", "Cancel appointment", "Refresh status", "Main Menu",
+            ])
+            try:
+                from app.services.clinic_service import get_departments_db
+                depts_res = get_departments_db(db, str(tenant_id))
+                for d in depts_res.get("departments") or []:
+                    d_n = d.get("name")
+                    if d_n:
+                        candidates.append(d_n)
+                        if d_n == "General Medicine":
+                            candidates.append("General Physician")
+            except Exception:
+                pass
+
+            adapter = get_adapter_for_connection(connection)
+            resolved_option = None
+            if hasattr(adapter, "resolve_poll_vote_option"):
+                resolved_option = adapter.resolve_poll_vote_option(
+                    poll_message_id=poll_id,
+                    vote_message_id=normalized.provider_message_id,
+                    voter_phone=normalized.customer_phone,
+                    candidate_options=candidates,
+                )
+            if not resolved_option:
+                db.commit()
+                return {
+                    "status": "IGNORED",
+                    "reason": "Empty or unresolvable poll vote",
+                    "tenant_id": str(tenant_id),
+                }
+            normalized.text = resolved_option
+            normalized.message_type = "text"
+
         # Step 6: Upsert Tenant Conversation
         session_key = f"{tenant_id}:{normalized.customer_phone}"
         conversation = db.query(TenantConversation).filter(
