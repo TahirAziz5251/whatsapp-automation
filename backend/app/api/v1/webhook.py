@@ -250,9 +250,10 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                                     "poll_options": send_res.get("poll_options"),
                                 }
                                 msg_row.metadata_ = meta
-                    if sent_id and send_res.get("poll_options"):
+                    if sent_id and (send_res.get("poll_options") or interactive_data):
                         try:
                             from app.models.contact import PlatformContact
+                            from app.services.ai.supervisor import extract_interactive_labels
                             contact_row = db.query(PlatformContact).filter(
                                 PlatformContact.tenant_id == UUID(str(tenant_id)),
                                 PlatformContact.customer_phone.like(f"%{customer_phone[-10:]}"),
@@ -260,12 +261,18 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                             if contact_row:
                                 c_meta = dict(contact_row.metadata_ or {})
                                 c_state = dict(c_meta.get("conversation_state") or {})
-                                p_map = dict(c_state.get("poll_options_by_msg_id") or {})
-                                p_map[str(sent_id)] = list(send_res["poll_options"])
-                                if len(p_map) > 10:
-                                    for old_k in list(p_map.keys())[:-10]:
-                                        p_map.pop(old_k, None)
-                                c_state["poll_options_by_msg_id"] = p_map
+                                if send_res.get("poll_options"):
+                                    p_map = dict(c_state.get("poll_options_by_msg_id") or {})
+                                    p_map[str(sent_id)] = list(send_res["poll_options"])
+                                    if len(p_map) > 10:
+                                        for old_k in list(p_map.keys())[:-10]:
+                                            p_map.pop(old_k, None)
+                                    c_state["poll_options_by_msg_id"] = p_map
+                                opts = list(send_res.get("poll_options") or extract_interactive_labels(interactive_data))
+                                if opts:
+                                    issued_map = dict(c_state.get("issued_options") or {})
+                                    issued_map["last_interactive_options"] = opts
+                                    c_state["issued_options"] = issued_map
                                 c_meta["conversation_state"] = c_state
                                 contact_row.metadata_ = c_meta
                         except Exception as pe:

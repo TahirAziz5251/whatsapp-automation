@@ -51,7 +51,7 @@ def generate_interactive_elements(
         short_title = (tenant_name or "Clinic Assistant")[:24]
 
         # ---------------------------------------------------------------------
-        # State 1: Booking Confirmed (Post-Booking Action Buttons)
+        # State 1: Booking / Reschedule Confirmed & Cancel Completed
         # ---------------------------------------------------------------------
         for exec_item in tools_executed:
             tool_name = exec_item.get("tool")
@@ -67,27 +67,39 @@ def generate_interactive_elements(
                         {"id": "btn_queue_status", "displayText": "Queue status"},
                     ],
                 }
+            if tool_name == "reschedule_appointment" and res.get("status") == "RESCHEDULED":
+                return {
+                    "type": "buttons",
+                    "title": short_title,
+                    "footer": short_title,
+                    "buttons": [
+                        {"id": "btn_reschedule", "displayText": "Reschedule"},
+                        {"id": "btn_cancel", "displayText": "Cancel appointment"},
+                        {"id": "btn_queue_status", "displayText": "Queue status"},
+                    ],
+                }
+            if tool_name == "cancel_appointment" and res.get("status") == "CANCELLED":
+                return {
+                    "type": "buttons",
+                    "title": short_title,
+                    "footer": short_title,
+                    "buttons": [
+                        {"id": "btn_book", "displayText": "Book appointment"},
+                        {"id": "btn_my_appointments", "displayText": "My appointments"},
+                        {"id": "btn_reception", "displayText": "Talk to reception"},
+                    ],
+                }
 
-        if (
-            re.search(r"\b(booked|appointment confirmed|appointment is confirmed|booking confirmed|booking id|apt-\d+)\b", reply_lower)
-            and not re.search(r"\b(please confirm|do you confirm|reply\s+[“\"']?confirm|before i confirm)\b", reply_lower)
-        ):
-            return {
-                "type": "buttons",
-                "title": short_title,
-                "footer": short_title,
-                "buttons": [
-                    {"id": "btn_reschedule", "displayText": "Reschedule"},
-                    {"id": "btn_cancel", "displayText": "Cancel appointment"},
-                    {"id": "btn_queue_status", "displayText": "Queue status"},
-                ],
-            }
+        has_confirm_gate = any(
+            (exec_item.get("result") or {}).get("status") == "CONFIRMATION_REQUIRED"
+            for exec_item in tools_executed
+        )
 
         # ---------------------------------------------------------------------
-        # State 2: 2-Step Confirmation Summary ("Please confirm / Reply Confirm")
+        # State 2: 2-Step Confirmation Summary ("Please confirm / Confirm / Change")
         # ---------------------------------------------------------------------
-        if re.search(
-            r"\b(please confirm|do you confirm|confirm appointment|before i confirm|reply\s+[“\"']?confirm|kya aap confirm|confirm karein)\b",
+        if has_confirm_gate or re.search(
+            r"\b(please confirm|do you confirm|confirm appointment|confirm cancellation|confirm reschedule|before i confirm|reply\s+[“\"']?confirm|kya aap confirm|confirm karein)\b",
             reply_lower,
         ):
             return {
@@ -97,6 +109,22 @@ def generate_interactive_elements(
                 "buttons": [
                     {"id": "btn_confirm", "displayText": "Confirm"},
                     {"id": "btn_change", "displayText": "Change"},
+                ],
+            }
+
+        # State 1 Fallback (only when not waiting for confirmation)
+        if (
+            re.search(r"\b(booked|appointment confirmed|appointment is confirmed|booking confirmed|booking ref|booking id|reschedule confirmed|apt-\d+)\b", reply_lower)
+            and not re.search(r"\b(please confirm|do you confirm|reply\s+[“\"']?confirm|before i confirm|cancel|cancellation)\b", reply_lower)
+        ):
+            return {
+                "type": "buttons",
+                "title": short_title,
+                "footer": short_title,
+                "buttons": [
+                    {"id": "btn_reschedule", "displayText": "Reschedule"},
+                    {"id": "btn_cancel", "displayText": "Cancel appointment"},
+                    {"id": "btn_queue_status", "displayText": "Queue status"},
                 ],
             }
 

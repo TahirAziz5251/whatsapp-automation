@@ -1332,3 +1332,122 @@ def test_real_db_slots_never_show_shift_end_boundaries_0400_0800():
     assert "Tomorrow slots" not in val["sanitized_text"]
     assert "*Dr. Ayesha Malik*" in val["sanitized_text"]
     assert "*Ms. Naseem Mai*" in val["sanitized_text"]
+
+
+def test_post_booking_buttons_and_numeric_123_executable_resolution():
+    """
+    Verifies:
+    1. Booking confirmation flattens Markdown [View Ticket](url) -> plain clickable URL and strips
+       duplicate '1. Reschedule / 2. Cancel appointment / 3. Queue status' text when interactive buttons attach.
+    2. Manual numeric shortcuts ('1', '2', '3', '4') deterministically resolve to the exact executable
+       command from last_interactive_options (Reschedule, Cancel appointment, Queue status, etc.).
+    3. Typing '1' -> Reschedule, '2' -> Cancel appointment, '3' -> Queue status execute immediately without
+       forcing the patient to type full button labels or Booking IDs manually.
+    """
+    import json
+    from unittest.mock import MagicMock
+    from app.services.ai.supervisor import (
+        resolve_numeric_option_shortcut,
+        extract_interactive_labels,
+        _update_state_from_tool,
+    )
+    from app.services.ai.interactive_formatter import generate_interactive_elements
+    from app.services.ai.output_validator import validate_ai_response
+
+    conf_tool = {
+        "tool": "book_appointment",
+        "result": {
+            "status": "CONFIRMED",
+            "appointment_number": "APT-202611-7A283A",
+            "queue_token": "T-M02",
+            "patient_name": "Tahir Aziz",
+            "doctor_name": "Dr. Ayesha Malik",
+            "room_number": "Room 102",
+            "appointment_date": "2026-11-27",
+            "slot_time": "05:30 PM",
+            "fee_pkr": 1800,
+        },
+    }
+
+    state = _update_state_from_tool({"step": "AWAITING_CONFIRMATION"}, "book_appointment", conf_tool["result"], "k1")
+    assert state["step"] == "BOOKED"
+    assert state["last_booking"]["appointment_number"] == "APT-202611-7A283A"
+
+    # Interactive post-booking buttons
+    mock_db = MagicMock()
+    inter = generate_interactive_elements(
+        db=mock_db,
+        tenant_id="11111111-1111-1111-1111-111111111111",
+        tenant_name="Alpha Heart & Medical Centre",
+        user_text="Confirm",
+        reply_text="Appointment Confirmed!",
+        tools_executed=[conf_tool],
+        state_json=state,
+    )
+    assert inter is not None
+    labels = extract_interactive_labels(inter)
+    assert labels == ["Reschedule", "Cancel appointment", "Queue status"]
+    state["issued_options"]["last_interactive_options"] = labels
+
+    # Output validator strips [View Ticket](url) brackets + duplicate 1/2/3 menu
+    sample_conf_msg = (
+        "✅ *Appointment Confirmed!*\n"
+        "- Patient: Tahir Aziz\n"
+        "- Doctor: Dr. Ayesha Malik (General Medicine, Room 102)\n"
+        "- Slot: 05:30 PM\n"
+        "- Queue Token: T\u2011M02\n"
+        "- Booking Ref: APT\u2011202611\u20117A283A\n"
+        "- Digital Ticket: [View Ticket](http://192.168.1.31:3000/ticket/APT-202611-7A283A)\n\n"
+        "1. Reschedule\n"
+        "2. Cancel appointment\n"
+        "3. Queue status\n"
+    )
+    cleaned_conf = validate_ai_response(sample_conf_msg, tools_executed=[conf_tool], state_json=state)["sanitized_text"]
+    assert "[View Ticket]" not in cleaned_conf
+    assert "http://192.168.1.31:3000/ticket/APT-202611-7A283A" in cleaned_conf
+    assert "1. Reschedule" not in cleaned_conf
+    assert "*APT-202611-7A283A*" in cleaned_conf
+    assert "*T-M02*" in cleaned_conf
+
+    # Manual numeric inputs '1', '2', '3' resolve directly to executable commands
+    assert resolve_numeric_option_shortcut("1", state) == "Reschedule"
+    assert resolve_numeric_option_shortcut("2", state) == "Cancel appointment"
+    assert resolve_numeric_option_shortcut("3", state) == "Queue status"
+
+    # Executable tool calls via GroqClient fallback after '1' / '2' / '3' resolution
+    gc = GroqClient(api_key="gsk_placeholder_key")
+    tools = [
+        {"type": "function", "function": {"name": "get_doctor_schedule"}},
+        {"type": "function", "function": {"name": "reschedule_appointment"}},
+        {"type": "function", "function": {"name": "cancel_appointment"}},
+        {"type": "function", "function": {"name": "get_queue_status"}},
+    ]
+    sys_msg = {"role": "system", "content": f"Conversation State: {json.dumps(state)}"}
+
+    # Option 1 -> Reschedule fetches booked doctor's schedule for slot selection
+    res_1 = gc._mock_completion([sys_msg, {"role": "user", "content": resolve_numeric_option_shortcut("1", state)}], tools=tools)
+    assert res_1["message"]["tool_calls"][0]["function"]["name"] == "get_doctor_schedule"
+    assert json.loads(res_1["message"]["tool_calls"][0]["function"]["arguments"])["doctor_name_or_specialty"] == "Dr. Ayesha Malik"
+
+    # Option 2 -> Cancel appointment initiates 2-step confirmation with APT-202611-7A283A
+    res_2 = gc._mock_completion([sys_msg, {"role": "user", "content": resolve_numeric_option_shortcut("2", state)}], tools=tools)
+    assert res_2["message"]["tool_calls"][0]["function"]["name"] == "cancel_appointment"
+    c_args = json.loads(res_2["message"]["tool_calls"][0]["function"]["arguments"])
+    assert c_args["appointment_id"] == "APT-202611-7A283A"
+    assert c_args["confirmed"] is False
+
+    # Option 3 -> Queue status runs get_queue_status directly
+    res_3 = gc._mock_completion([sys_msg, {"role": "user", "content": resolve_numeric_option_shortcut("3", state)}], tools=tools)
+    assert res_3["message"]["tool_calls"][0]["function"]["name"] == "get_queue_status"
+
+    # Cancellation CONFIRMATION_REQUIRED deterministically yields Confirm / Change buttons
+    inter_cancel = generate_interactive_elements(
+        db=mock_db,
+        tenant_id="11111111-1111-1111-1111-111111111111",
+        tenant_name="Alpha Clinic",
+        user_text="Cancel appointment",
+        reply_text="Summary for APT-202611-7A283A",
+        tools_executed=[{"tool": "cancel_appointment", "result": {"status": "CONFIRMATION_REQUIRED"}}],
+        state_json=state,
+    )
+    assert extract_interactive_labels(inter_cancel) == ["Confirm", "Change"]

@@ -196,6 +196,10 @@ def format_whatsapp_uniform_text(text: str, entity_hints: Optional[Dict[str, Lis
     if not text:
         return ""
 
+    # 0. Normalize non-breaking hyphens inside Booking IDs/Tokens and convert [Label](url) -> plain clickable URL
+    out = re.sub(r"[\u2010\u2011]", "-", text)
+    out = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r"\2", out)
+
     # 1. Mask URLs verbatim so regex rules never alter ticket or map links
     urls: List[str] = []
 
@@ -204,7 +208,7 @@ def format_whatsapp_uniform_text(text: str, entity_hints: Optional[Dict[str, Lis
         urls.append(m.group(0))
         return f"__URL_{idx}__"
 
-    out = re.sub(r"https?://[^\s<>()]+", _mask_url, text)
+    out = re.sub(r"https?://[^\s<>()]+", _mask_url, out)
 
     # 2. Uniform font normalization
     out = _unicode_fancy_to_ascii(out)
@@ -363,6 +367,14 @@ def validate_ai_response(
     if has_sched_slots:
         cleaned = re.sub(
             r"(?im)^\s*\d+\.\s*(?:\*{0,2}\d{1,2}:\d{2}\s*(?:AM|PM)\*{0,2}|\*{0,2}Tomorrow slots\*{0,2}).*$\n?",
+            "",
+            cleaned,
+        ).strip()
+
+    # 1.4 Strip duplicate numbered post-booking menu (1. Reschedule / 2. Cancel appointment / 3. Queue status)
+    if "BOOKED" in _collect_grounded_values(tools_executed, state_json)["succeeded_ops"] or "RESCHEDULED" in _collect_grounded_values(tools_executed, state_json)["succeeded_ops"]:
+        cleaned = re.sub(
+            r"(?im)^\s*[1-3]\.\s*(?:\*{0,2}(?:Reschedule|Cancel appointment|Queue status)\*{0,2}).*$\n?",
             "",
             cleaned,
         ).strip()

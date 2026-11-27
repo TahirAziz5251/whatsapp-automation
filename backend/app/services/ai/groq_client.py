@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Dict, Any, List, Optional
 import httpx
 from app.core.config import settings
@@ -286,7 +287,9 @@ class GroqClient:
                 "usage": {"prompt_tokens": 80, "completion_tokens": 25, "total_tokens": 105}
             }
 
-        is_availability_query = any(w in user_text for w in ["which slot", "which slots", "available", "dastiyab", "timing", "timings", "schedule", "kab"]) and not any(w in user_text for w in ["book", "kar do", "leni", "lena", "confirm"])
+        is_availability_query = bool(re.search(r"\b(which slots?|available|dastiyab|timings?|schedule|kab)\b", user_text)) and not any(
+            w in user_text for w in ["book", "reschedule", "cancel", "kar do", "leni", "lena", "confirm"]
+        )
 
         # Informational schedule/slot queries must NOT book appointments
         if is_availability_query and "get_doctor_schedule" in tool_names:
@@ -311,20 +314,26 @@ class GroqClient:
                 "usage": {"prompt_tokens": 80, "completion_tokens": 25, "total_tokens": 105}
             }
 
-        # Confirmation reply for an awaiting booking draft (2-step summary gate)
+        # Confirmation reply for an awaiting booking / reschedule / cancel draft (2-step summary gate)
         sys_text = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
+        state_parsed = {}
+        try:
+            if "Conversation State:" in sys_text:
+                state_line = sys_text.split("Conversation State:", 1)[1].splitlines()[0].strip()
+                state_parsed = json.loads(state_line) or {}
+        except Exception:
+            state_parsed = {}
+
+        last_booking = state_parsed.get("last_booking") or {}
+        issued_apts = (state_parsed.get("issued_options") or {}).get("appointments") or []
+        active_apt_ref = last_booking.get("appointment_number") or (issued_apts[-1] if issued_apts else "")
+
         is_confirm_reply = any(
             user_text.strip() == w or user_text.strip().startswith(w + " ")
             for w in ("confirm", "yes", "haan", "jee", "ok", "finalize")
         )
         if is_confirm_reply and "AWAITING_CONFIRMATION" in sys_text and "book_appointment" in tool_names:
-            draft = {}
-            try:
-                if "Conversation State:" in sys_text:
-                    state_line = sys_text.split("Conversation State:", 1)[1].splitlines()[0].strip()
-                    draft = (json.loads(state_line) or {}).get("draft_booking") or {}
-            except Exception:
-                draft = {}
+            draft = state_parsed.get("draft_booking") or {}
             return {
                 "status": "SUCCESS",
                 "message": {
@@ -351,6 +360,156 @@ class GroqClient:
                 "finish_reason": "tool_calls",
                 "usage": {"prompt_tokens": 90, "completion_tokens": 30, "total_tokens": 120}
             }
+
+        if is_confirm_reply and state_parsed.get("step") == "AWAITING_RESCHEDULE_CONFIRM" and "reschedule_appointment" in tool_names:
+            rdraft = state_parsed.get("draft_reschedule") or {}
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_resched_confirm_001",
+                            "type": "function",
+                            "function": {
+                                "name": "reschedule_appointment",
+                                "arguments": json.dumps({
+                                    "appointment_id": rdraft.get("appointment_number") or active_apt_ref,
+                                    "new_date": rdraft.get("new_date") or today_str,
+                                    "new_slot_time": rdraft.get("new_slot") or "05:30 PM",
+                                    "confirmed": True,
+                                })
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+            }
+
+        if is_confirm_reply and state_parsed.get("step") == "AWAITING_CANCEL_CONFIRM" and "cancel_appointment" in tool_names:
+            cdraft = state_parsed.get("draft_cancel") or {}
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_cancel_confirm_001",
+                            "type": "function",
+                            "function": {
+                                "name": "cancel_appointment",
+                                "arguments": json.dumps({
+                                    "appointment_id": cdraft.get("appointment_number") or active_apt_ref,
+                                    "confirmed": True,
+                                })
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+            }
+
+        # Executable post-booking actions: Reschedule / Cancel appointment (even without manually typing Booking ID)
+        if user_text.strip() in ("reschedule", "reschedule appointment", "change slot", "slot change"):
+            target_doc = last_booking.get("doctor_name") or "Dr. Ayesha Malik"
+            if "get_doctor_schedule" in tool_names:
+                return {
+                    "status": "SUCCESS",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_resched_slots_001",
+                                "type": "function",
+                                "function": {
+                                    "name": "get_doctor_schedule",
+                                    "arguments": json.dumps({
+                                        "doctor_name_or_specialty": target_doc,
+                                        "date": last_booking.get("appointment_date") or today_str,
+                                    })
+                                }
+                            }
+                        ]
+                    },
+                    "finish_reason": "tool_calls",
+                    "usage": {"prompt_tokens": 80, "completion_tokens": 25, "total_tokens": 105}
+                }
+
+        if state_parsed.get("pending_action") == "RESCHEDULE" and re.match(r"^\d{1,2}:\d{2}\s*(?:am|pm)$", user_text.strip(), re.IGNORECASE) and active_apt_ref and "reschedule_appointment" in tool_names:
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_resched_draft_001",
+                            "type": "function",
+                            "function": {
+                                "name": "reschedule_appointment",
+                                "arguments": json.dumps({
+                                    "appointment_id": active_apt_ref,
+                                    "new_date": last_booking.get("appointment_date") or today_str,
+                                    "new_slot_time": user_text.strip().upper(),
+                                    "confirmed": False,
+                                })
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+            }
+
+        if user_text.strip() in ("cancel", "cancel appointment", "cancel booking", "appointment cancel") and ("cancel_appointment" in tool_names or "get_appointments" in tool_names):
+            if active_apt_ref and "cancel_appointment" in tool_names:
+                return {
+                    "status": "SUCCESS",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_cancel_draft_001",
+                                "type": "function",
+                                "function": {
+                                    "name": "cancel_appointment",
+                                    "arguments": json.dumps({
+                                        "appointment_id": active_apt_ref,
+                                        "confirmed": False,
+                                    })
+                                }
+                            }
+                        ]
+                    },
+                    "finish_reason": "tool_calls",
+                    "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+                }
+            elif "get_appointments" in tool_names:
+                return {
+                    "status": "SUCCESS",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_cancel_lookup_001",
+                                "type": "function",
+                                "function": {
+                                    "name": "get_appointments",
+                                    "arguments": "{}"
+                                }
+                            }
+                        ]
+                    },
+                    "finish_reason": "tool_calls",
+                    "usage": {"prompt_tokens": 75, "completion_tokens": 20, "total_tokens": 95}
+                }
 
         # Handle explicit menu button clicks cleanly BEFORE general booking intent
         if user_text.strip() in ("my appointment", "my appointments", "meri appointment", "active booking") and "get_appointments" in tool_names:

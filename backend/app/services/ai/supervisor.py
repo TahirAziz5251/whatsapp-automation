@@ -58,6 +58,17 @@ def _update_state_from_tool(state_json: Dict[str, Any], fn_name: str, tool_outpu
             state["step"] = "BOOKED"
             state.pop("draft_booking", None)
             state.pop("pending_idempotency_key", None)
+            state.pop("pending_action", None)
+            state["last_booking"] = {
+                "appointment_number": tool_output.get("appointment_number"),
+                "queue_token": tool_output.get("queue_token"),
+                "patient_name": tool_output.get("patient_name"),
+                "doctor_name": tool_output.get("doctor_name"),
+                "specialty": tool_output.get("specialty"),
+                "room_number": tool_output.get("room_number"),
+                "appointment_date": tool_output.get("appointment_date"),
+                "slot_time": tool_output.get("slot_time"),
+            }
             if tool_output.get("appointment_number"):
                 apts = list(issued.get("appointments") or [])
                 if tool_output["appointment_number"] not in apts:
@@ -66,14 +77,93 @@ def _update_state_from_tool(state_json: Dict[str, Any], fn_name: str, tool_outpu
     elif fn_name == "reschedule_appointment" and status == "CONFIRMATION_REQUIRED":
         state["step"] = "AWAITING_RESCHEDULE_CONFIRM"
         state["draft_reschedule"] = tool_output.get("summary") or {}
-    elif fn_name in ("reschedule_appointment", "cancel_appointment") and status in ("RESCHEDULED", "CANCELLED"):
-        state["step"] = status
+    elif fn_name == "cancel_appointment" and status == "CONFIRMATION_REQUIRED":
+        state["step"] = "AWAITING_CANCEL_CONFIRM"
+        state["draft_cancel"] = tool_output.get("summary") or {}
+    elif fn_name == "reschedule_appointment" and status == "RESCHEDULED":
+        state["step"] = "RESCHEDULED"
         state.pop("draft_reschedule", None)
+        state.pop("pending_action", None)
+        if isinstance(state.get("last_booking"), dict):
+            state["last_booking"].update({
+                "appointment_date": tool_output.get("appointment_date"),
+                "slot_time": tool_output.get("slot_time"),
+            })
+    elif fn_name == "cancel_appointment" and status == "CANCELLED":
+        state["step"] = "CANCELLED"
+        state.pop("draft_cancel", None)
+        state.pop("last_booking", None)
+        state.pop("pending_action", None)
     elif fn_name in ("handoff_to_human", "escalate_to_human") and status == "HANDOFF_ACTIVE":
         state["step"] = "HANDOFF_ACTIVE"
 
     state["issued_options"] = issued
     return state
+
+
+def extract_interactive_labels(interactive_payload: Optional[Dict[str, Any]]) -> List[str]:
+    """Extracts ordered button/option display labels from an interactive payload."""
+    if not isinstance(interactive_payload, dict):
+        return []
+    labels: List[str] = []
+    itype = interactive_payload.get("type")
+    if itype == "buttons":
+        for b in interactive_payload.get("buttons") or []:
+            lbl = str((b.get("displayText") if isinstance(b, dict) else b) or "").strip()
+            if lbl:
+                labels.append(lbl)
+    elif itype == "button_groups":
+        for g in interactive_payload.get("groups") or []:
+            if isinstance(g, dict):
+                for b in g.get("buttons") or []:
+                    lbl = str((b.get("displayText") if isinstance(b, dict) else b) or "").strip()
+                    if lbl:
+                        labels.append(lbl)
+    elif itype == "list":
+        for s in interactive_payload.get("sections") or []:
+            if isinstance(s, dict):
+                for r in s.get("rows") or []:
+                    if isinstance(r, dict) and r.get("title"):
+                        labels.append(str(r["title"]).strip())
+    return labels
+
+
+def resolve_numeric_option_shortcut(user_text: str, state_json: Optional[Dict[str, Any]]) -> str:
+    """
+    Maps bare numeric replies ('1', '2', '3', 'option 1') to the corresponding interactive option
+    from last_interactive_options (or current step defaults), so users never must manually type
+    'Reschedule', 'Cancel appointment', 'Queue status', etc.
+    """
+    raw = (user_text or "").strip()
+    m = re.match(r"^(?:option\s*)?#?\s*(\d{1,2})[.)]?\s*$", raw, re.IGNORECASE)
+    if not m:
+        return user_text
+    idx = int(m.group(1))
+    if idx < 1:
+        return user_text
+
+    state = state_json or {}
+    issued = state.get("issued_options") or {}
+    options = list(issued.get("last_interactive_options") or [])
+    if not options:
+        step = str(state.get("step") or "IDLE").upper()
+        if step in ("BOOKED", "RESCHEDULED"):
+            options = ["Reschedule", "Cancel appointment", "Queue status"]
+        elif step == "DISCOVERED_DEPARTMENTS":
+            options = [
+                "General Physician" if d == "General Medicine" else d
+                for d in (issued.get("departments") or ["General Physician", "Cardiology", "Pediatrics"])
+            ]
+        elif step == "SLOTS_SHOWN":
+            options = list((issued.get("slots") or [])[:11]) + ["Tomorrow slots"]
+        elif step in ("AWAITING_CONFIRMATION", "AWAITING_RESCHEDULE_CONFIRM", "AWAITING_CANCEL_CONFIRM"):
+            options = ["Confirm", "Change"]
+        else:
+            options = ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
+
+    if 1 <= idx <= len(options):
+        return options[idx - 1]
+    return user_text
 
 
 class AiSupervisor:
@@ -147,7 +237,7 @@ class AiSupervisor:
             patient_profile = None
             state_json = {"step": "IDLE", "issued_options": {}}
 
-        # Step 3.5: Fresh Greeting / Menu Reset Check (never leak old booking context on "Assalam o Alaikum")
+        # Step 3.5: Fresh Greeting / Menu Reset Check & Numeric Option Resolution
         greeting_re = re.compile(
             r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey|main menu|menu|start)\s*[!.,?]*\s*$",
             re.IGNORECASE,
@@ -159,6 +249,10 @@ class AiSupervisor:
                 save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
             except Exception:
                 pass
+        else:
+            user_text = resolve_numeric_option_shortcut(user_text, state_json)
+            if (user_text or "").strip().lower() in ("reschedule", "reschedule appointment"):
+                state_json["pending_action"] = "RESCHEDULE"
 
         runtime_context = {
             "current_datetime": now_local.strftime("%Y-%m-%d %I:%M %p (%A)"),
@@ -408,6 +502,12 @@ class AiSupervisor:
                 tools_executed=tools_executed,
                 state_json=state_json,
             )
+            labels = extract_interactive_labels(interactive_payload)
+            if labels:
+                issued_map = dict(state_json.get("issued_options") or {})
+                issued_map["last_interactive_options"] = labels
+                state_json["issued_options"] = issued_map
+                save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
         except Exception as e:
             logger.warning(f"Failed to generate interactive payload: {e}")
 

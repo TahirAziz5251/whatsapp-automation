@@ -196,6 +196,17 @@ class ChannelService:
             normalized.text = resolved_option
             normalized.message_type = "text"
 
+        # Step 5.6: Resolve manual numeric shortcut ('1', '2', '3', ...) to last interactive option
+        if normalized.message_type == "text" and re.match(r"^\s*(?:option\s*)?#?\s*\d{1,2}[.)]?\s*$", normalized.text or "", re.IGNORECASE):
+            try:
+                from app.services.ai.supervisor import resolve_numeric_option_shortcut
+                c_state = dict((contact.metadata_ or {}).get("conversation_state") or {})
+                resolved_num = resolve_numeric_option_shortcut(normalized.text, c_state)
+                if resolved_num and resolved_num != normalized.text:
+                    normalized.text = resolved_num
+            except Exception:
+                pass
+
         # Step 6: Upsert Tenant Conversation
         session_key = f"{tenant_id}:{normalized.customer_phone}"
         conversation = db.query(TenantConversation).filter(
