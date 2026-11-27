@@ -367,11 +367,13 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if self.instance_name in self._unsupported_buttons_instances:
             return self.send_poll_message(recipient_phone, text, opts_labels, max_answer=1)
 
+        footer_val = footer or (title or "Healthcare Assistant")
         body_payload = {
             "number": clean_phone,
             "title": title or "Healthcare Assistant",
             "description": text,
-            "footer": footer or (title or "Healthcare Assistant"),
+            "footer": footer_val,
+            "footerText": footer_val,
             "buttons": [{"type": b["type"], "displayText": b["displayText"], "id": b["id"]} for b in formatted_buttons],
         }
 
@@ -426,13 +428,15 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             first_payload_btns.append({"type": "reply", "displayText": disp, "id": b_id})
 
         clean_phone = re.sub(r"[^0-9]", "", recipient_phone)
+        footer_val = first_g.get("footer") or footer or title or "Healthcare Assistant"
         probe_res = self._post_with_token_retry(
             "/send/button",
             {
                 "number": clean_phone,
                 "title": first_g.get("title") or title or "Healthcare Assistant",
                 "description": text,
-                "footer": first_g.get("footer") or footer or title or "Healthcare Assistant",
+                "footer": footer_val,
+                "footerText": footer_val,
                 "buttons": first_payload_btns,
             },
         )
@@ -496,12 +500,14 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if self.instance_name in self._unsupported_buttons_instances and len(flat_titles) >= 2:
             return self.send_poll_message(recipient_phone, text, flat_titles, max_answer=1)
 
+        footer_val = footer or (title or "Healthcare Assistant")
         body_payload = {
             "number": clean_phone,
             "title": title or "Healthcare Assistant",
             "description": text,
             "buttonText": (button_text or "Select Option")[:20],
-            "footerText": footer or (title or "Healthcare Assistant"),
+            "footer": footer_val,
+            "footerText": footer_val,
             "sections": formatted_sections,
         }
 

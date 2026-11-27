@@ -239,11 +239,12 @@ class AiSupervisor:
 
         # Step 3.5: Fresh Greeting / Menu Reset Check & Numeric Option Resolution
         greeting_re = re.compile(
-            r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey|main menu|menu|start)\s*[!.,?]*\s*$",
+            r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey)\s*[!.,?]*\s*$",
             re.IGNORECASE,
         )
         is_fresh_greeting = bool(greeting_re.match(user_text or ""))
-        if is_fresh_greeting:
+        is_menu_cmd = bool(re.match(r"^\s*(?:main menu|menu|start|help|options)\s*[!.,?]*\s*$", user_text or "", re.IGNORECASE))
+        if is_fresh_greeting or is_menu_cmd:
             state_json = {"step": "IDLE", "issued_options": {}}
             try:
                 save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
@@ -491,25 +492,27 @@ class AiSupervisor:
         )
 
         # Step 8.5: Generate dynamic database-driven WhatsApp interactive controls (zero hallucination)
+        # Never attach interactive buttons or polls on pure greetings (e.g. "Assalam o Alikum")
         interactive_payload = None
-        try:
-            interactive_payload = generate_interactive_elements(
-                db=db,
-                tenant_id=str(tenant.id),
-                tenant_name=str(tenant.name or "Alpha Heart & Medical Centre"),
-                user_text=user_text,
-                reply_text=final_reply,
-                tools_executed=tools_executed,
-                state_json=state_json,
-            )
-            labels = extract_interactive_labels(interactive_payload)
-            if labels:
-                issued_map = dict(state_json.get("issued_options") or {})
-                issued_map["last_interactive_options"] = labels
-                state_json["issued_options"] = issued_map
-                save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
-        except Exception as e:
-            logger.warning(f"Failed to generate interactive payload: {e}")
+        if not is_fresh_greeting:
+            try:
+                interactive_payload = generate_interactive_elements(
+                    db=db,
+                    tenant_id=str(tenant.id),
+                    tenant_name=str(tenant.name or "Alpha Heart & Medical Centre"),
+                    user_text=user_text,
+                    reply_text=final_reply,
+                    tools_executed=tools_executed,
+                    state_json=state_json,
+                )
+                labels = extract_interactive_labels(interactive_payload)
+                if labels:
+                    issued_map = dict(state_json.get("issued_options") or {})
+                    issued_map["last_interactive_options"] = labels
+                    state_json["issued_options"] = issued_map
+                    save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
+            except Exception as e:
+                logger.warning(f"Failed to generate interactive payload: {e}")
 
         # Step 9: Enqueue to Transactional Outbox for Delivery
         connection = db.query(ChannelConnection).filter(

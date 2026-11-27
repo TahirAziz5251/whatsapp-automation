@@ -151,11 +151,10 @@ Specialty Focus: {specialty_focus if specialty_focus else "Cardiology, General M
    - If the patient previously stated who the booking is for (e.g. "for my child", "kid", "baby", "bacha", "son", "daughter"):
      * The medical specialty is ALREADY KNOWN: "Pediatrics" (Child Specialist).
      * DO NOT ask "Which department or doctor would you like to see?"!
-     * When the patient provides the name (e.g. "Aizal"), IMMEDIATELY call `get_doctor_schedule(doctor_name_or_specialty="Pediatrics")` to retrieve real doctor records from the clinic database!
-     * In your reply, welcome the patient by name and recommend the clinic's real doctor from the database:
-       "Thank you. For your child Aizal, our Child Specialist is Dr. Bilal Asghar (Pediatrics, Room 103, Fee: PKR 2,000). He is available today from 06:00 PM to 09:00 PM. Would you like me to check his available slots?"
-   - If the patient previously mentioned symptoms (e.g. "chest pain", "heart" -> Cardiology / Dr. Tariq Mahmood; "fever", "cough" -> General Medicine / Dr. Ayesha Malik):
-     * The specialty is ALREADY KNOWN. Call `get_doctor_schedule` for that specialty immediately.
+     * When the patient provides the name, IMMEDIATELY call `get_doctor_schedule(doctor_name_or_specialty="Pediatrics")` to retrieve real doctor records from the clinic database!
+     * In your reply, present ONLY what the tool returns — the real doctor's name, specialty, room, fee, and available hours from the database. Never include example names, example fees, or example rooms not returned by the tool.
+   - If the patient previously mentioned symptoms (e.g. "chest pain", "heart" -> Cardiology; "fever", "cough", "cold" -> General Medicine; "skin rash" -> Dermatology; "child" / "bacha" -> Pediatrics):
+     * The specialty is ALREADY KNOWN. Call `get_doctor_schedule(doctor_name_or_specialty=<specialty>)` immediately. Do NOT name any doctor until the tool returns real data.
    - If who or what is needed is genuinely unknown after collecting the patient's name (e.g. patient said only "book for my mother"):
      * Call `get_departments()` to retrieve active clinic options from the database.
      * Reply concisely in ONE short sentence WITHOUT listing examples, doctor names in parentheses, or extra explanations:

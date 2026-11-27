@@ -31,6 +31,33 @@ def _chunk_buttons(buttons: List[Dict[str, str]], title: str, footer: str, overf
     }
 
 
+def extract_interactive_labels(interactive_payload: Optional[Dict[str, Any]]) -> List[str]:
+    """Extracts ordered button/option display labels from an interactive payload."""
+    if not isinstance(interactive_payload, dict):
+        return []
+    labels: List[str] = []
+    itype = interactive_payload.get("type")
+    if itype == "buttons":
+        for b in interactive_payload.get("buttons") or []:
+            lbl = str((b.get("displayText") if isinstance(b, dict) else b) or "").strip()
+            if lbl:
+                labels.append(lbl)
+    elif itype == "button_groups":
+        for g in interactive_payload.get("groups") or []:
+            if isinstance(g, dict):
+                for b in g.get("buttons") or []:
+                    lbl = str((b.get("displayText") if isinstance(b, dict) else b) or "").strip()
+                    if lbl:
+                        labels.append(lbl)
+    elif itype == "list":
+        for s in interactive_payload.get("sections") or []:
+            if isinstance(s, dict):
+                for r in s.get("rows") or []:
+                    if isinstance(r, dict) and r.get("title"):
+                        labels.append(str(r["title"]).strip())
+    return labels
+
+
 def generate_interactive_elements(
     db: Session,
     tenant_id: str,
@@ -251,14 +278,36 @@ def generate_interactive_elements(
                 }
 
         # ---------------------------------------------------------------------
-        # State 7: Initial Greeting / Welcome / Main Menu -> 4 Clickable Buttons
+        # State 7: Explicit Menu or General Appointment Intent -> 4 Primary Actions
         # ---------------------------------------------------------------------
-        is_greeting = bool(
-            re.search(r"\b(assalam|as[- ]?salamu|salam|aoa|hello|hi|hey|welcome|how can i help|main menu|menu)\b", user_lower)
-            or re.search(r"\b(welcome to|how can i help you today|khush-?amdeed)\b", reply_lower)
+        # NEVER attach on pure greetings ("Assalam o Alikum", "Hi", "Hello", "Salam")
+        is_pure_greeting = bool(
+            re.match(
+                r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey)\s*[!.,?]*\s*$",
+                user_lower,
+            )
+        )
+        if is_pure_greeting:
+            return None
+
+        is_explicit_menu_or_general_intent = bool(
+            user_lower in ("menu", "main menu", "options", "help", "services", "start")
+            or re.search(r"\b(main menu|options menu|show menu|kya services|what services|all options)\b", user_lower)
+            or (
+                re.search(
+                    r"\b(i want to book|want to book|book my appointment|schedule appointment|book an appointment|need an appointment|appointment chahiye)\b",
+                    user_lower,
+                )
+                and not re.search(
+                    r"\b(child|bacha|mother|father|walid|walida|sister|brother|bhai|behan|for my|dr\b|doctor|cardiolog|pediatric|medicine|physician|derma)\b",
+                    user_lower,
+                )
+                and not tools_executed
+            )
+            or re.search(r"\b(choose an option|select an option|how can i help|main menu options)\b", reply_lower)
         )
 
-        if is_greeting and not tools_executed:
+        if is_explicit_menu_or_general_intent and not tools_executed:
             main_buttons = [
                 {"id": "menu_book_appointment", "displayText": "Book appointment"},
                 {"id": "menu_my_appointments", "displayText": "My appointments"},

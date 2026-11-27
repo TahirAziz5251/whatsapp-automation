@@ -801,7 +801,7 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
     tenant_id = "11111111-1111-1111-1111-111111111111"
     tenant_name = "Alpha Heart & Medical Centre"
 
-    # 1. Greeting -> 4 clickable buttons via button_groups (no fragile ListMessage)
+    # 1. Pure Greeting -> ZERO interactive elements (res_welcome is None)
     res_welcome = generate_interactive_elements(
         db=mock_db,
         tenant_id=tenant_id,
@@ -811,9 +811,21 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
         tools_executed=[],
         state_json={"step": "IDLE"},
     )
-    assert res_welcome is not None
-    assert res_welcome["type"] == "button_groups"
-    all_welcome_btns = [b["displayText"] for g in res_welcome["groups"] for b in g["buttons"]]
+    assert res_welcome is None
+
+    # 1.1 Explicit Menu / Booking Intent -> 4 clickable buttons via button_groups
+    res_menu = generate_interactive_elements(
+        db=mock_db,
+        tenant_id=tenant_id,
+        tenant_name=tenant_name,
+        user_text="menu",
+        reply_text="Welcome to Alpha Heart & Medical Centre. Please select an option:",
+        tools_executed=[],
+        state_json={"step": "IDLE"},
+    )
+    assert res_menu is not None
+    assert res_menu["type"] == "button_groups"
+    all_welcome_btns = [b["displayText"] for g in res_menu["groups"] for b in g["buttons"]]
     assert all_welcome_btns == ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
 
     # 2. Specialty Selection -> DB-driven buttons
@@ -948,6 +960,7 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
                 "title": "Alpha Clinic",
                 "description": "Please confirm appointment",
                 "footer": "Alpha Clinic",
+                "footerText": "Alpha Clinic",
                 "buttons": [
                     {"type": "reply", "displayText": "Confirm", "id": "btn_1_confirm"},
                     {"type": "reply", "displayText": "Change", "id": "btn_2_change"},
@@ -1052,7 +1065,7 @@ def test_fresh_greeting_never_leaks_mother_and_validator_enforces_db_fee():
 
     assert "mother" not in res["response_text"].lower()
     assert "Alpha Heart & Medical Centre" in res["response_text"]
-    assert res["interactive"]["type"] == "button_groups"
+    assert res["interactive"] is None  # Pure greeting must NEVER attach unrequested poll/buttons
     assert saved_states and saved_states[0]["step"] == "IDLE"
 
     # Output validator auto-corrects hallucinated PKR 1,500 back to grounded PKR 1,800
@@ -1451,3 +1464,89 @@ def test_post_booking_buttons_and_numeric_123_executable_resolution():
         state_json=state,
     )
     assert extract_interactive_labels(inter_cancel) == ["Confirm", "Change"]
+
+
+def test_menu_and_booking_intent_attaches_primary_buttons_and_progresses_to_db_specialties():
+    """
+    Verifies:
+    1. Pure greeting ('Assalam o Alikum') produces ZERO interactive elements (res['interactive'] is None).
+    2. Explicit booking intent ('I want to book my appointment') or 'menu' produces the 4 primary actions:
+       ['Book appointment', 'My appointments', 'Queue status', 'Talk to reception'].
+    3. Selecting 'Book appointment' queries platform_db and returns dynamic specialty buttons:
+       ['General Physician', 'Cardiology', 'Dermatology', 'Pediatrics'].
+    """
+    from unittest.mock import MagicMock, patch
+    from app.services.ai.interactive_formatter import generate_interactive_elements, extract_interactive_labels
+
+    mock_db = MagicMock()
+    mock_depts = [
+        {"id": "dep-1", "name": "General Medicine"},
+        {"id": "dep-2", "name": "Cardiology"},
+        {"id": "dep-3", "name": "Dermatology"},
+        {"id": "dep-4", "name": "Pediatrics"},
+    ]
+
+    with patch("app.services.ai.interactive_formatter.get_departments_db", return_value={"departments": mock_depts}):
+        # 1. Pure greeting -> No interactive payload
+        greeting_inter = generate_interactive_elements(
+            db=mock_db,
+            tenant_id="11111111-1111-1111-1111-111111111111",
+            tenant_name="Alpha Heart & Medical Centre",
+            user_text="Assalam o Alikum",
+            reply_text="Walaikum Assalam! Welcome to Alpha Heart & Medical Centre. How can I help you today?",
+            tools_executed=[],
+            state_json={},
+        )
+        assert greeting_inter is None
+
+        # 2. 'I want to book my appointment' -> 4 Primary Actions
+        booking_intent_inter = generate_interactive_elements(
+            db=mock_db,
+            tenant_id="11111111-1111-1111-1111-111111111111",
+            tenant_name="Alpha Heart & Medical Centre",
+            user_text="I want to book my appointment",
+            reply_text="Sure! I can help you with that. Please choose an option below:",
+            tools_executed=[],
+            state_json={},
+        )
+        assert extract_interactive_labels(booking_intent_inter) == [
+            "Book appointment",
+            "My appointments",
+            "Queue status",
+            "Talk to reception",
+        ]
+
+        # 3. 'menu' -> 4 Primary Actions
+        menu_inter = generate_interactive_elements(
+            db=mock_db,
+            tenant_id="11111111-1111-1111-1111-111111111111",
+            tenant_name="Alpha Heart & Medical Centre",
+            user_text="menu",
+            reply_text="Welcome to Alpha Heart & Medical Centre. Please select an option:",
+            tools_executed=[],
+            state_json={},
+        )
+        assert extract_interactive_labels(menu_inter) == [
+            "Book appointment",
+            "My appointments",
+            "Queue status",
+            "Talk to reception",
+        ]
+
+        # 4. 'Book appointment' -> Dynamic Database Specialties
+        book_spec_inter = generate_interactive_elements(
+            db=mock_db,
+            tenant_id="11111111-1111-1111-1111-111111111111",
+            tenant_name="Alpha Heart & Medical Centre",
+            user_text="Book appointment",
+            reply_text="Please choose a specialty:",
+            tools_executed=[],
+            state_json={},
+        )
+        assert extract_interactive_labels(book_spec_inter) == [
+            "General Physician",
+            "Cardiology",
+            "Dermatology",
+            "Pediatrics",
+        ]
+
