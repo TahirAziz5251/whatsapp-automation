@@ -283,6 +283,14 @@ class ChannelService:
                     title=title,
                     footer=footer,
                 )
+            elif itype == "button_groups" and interactive_data.get("groups") and hasattr(adapter, "send_button_groups"):
+                dispatch_result = adapter.send_button_groups(
+                    recipient_phone=outbox.recipient_phone,
+                    text=text_body,
+                    groups=interactive_data.get("groups"),
+                    title=title,
+                    footer=footer,
+                )
             elif itype == "list" and interactive_data.get("sections"):
                 dispatch_result = adapter.send_list_message(
                     recipient_phone=outbox.recipient_phone,

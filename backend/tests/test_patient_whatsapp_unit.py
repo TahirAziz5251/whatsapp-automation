@@ -633,6 +633,7 @@ def test_single_reply_outbox_deferral_and_no_duplicate_ai_message():
         fake_adapter.send_text_message.return_value = mock_ret
         fake_adapter.send_list_message.return_value = mock_ret
         fake_adapter.send_button_message.return_value = mock_ret
+        fake_adapter.send_button_groups.return_value = mock_ret
         mock_get_adapter.return_value = fake_adapter
         disp = ChannelService.dispatch_outbox_message(outbox.id, disp_db)
         assert disp["success"] is True
@@ -800,25 +801,20 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
     tenant_id = "11111111-1111-1111-1111-111111111111"
     tenant_name = "Alpha Heart & Medical Centre"
 
-    # 1. Greeting -> 4-item list menu
+    # 1. Greeting -> 4 clickable buttons via button_groups (no fragile ListMessage)
     res_welcome = generate_interactive_elements(
         db=mock_db,
         tenant_id=tenant_id,
         tenant_name=tenant_name,
-        user_text="Assalam o Alaikum",
-        reply_text="Walaikum Assalam! Welcome to Alpha Heart & Medical Centre Lahore. How can I help you today?",
+        user_text="Assalam o Alikum",
+        reply_text="Walaikum Assalam! Welcome to Alpha Heart & Medical Centre. How can I help you today?",
         tools_executed=[],
         state_json={"step": "IDLE"},
     )
     assert res_welcome is not None
-    assert res_welcome["type"] == "list"
-    assert res_welcome["button_text"] == "Main Menu"
-    rows = res_welcome["sections"][0]["rows"]
-    row_titles = [r["title"] for r in rows]
-    assert "Book appointment" in row_titles
-    assert "My appointments" in row_titles
-    assert "Queue status" in row_titles
-    assert "Talk to reception" in row_titles
+    assert res_welcome["type"] == "button_groups"
+    all_welcome_btns = [b["displayText"] for g in res_welcome["groups"] for b in g["buttons"]]
+    assert all_welcome_btns == ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
 
     # 2. Specialty Selection -> DB-driven buttons
     with patch("app.services.ai.interactive_formatter.get_departments_db") as mock_get_depts:
@@ -846,7 +842,7 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
         assert "Cardiology" in spec_buttons
         assert "Pediatrics" in spec_buttons
 
-    # 3. Doctor Details & Open Slots -> Slot buttons
+    # 3. Doctor Details & Open Slots -> Slot buttons from doctors[0]["open_slots"]
     res_slots = generate_interactive_elements(
         db=mock_db,
         tenant_id=tenant_id,
@@ -858,8 +854,12 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
                 "tool": "get_doctor_schedule",
                 "result": {
                     "status": "SUCCESS",
-                    "available_slots": ["04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM"],
-                    "doctor_name": "Dr. Ayesha Malik",
+                    "doctors": [
+                        {
+                            "name": "Dr. Ayesha Malik",
+                            "open_slots": ["04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM"],
+                        }
+                    ],
                 },
             }
         ],
@@ -911,7 +911,7 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
     booked_btns = [b["displayText"] for b in res_booked["buttons"]]
     assert booked_btns == ["Reschedule", "Cancel appointment", "Queue status"]
 
-    # 6. Queue Status Inquiry -> [ Refresh status ], [ Talk to reception ]
+    # 6. Queue Status Inquiry -> [ Refresh status ], [ Book appointment ], [ Talk to reception ]
     res_queue = generate_interactive_elements(
         db=mock_db,
         tenant_id=tenant_id,
@@ -929,9 +929,9 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
     assert res_queue is not None
     assert res_queue["type"] == "buttons"
     queue_btns = [b["displayText"] for b in res_queue["buttons"]]
-    assert queue_btns == ["Refresh status", "Talk to reception"]
+    assert queue_btns == ["Refresh status", "Book appointment", "Talk to reception"]
 
-    # 7. EvolutionGoAdapter Button & List Dispatch + Fallback
+    # 7. EvolutionGoAdapter Button & Button-Groups Dispatch + Fallback
     adapter = EvolutionGoAdapter(instance_name="alpha-clinic", api_url="http://mock-evo:4000", api_key="test-key")
     with patch.object(adapter, "_post_with_token_retry") as mock_post:
         # Success case for buttons
@@ -968,3 +968,100 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
             buttons=["Option A", "Option B"],
         )
         assert fallback_resp["success"] is True
+
+        # NativeFlow inbound response parsing
+        nf_inbound = adapter.normalize_inbound({
+            "instanceName": "alpha-clinic",
+            "data": {
+                "ID": "NF_001",
+                "Info": {"Chat": "923001234567@s.whatsapp.net", "Sender": "923001234567@s.whatsapp.net", "PushName": "Ali"},
+                "Message": {
+                    "interactiveResponseMessage": {
+                        "nativeFlowResponseMessage": {
+                            "name": "quick_reply",
+                            "paramsJson": json.dumps({"id": "menu_book_appointment", "display_text": "Book appointment"}),
+                        }
+                    }
+                },
+            },
+        })
+        assert nf_inbound is not None
+        assert nf_inbound.text == "Book appointment"
+
+
+def test_fresh_greeting_never_leaks_mother_and_validator_enforces_db_fee():
+    """
+    Verifies:
+    1. Sending 'Assalam o Alikum' resets stale state (never assumes 'mother' from prior history)
+       and attaches all 4 clickable main menu buttons.
+    2. Output validator automatically corrects any hallucinated doctor fee (e.g. PKR 1,500 -> PKR 1,800).
+    """
+    from unittest.mock import patch, MagicMock
+    from app.models.communication import TenantConversation, TenantMessage, TenantOutboxMessage
+    from app.models.tenant import ChannelConnection
+    from app.services.ai.supervisor import AiSupervisor
+    from app.services.ai.output_validator import validate_ai_response
+
+    tid = uuid.UUID("11111111-1111-1111-1111-111111111111")
+    conv_id = uuid.uuid4()
+    conn_id = uuid.uuid4()
+    tpl = BusinessTemplate(id="CLINIC_OPD", name="Clinic OPD", industry_category="HEALTHCARE", allowed_tools=["get_departments", "get_doctor_schedule"])
+    tenant = PlatformTenant(id=tid, slug="alpha-clinic", name="Alpha Heart & Medical Centre", business_template_id="CLINIC_OPD", status="ACTIVE", timezone="Asia/Karachi", currency="PKR", settings={"bot_name": "Dr. Shifa"})
+    conn = ChannelConnection(id=conn_id, tenant_id=tid, channel_type="EVOLUTION_GO", phone_number_id="alpha-clinic", display_phone_number="+923127118485", status="CONNECTED")
+    conv = TenantConversation(id=conv_id, tenant_id=tid, channel_connection_id=conn_id, session_key=f"{tid}:923001112233", status="ACTIVE", ai_paused=False)
+
+    mock_db = MagicMock()
+    mock_db.add.side_effect = lambda o: setattr(o, "id", uuid.uuid4()) if getattr(o, "id", None) is None else None
+    def _q(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        q.order_by.return_value = q
+        q.limit.return_value = q
+        if model is TenantConversation:
+            q.first.return_value = conv
+        elif model is PlatformTenant:
+            q.first.return_value = tenant
+        elif model is BusinessTemplate:
+            q.first.return_value = tpl
+        elif model is ChannelConnection:
+            q.first.return_value = conn
+        else:
+            q.all.return_value = []
+            q.first.return_value = None
+        return q
+    mock_db.query.side_effect = _q
+
+    saved_states = []
+    sup = AiSupervisor(groq_client=GroqClient(api_key="gsk_placeholder_key"))
+    with patch("app.services.billing_service.check_entitlement_db", return_value={"allowed": True}), \
+         patch("app.services.billing_service.record_usage_db", return_value=None), \
+         patch("app.services.clinic_service.get_patient_profile_db", return_value={"full_name": "Tahir Aziz"}), \
+         patch("app.services.clinic_service.get_conversation_state_db", return_value={"step": "BOOKED", "draft_booking": {"notes": "mother"}, "issued_options": {}}), \
+         patch("app.services.clinic_service.save_conversation_state_db", side_effect=lambda db, t, p, s: saved_states.append(s)):
+        coro = sup.process_message(
+            db=mock_db,
+            tenant_id=str(tid),
+            conversation_id=str(conv_id),
+            customer_phone="923001112233",
+            user_text="Assalam o Alikum",
+            defer_outbox_seconds=60,
+        )
+        try:
+            coro.send(None)
+            raise AssertionError("Expected sync completion")
+        except StopIteration as exc:
+            res = exc.value
+
+    assert "mother" not in res["response_text"].lower()
+    assert "Alpha Heart & Medical Centre" in res["response_text"]
+    assert res["interactive"]["type"] == "button_groups"
+    assert saved_states and saved_states[0]["step"] == "IDLE"
+
+    # Output validator auto-corrects hallucinated PKR 1,500 back to grounded PKR 1,800
+    val = validate_ai_response(
+        reply_text="Please confirm: Dr. Ayesha Malik | Today, 06:15 PM | Fee: PKR 1,500 (payable at counter)",
+        tools_executed=[{"tool": "get_doctor_schedule", "result": {"status": "SUCCESS", "doctors": [{"name": "Dr. Ayesha Malik", "fee_pkr": 1800.0}]}}],
+        state_json={"issued_options": {}},
+    )
+    assert "PKR 1,800" in val["sanitized_text"]
+    assert "1,500" not in val["sanitized_text"]

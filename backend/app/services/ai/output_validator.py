@@ -165,6 +165,42 @@ def validate_ai_response(
             "violations": violations,
         }
 
+    # 4. Grounded Fee Enforcement (never let LLM guess a wrong fee like PKR 1,500 when DB doctor fee is PKR 1,800)
+    doctor_fees: Dict[str, float] = {}
+    if isinstance(state_json, dict):
+        issued_fees = (state_json.get("issued_options") or {}).get("doctor_fees") or {}
+        for d_name, f_val in issued_fees.items():
+            try:
+                doctor_fees[d_name] = float(f_val)
+            except Exception:
+                pass
+    for item in tools_executed or []:
+        res = item.get("result") or {}
+        if isinstance(res, dict):
+            for doc in res.get("doctors") or []:
+                if isinstance(doc, dict) and doc.get("name") and doc.get("fee_pkr") is not None:
+                    doctor_fees[doc["name"]] = float(doc["fee_pkr"])
+            if res.get("summary") and isinstance(res["summary"], dict):
+                s_doc = res["summary"].get("doctor_name")
+                s_fee = res["summary"].get("fee_pkr")
+                if s_doc and s_fee is not None:
+                    doctor_fees[s_doc] = float(s_fee)
+
+    matched_fees = [f for d_name, f in doctor_fees.items() if d_name.lower() in cleaned.lower()]
+    if len(set(matched_fees)) == 1:
+        exact_fee = matched_fees[0]
+        exact_fee_str = f"{exact_fee:,.0f}"
+        def _replace_wrong_fee(m):
+            prefix = m.group(1)
+            raw_num = m.group(2).replace(",", "")
+            try:
+                if float(raw_num) != exact_fee:
+                    return f"{prefix}{exact_fee_str}"
+            except Exception:
+                pass
+            return m.group(0)
+        cleaned = re.sub(r"\b((?:PKR|Rs\.?)\s*)([\d,]+(?:\.\d+)?)", _replace_wrong_fee, cleaned, flags=re.IGNORECASE)
+
     return {
         "valid": True,
         "sanitized_text": cleaned,

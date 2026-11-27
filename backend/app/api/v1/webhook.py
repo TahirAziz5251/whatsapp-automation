@@ -118,7 +118,7 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
             return result
 
         # 2. Explicit Human Staff Handoff Request
-        handoff_pattern = r"\b(human|agent|receptionist|staff|doctor se baat|reception se baat|insan se baat|representative)\b"
+        handoff_pattern = r"\b(human|agent|receptionist|staff|talk to reception|reception|doctor se baat|reception se baat|insan se baat|representative)\b"
         if re.search(handoff_pattern, user_text, re.IGNORECASE):
             try:
                 conv = db.query(TenantConversation).filter(TenantConversation.id == UUID(conversation_id)).first()
@@ -185,6 +185,14 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                             title=title,
                             footer=footer,
                         )
+                    elif itype == "button_groups" and interactive_data.get("groups"):
+                        send_res = adapter.send_button_groups(
+                            recipient_phone=customer_phone,
+                            text=reply_text,
+                            groups=interactive_data.get("groups"),
+                            title=title,
+                            footer=footer,
+                        )
                     elif itype == "list" and interactive_data.get("sections"):
                         send_res = adapter.send_list_message(
                             recipient_phone=customer_phone,
@@ -225,13 +233,22 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                         sent_id = (data_obj.get("Info") or {}).get("ID") or (data_obj.get("key") or {}).get("id") or data_obj.get("id")
                     if not sent_id and isinstance(resp_obj, dict):
                         sent_id = (resp_obj.get("key") or {}).get("id")
-                    if sent_id:
+                    if ai_message_id:
                         msg_row = db.query(TenantMessage).filter(
                             TenantMessage.tenant_id == UUID(str(tenant_id)),
                             TenantMessage.id == UUID(str(ai_message_id)),
                         ).first()
-                        if msg_row and not msg_row.provider_message_id:
-                            msg_row.provider_message_id = str(sent_id)
+                        if msg_row:
+                            if sent_id and not msg_row.provider_message_id:
+                                msg_row.provider_message_id = str(sent_id)
+                            if interactive_data:
+                                meta = dict(msg_row.metadata_ or {})
+                                meta["interactive_dispatch"] = {
+                                    "type": interactive_data.get("type"),
+                                    "fallback_reason": send_res.get("interactive_fallback_reason"),
+                                    "status_code": send_res.get("status_code"),
+                                }
+                                msg_row.metadata_ = meta
                 db.commit()
                 result["reply_sent"] = reply_text
                 result["send_status"] = send_res.get("success", False)

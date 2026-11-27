@@ -304,6 +304,49 @@ class GroqClient:
                 "usage": {"prompt_tokens": 90, "completion_tokens": 30, "total_tokens": 120}
             }
 
+        # Handle explicit menu button clicks cleanly BEFORE general booking intent
+        if user_text.strip() in ("my appointment", "my appointments", "meri appointment", "active booking") and "get_appointments" in tool_names:
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_apt_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_appointments",
+                                "arguments": "{}"
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 70, "completion_tokens": 20, "total_tokens": 90}
+            }
+
+        if user_text.strip() == "book appointment" and "get_departments" in tool_names:
+            return {
+                "status": "SUCCESS",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_dept_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_departments",
+                                "arguments": "{}"
+                            }
+                        }
+                    ]
+                },
+                "finish_reason": "tool_calls",
+                "usage": {"prompt_tokens": 70, "completion_tokens": 20, "total_tokens": 90}
+            }
+
         # Progressive booking initiation: if booking for another person or without specific doctor/slot,
         # ask for the patient's full name first instead of immediately triggering a blind mock booking or questionnaire
         is_booking_intent = any(w in user_text for w in ["book", "appointment", "booking", "kar do", "leni", "lena", "chahiye", "mil sakta", "checkup", "dikhana"])
@@ -489,7 +532,7 @@ class GroqClient:
                             "type": "function",
                             "function": {
                                 "name": "get_queue_status",
-                                "arguments": json.dumps({"appointment_id_or_token": "T-A14"})
+                                "arguments": json.dumps({})
                             }
                         }
                     ]

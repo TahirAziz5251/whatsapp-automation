@@ -62,7 +62,7 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if not msg_id:
             return None
 
-        # 5. Extract message text (including interactive button / list replies)
+        # 5. Extract message text (including interactive button / list / nativeFlow replies)
         msg_obj = data.get("Message") or data.get("message") or {}
         if isinstance(msg_obj, str):
             text = msg_obj.strip()
@@ -70,15 +70,30 @@ class EvolutionGoAdapter(BaseChannelAdapter):
             btn_resp = msg_obj.get("buttonsResponseMessage") or {}
             list_resp = msg_obj.get("listResponseMessage") or {}
             tpl_btn = msg_obj.get("templateButtonReplyMessage") or {}
+            inter_resp = msg_obj.get("interactiveResponseMessage") or {}
+            nf_resp = inter_resp.get("nativeFlowResponseMessage") or {}
+            nf_text = ""
+            if nf_resp.get("paramsJson"):
+                try:
+                    import json as _json
+                    nf_params = _json.loads(nf_resp["paramsJson"]) if isinstance(nf_resp["paramsJson"], str) else nf_resp["paramsJson"]
+                    if isinstance(nf_params, dict):
+                        nf_text = str(nf_params.get("display_text") or nf_params.get("id") or "").strip()
+                except Exception:
+                    nf_text = ""
             text = str(
                 msg_obj.get("conversation")
                 or (msg_obj.get("extendedTextMessage") or {}).get("text")
                 or btn_resp.get("selectedDisplayText")
                 or btn_resp.get("selectedButtonId")
+                or btn_resp.get("selectedButtonID")
+                or nf_text
                 or list_resp.get("title")
                 or (list_resp.get("singleSelectReply") or {}).get("selectedRowId")
+                or (list_resp.get("singleSelectReply") or {}).get("selectedRowID")
                 or tpl_btn.get("selectedDisplayText")
                 or tpl_btn.get("selectedId")
+                or tpl_btn.get("selectedID")
                 or msg_obj.get("text")
                 or data.get("caption")
                 or data.get("text")
@@ -232,9 +247,43 @@ class EvolutionGoAdapter(BaseChannelAdapter):
         if res.get("success"):
             return res
 
-        logger.warning(f"Evolution /send/button failed ({res.get('status_code')}), falling back to text options.")
+        logger.warning(f"Evolution /send/button failed ({res.get('status_code')}): {res.get('response') or res.get('error')} — falling back to text options.")
         opts = [b["displayText"] for b in formatted_buttons]
-        return self.send_interactive_options(recipient_phone, text, opts)
+        fb = self.send_interactive_options(recipient_phone, text, opts)
+        fb["interactive_fallback_reason"] = f"HTTP {res.get('status_code')}: {res.get('response') or res.get('error')}"
+        return fb
+
+    def send_button_groups(
+        self,
+        recipient_phone: str,
+        text: str,
+        groups: list,
+        title: Optional[str] = None,
+        footer: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Sends 4+ clickable options using sequential native WhatsApp quick-reply button messages
+        (up to 3 reply buttons per message via /send/button, avoiding fragile ListMessage rendering).
+        """
+        valid_groups = [g for g in (groups or []) if isinstance(g, dict) and g.get("buttons")]
+        if not valid_groups:
+            return self.send_text_message(recipient_phone, text)
+
+        first_res: Optional[Dict[str, Any]] = None
+        last_res: Optional[Dict[str, Any]] = None
+        for idx, g in enumerate(valid_groups):
+            g_text = text if idx == 0 else str(g.get("text") or "More options:")
+            res = self.send_button_message(
+                recipient_phone=recipient_phone,
+                text=g_text,
+                buttons=g.get("buttons") or [],
+                title=g.get("title") or title,
+                footer=g.get("footer") or footer,
+            )
+            if first_res is None:
+                first_res = res
+            last_res = res
+        return first_res or last_res or {"success": False, "status_code": 500}
 
     def send_list_message(
         self,

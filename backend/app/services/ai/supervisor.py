@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 import logging
 from datetime import datetime, timedelta, timezone
@@ -29,6 +30,16 @@ def _update_state_from_tool(state_json: Dict[str, Any], fn_name: str, tool_outpu
     elif fn_name in ("get_doctor_schedule", "search_doctors", "get_availability") and status == "SUCCESS":
         docs = tool_output.get("doctors") or []
         issued["doctors"] = [d.get("name") for d in docs if d.get("name")]
+        doctor_fees = dict(issued.get("doctor_fees") or {})
+        for d in docs:
+            if d.get("name") and d.get("fee_pkr") is not None:
+                doctor_fees[d["name"]] = float(d["fee_pkr"])
+            elif d.get("name") and isinstance(d.get("fee"), str):
+                m_fee = re.search(r"([\d,]+)", d["fee"])
+                if m_fee:
+                    doctor_fees[d["name"]] = float(m_fee.group(1).replace(",", ""))
+        if doctor_fees:
+            issued["doctor_fees"] = doctor_fees
         all_slots: List[str] = []
         for d in docs:
             for s in d.get("open_slots") or []:
@@ -136,10 +147,23 @@ class AiSupervisor:
             patient_profile = None
             state_json = {"step": "IDLE", "issued_options": {}}
 
+        # Step 3.5: Fresh Greeting / Menu Reset Check (never leak old booking context on "Assalam o Alaikum")
+        greeting_re = re.compile(
+            r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey|main menu|menu|start)\s*[!.,?]*\s*$",
+            re.IGNORECASE,
+        )
+        is_fresh_greeting = bool(greeting_re.match(user_text or ""))
+        if is_fresh_greeting:
+            state_json = {"step": "IDLE", "issued_options": {}}
+            try:
+                save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
+            except Exception:
+                pass
+
         runtime_context = {
             "current_datetime": now_local.strftime("%Y-%m-%d %I:%M %p (%A)"),
             "patient_phone": customer_phone,
-            "patient_profile": patient_profile,
+            "patient_profile": None if is_fresh_greeting else patient_profile,
             "state_json": state_json,
             "handoff_flag": False,
             "language": lang_info["language"],
@@ -167,24 +191,49 @@ class AiSupervisor:
                 "tools_executed": []
             }
 
-        # Step 5: Assemble Conversation Messages
+        # Step 5: Assemble Conversation Messages (Session-bounded so old turns never bleed)
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": system_prompt}
         ]
 
-        # Retrieve recent history (up to last 6 messages)
-        history_msgs = db.query(TenantMessage).filter(
-            TenantMessage.tenant_id == tenant_id,
-            TenantMessage.conversation_id == conversation_id
-        ).order_by(TenantMessage.created_at.desc()).limit(6).all()
+        if not is_fresh_greeting:
+            raw_history = db.query(TenantMessage).filter(
+                TenantMessage.tenant_id == tenant_id,
+                TenantMessage.conversation_id == conversation_id
+            ).order_by(TenantMessage.created_at.desc()).limit(10).all()
 
-        for m in reversed(history_msgs):
-            role = "user" if m.sender_type == "CUSTOMER" else "assistant"
-            messages.append({"role": role, "content": m.content})
+            bounded_history: List[TenantMessage] = []
+            prev_ts = datetime.now(timezone.utc)
+            for idx, m in enumerate(raw_history):
+                if idx == 0 and (m.content or "").strip() == (user_text or "").strip():
+                    continue
+                m_ts = getattr(m, "created_at", None)
+                if m_ts is not None:
+                    try:
+                        if m_ts.tzinfo is None:
+                            m_ts = m_ts.replace(tzinfo=timezone.utc)
+                        if (prev_ts - m_ts).total_seconds() > 3600:
+                            break
+                        prev_ts = m_ts
+                    except Exception:
+                        pass
+                c_low = (m.content or "").lower()
+                # Stop at previous completed booking or prior session boundary
+                if m.sender_type != "CUSTOMER" and any(
+                    term in c_low for term in ("appointment confirmed", "your appointment is confirmed", "booking ref:")
+                ):
+                    break
+                bounded_history.append(m)
+                if m.sender_type == "CUSTOMER" and greeting_re.match(m.content or ""):
+                    break
+                if len(bounded_history) >= 6:
+                    break
 
-        # Append current user message if not already in history
-        if not history_msgs or history_msgs[0].content != user_text:
-            messages.append({"role": "user", "content": user_text})
+            for m in reversed(bounded_history):
+                role = "user" if m.sender_type == "CUSTOMER" else "assistant"
+                messages.append({"role": role, "content": m.content})
+
+        messages.append({"role": "user", "content": user_text})
 
         # Step 6 & 7: Bounded Multi-Step Tool Calling Loop (max 4 rounds)
         tools_executed: List[Dict[str, Any]] = []
@@ -193,7 +242,17 @@ class AiSupervisor:
         turn_idemp_key = f"{conversation_id}:{uuid.uuid5(uuid.NAMESPACE_OID, user_text).hex[:8]}"
         t_settings = tenant.settings or {}
 
-        for _round in range(4):
+        if is_fresh_greeting:
+            if lang_info["language"] == "URDU":
+                final_reply = f"وعلیکم السلام! {tenant.name} میں خوش آمدید۔ آج میں آپ کی کیا مدد کر سکتی ہوں؟"
+            elif lang_info["language"] == "ROMAN_URDU":
+                final_reply = f"Walaikum Assalam! {tenant.name} mein khush-amdeed. Aaj main aap ki kya madad kar sakti hoon?"
+            elif re.search(r"\b(assalam|salam|aoa)\b", user_text or "", re.IGNORECASE):
+                final_reply = f"Walaikum Assalam! Welcome to {tenant.name}. How can I help you today?"
+            else:
+                final_reply = f"Welcome to {tenant.name}! How can I help you today?"
+
+        for _round in range(0 if final_reply else 4):
             llm_response = await self.groq_client.chat_completion(
                 messages=messages,
                 tools=tool_schemas if tool_schemas else None,
