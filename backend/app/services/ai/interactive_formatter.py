@@ -214,7 +214,7 @@ def generate_interactive_elements(
         # State 4: Specialty / Department Selection (Database-driven)
         # ---------------------------------------------------------------------
         is_asking_specialty = bool(
-            re.search(r"\b(choose a specialty|which department|which specialty|select specialty|specialty|type of consultation|preferred department)\b", reply_lower)
+            re.search(r"\b(choose a specialty|which department|which specialty|select specialty|specialty|specialties|type of consultation|preferred department|kis specialty|kis department)\b", reply_lower)
             or user_lower in ("book appointment", "appointment", "book", "specialty", "specialties")
             or any(exec_item.get("tool") == "get_departments" for exec_item in tools_executed)
         )
@@ -295,16 +295,16 @@ def generate_interactive_elements(
             or re.search(r"\b(main menu|options menu|show menu|kya services|what services|all options)\b", user_lower)
             or (
                 re.search(
-                    r"\b(i want to book|want to book|book my appointment|schedule appointment|book an appointment|need an appointment|appointment chahiye)\b",
+                    r"\b(i want to book|want to book|book my appointment|schedule appointment|book an appointment|need an appointment|appointment chahiye|appointment karwani|appointment karwana|appointment leni|appointment lena|appointment book)\b",
                     user_lower,
                 )
                 and not re.search(
-                    r"\b(child|bacha|mother|father|walid|walida|sister|brother|bhai|behan|for my|dr\b|doctor|cardiolog|pediatric|medicine|physician|derma)\b",
+                    r"\b(child|bacha|mother|father|walid|walida|ammi|abbu|sister|brother|bhai|behan|for my|dr\b|doctor|cardiolog|pediatric|medicine|physician|derma)\b",
                     user_lower,
                 )
                 and not tools_executed
             )
-            or re.search(r"\b(choose an option|select an option|how can i help|main menu options)\b", reply_lower)
+            or re.search(r"\b(choose an option|select an option|how can i help|main menu options|number likh|get started)\b", reply_lower)
         )
 
         if is_explicit_menu_or_general_intent and not tools_executed:

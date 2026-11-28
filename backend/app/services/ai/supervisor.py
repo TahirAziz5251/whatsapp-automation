@@ -238,22 +238,39 @@ class AiSupervisor:
             state_json = {"step": "IDLE", "issued_options": {}}
 
         # Step 3.5: Fresh Greeting / Menu Reset Check & Numeric Option Resolution
+        raw_user_text = user_text or ""
         greeting_re = re.compile(
             r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey)\s*[!.,?]*\s*$",
             re.IGNORECASE,
         )
-        is_fresh_greeting = bool(greeting_re.match(user_text or ""))
-        is_menu_cmd = bool(re.match(r"^\s*(?:main menu|menu|start|help|options)\s*[!.,?]*\s*$", user_text or "", re.IGNORECASE))
+        is_fresh_greeting = bool(greeting_re.match(raw_user_text))
+        is_menu_cmd = bool(re.match(r"^\s*(?:main menu|menu|start|help|options)\s*[!.,?]*\s*$", raw_user_text, re.IGNORECASE))
+        prev_lang = (state_json or {}).get("language")
         if is_fresh_greeting or is_menu_cmd:
             state_json = {"step": "IDLE", "issued_options": {}}
+            if is_menu_cmd and prev_lang in ("ROMAN_URDU", "URDU", "ENGLISH"):
+                state_json["language"] = prev_lang
             try:
                 save_conversation_state_db(db, str(tenant.id), customer_phone, state_json)
             except Exception:
                 pass
         else:
-            user_text = resolve_numeric_option_shortcut(user_text, state_json)
+            is_numeric_or_choice = bool(
+                re.match(r"^\s*(?:option\s*)?#?\s*\d{1,2}[.)]?\s*$", raw_user_text, re.IGNORECASE)
+                or raw_user_text.strip().lower() in (
+                    "book appointment", "my appointments", "queue status", "talk to reception",
+                    "general physician", "cardiology", "dermatology", "pediatrics",
+                    "confirm", "change", "reschedule", "cancel appointment", "tomorrow slots", "refresh status",
+                )
+            )
+            user_text = resolve_numeric_option_shortcut(raw_user_text, state_json)
+            if is_numeric_or_choice and prev_lang in ("ROMAN_URDU", "URDU", "ENGLISH"):
+                lang_info = {"language": prev_lang, "script": "ARABIC" if prev_lang == "URDU" else "LATIN", "confidence": 0.95}
             if (user_text or "").strip().lower() in ("reschedule", "reschedule appointment"):
                 state_json["pending_action"] = "RESCHEDULE"
+
+        if not is_fresh_greeting:
+            state_json["language"] = lang_info["language"]
 
         runtime_context = {
             "current_datetime": now_local.strftime("%Y-%m-%d %I:%M %p (%A)"),

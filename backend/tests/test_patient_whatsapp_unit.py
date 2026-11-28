@@ -968,9 +968,12 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
             },
         )
 
-        # Fallback case for buttons when API fails
+        # Fallback case for buttons when /send/button and /send/list fail -> clean numbered text (zero Poll)
+        EvolutionGoAdapter._unsupported_buttons_instances.discard("alpha-clinic")
+        EvolutionGoAdapter._unsupported_list_instances.discard("alpha-clinic")
         mock_post.side_effect = [
             {"success": False, "status_code": 500, "error": "Internal Server Error"},
+            {"success": False, "status_code": 405, "response": '{"error":"405"}'},
             {"success": True, "status_code": 200, "response": {"key": {"id": "FALLBACK_TXT"}}},
         ]
         fallback_resp = adapter.send_button_message(
@@ -979,6 +982,11 @@ def test_whatsapp_interactive_buttons_and_lists_zero_hallucination():
             buttons=["Option A", "Option B"],
         )
         assert fallback_resp["success"] is True
+        assert mock_post.call_args_list[-1][0][0] == "/send/text"
+        assert "1. Option A" in mock_post.call_args_list[-1][0][1]["text"]
+        assert "2. Option B" in mock_post.call_args_list[-1][0][1]["text"]
+        EvolutionGoAdapter._unsupported_buttons_instances.discard("alpha-clinic")
+        EvolutionGoAdapter._unsupported_list_instances.discard("alpha-clinic")
 
         # NativeFlow inbound response parsing
         nf_inbound = adapter.normalize_inbound({
@@ -1092,47 +1100,73 @@ def test_fresh_greeting_never_leaks_mother_and_validator_enforces_db_fee():
     assert "*Ms. Naseem Mai*" in val_clean["sanitized_text"]
 
 
-def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
+def test_evolution_405_tries_button_then_list_then_numbered_options_zero_poll():
     """
-    Verifies:
-    1. When Evolution Go / WhatsApp returns error 405 on /send/button, EvolutionGoAdapter
-       remembers the instance and sends conversational text at uniform body font size (/send/text)
-       followed by a native single-select Poll (/send/poll, maxAnswer=1) containing all clickable options.
-    2. Inbound PollUpdateMessage webhook is resolved via SHA-256 hash matching back to plaintext option.
+    Verifies Option B interactive delivery cascade:
+    1. Tries POST /send/button first.
+    2. When /send/button returns 405, independently tries POST /send/list (succeeds when list works).
+    3. When BOTH /send/button and /send/list return 405, falls back cleanly to numbered options
+       (1. Book appointment, 2. My appointments, ...) via /send/text with ZERO /send/poll calls.
+    4. Legacy PollUpdateMessage SHA-256 resolution still works if a poll vote arrives.
     """
     import hashlib
     from unittest.mock import patch
     from app.adapters.evolution import EvolutionGoAdapter
 
-    EvolutionGoAdapter._unsupported_buttons_instances.discard("poll-test-inst")
-    adapter = EvolutionGoAdapter(instance_name="poll-test-inst", api_url="http://mock-evo:4000", api_key="test-key")
+    inst = "option-b-test-inst"
+    EvolutionGoAdapter._unsupported_buttons_instances.discard(inst)
+    EvolutionGoAdapter._unsupported_list_instances.discard(inst)
+    adapter = EvolutionGoAdapter(instance_name=inst, api_url="http://mock-evo:4000", api_key="test-key")
 
+    groups = [
+        {"buttons": [{"displayText": "Book appointment"}, {"displayText": "My appointments"}, {"displayText": "Queue status"}]},
+        {"buttons": [{"displayText": "Talk to reception"}]},
+    ]
+
+    # Case 1: /send/button 405 -> /send/list succeeds
     with patch.object(adapter, "_post_with_token_retry") as mock_post:
         mock_post.side_effect = [
             {"success": False, "status_code": 500, "response": '{"error":"server returned error 405"}'},
-            {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "TXT_MSG_100"}}}},
-            {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "POLL_MSG_101"}}}},
+            {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "LIST_MSG_101"}}}},
         ]
-        res = adapter.send_button_groups(
+        res_list = adapter.send_button_groups(
             recipient_phone="923348076760",
-            text="Walaikum Assalam! Welcome to *Alpha Heart & Medical Centre*. How can I help you today?",
-            groups=[
-                {"buttons": [{"displayText": "Book appointment"}, {"displayText": "My appointments"}, {"displayText": "Queue status"}]},
-                {"buttons": [{"displayText": "Talk to reception"}]},
-            ],
+            text="I'd be happy to help you with that! Feel free to pick an option below:",
+            groups=groups,
         )
-        assert res["success"] is True
-        assert "poll-test-inst" in EvolutionGoAdapter._unsupported_buttons_instances
-        assert res["poll_options"] == ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
-        assert mock_post.call_args_list[1][0][0] == "/send/text"
-        assert "*Alpha Heart & Medical Centre*" in mock_post.call_args_list[1][0][1]["text"]
-        assert mock_post.call_args_list[2][0][0] == "/send/poll"
-        assert mock_post.call_args_list[2][0][1]["question"] == "Choose an option:"
-        assert mock_post.call_args_list[2][0][1]["maxAnswer"] == 1
+        assert res_list["success"] is True
+        assert inst in EvolutionGoAdapter._unsupported_buttons_instances
+        assert inst not in EvolutionGoAdapter._unsupported_list_instances
+        assert mock_post.call_args_list[0][0][0] == "/send/button"
+        assert mock_post.call_args_list[1][0][0] == "/send/list"
+        assert "/send/poll" not in [c[0][0] for c in mock_post.call_args_list]
 
-    # Verify inbound PollUpdateMessage normalization + SHA-256 resolution
+    # Case 2: Both cached/returning 405 -> sends numbered text options with ZERO Poll
+    with patch.object(adapter, "_post_with_token_retry") as mock_post:
+        mock_post.side_effect = [
+            {"success": False, "status_code": 405, "response": '{"error":"405"}'},
+            {"success": True, "status_code": 200, "response": {"data": {"Info": {"ID": "NUM_TXT_102"}}}},
+        ]
+        res_num = adapter.send_button_groups(
+            recipient_phone="923348076760",
+            text="I'd be happy to help you with that! Feel free to pick an option below:",
+            groups=groups,
+        )
+        assert res_num["success"] is True
+        assert inst in EvolutionGoAdapter._unsupported_list_instances
+        assert res_num["fallback_options"] == ["Book appointment", "My appointments", "Queue status", "Talk to reception"]
+        paths_called = [c[0][0] for c in mock_post.call_args_list]
+        assert paths_called == ["/send/list", "/send/text"]
+        assert "/send/poll" not in paths_called
+        sent_body = mock_post.call_args_list[1][0][1]["text"]
+        assert "1. Book appointment" in sent_body
+        assert "2. My appointments" in sent_body
+        assert "3. Queue status" in sent_body
+        assert "4. Talk to reception" in sent_body
+
+    # Verify inbound PollUpdateMessage normalization + SHA-256 resolution still supported
     inbound = adapter.normalize_inbound({
-        "instanceName": "poll-test-inst",
+        "instanceName": inst,
         "data": {
             "ID": "VOTE_999",
             "Info": {"Chat": "923348076760@s.whatsapp.net", "Sender": "923348076760@s.whatsapp.net", "PushName": "Tahir"},
@@ -1167,7 +1201,8 @@ def test_evolution_405_switches_to_clickable_poll_and_resolves_sha256_vote():
         )
         assert resolved == "General Physician"
 
-    EvolutionGoAdapter._unsupported_buttons_instances.discard("poll-test-inst")
+    EvolutionGoAdapter._unsupported_buttons_instances.discard(inst)
+    EvolutionGoAdapter._unsupported_list_instances.discard(inst)
 
 
 def test_uniform_conversation_font_size_and_saas_bold_highlights():
@@ -1725,5 +1760,81 @@ def test_reminders_24h_pre_date_and_30m_exact_window_and_channel_re():
         assert apt_resched.reminder_30m_sent_at is None
         assert apt_resched.reminder_2h_sent is False
         assert apt_resched.reminder_2h_sent_at is None
+
+
+def test_humanized_turn2_menu_no_name_clash_and_meta_interactive_buttons():
+    """
+    Verifies:
+    1. 'ma ny appointment karwani hn' is accurately detected as ROMAN_URDU.
+    2. 'I want to book my appointment' receives a warm humanized prompt aligned with
+       the 4 options (NEVER asking 'full name' simultaneously alongside menu buttons).
+    3. Tapping/selecting 'Book appointment' triggers get_departments() -> warm specialty question.
+    4. MetaCloudApiAdapter dispatches native Meta interactive reply buttons & lists.
+    """
+    from unittest.mock import patch
+    from app.adapters.meta import MetaCloudApiAdapter
+    from app.services.ai.groq_client import GroqClient
+    from app.services.ai.prompt_engine import detect_language_and_script
+
+    assert detect_language_and_script("ma ny appointment karwani hn")["language"] == "ROMAN_URDU"
+    assert detect_language_and_script("I want to book my appointment")["language"] == "ENGLISH"
+
+    gc = GroqClient(api_key="gsk_placeholder_key")
+    tools = [
+        {"type": "function", "function": {"name": "get_departments"}},
+        {"type": "function", "function": {"name": "book_appointment"}},
+    ]
+
+    # Turn 2 English -> humanized option invite (NOT full name prompt)
+    res_en = gc._mock_completion(messages=[{"role": "user", "content": "I want to book my appointment"}], tools=tools)
+    txt_en = res_en["message"]["content"]
+    assert "full name" not in txt_en.lower()
+    assert "happy to help" in txt_en.lower()
+
+    # Turn 2 Roman Urdu -> humanized Roman Urdu option invite
+    res_ru = gc._mock_completion(messages=[{"role": "user", "content": "ma ny appointment karwani hn"}], tools=tools)
+    txt_ru = res_ru["message"]["content"]
+    assert "madad" in txt_ru.lower()
+    assert "naam" not in txt_ru.lower()
+
+    # Turn 3 Clicking 'Book appointment' -> invokes get_departments()
+    res_btn = gc._mock_completion(messages=[{"role": "user", "content": "Book appointment"}], tools=tools)
+    assert res_btn["message"]["tool_calls"][0]["function"]["name"] == "get_departments"
+
+    # Turn 3 Synthesis preserves session language (Roman Urdu) across button click
+    res_synth_ru = gc._mock_completion(
+        messages=[
+            {"role": "system", "content": 'Role for "Alpha Clinic"\nDetected Language: ROMAN_URDU'},
+            {"role": "user", "content": "Book appointment"},
+            {"role": "tool", "content": json.dumps({"status": "SUCCESS", "departments": [{"name": "General Medicine"}]})},
+        ],
+        tools=tools,
+    )
+    assert "specialty ya department" in res_synth_ru["message"]["content"].lower()
+
+    # MetaCloudApiAdapter native pill buttons (<=3) and interactive list (4+)
+    meta = MetaCloudApiAdapter(phone_number_id="123456789", access_token="test-token")
+    with patch.object(meta, "_post_graph", return_value={"success": True, "status_code": 200}) as mock_graph:
+        meta.send_button_message("923001234567", "Please confirm:", [{"id": "c", "displayText": "Confirm"}, {"id": "x", "displayText": "Change"}])
+        p_btn = mock_graph.call_args_list[-1][0][0]
+        assert p_btn["type"] == "interactive"
+        assert p_btn["interactive"]["type"] == "button"
+        assert len(p_btn["interactive"]["action"]["buttons"]) == 2
+
+        meta.send_button_groups(
+            "923001234567",
+            "Choose an option:",
+            [{"buttons": [{"displayText": "Book appointment"}, {"displayText": "My appointments"}, {"displayText": "Queue status"}]}, {"buttons": [{"displayText": "Talk to reception"}]}],
+        )
+        p_list = mock_graph.call_args_list[-1][0][0]
+        assert p_list["type"] == "interactive"
+        assert p_list["interactive"]["type"] == "list"
+        assert len(p_list["interactive"]["action"]["sections"][0]["rows"]) == 4
+
+    meta_in = meta.normalize_inbound({
+        "entry": [{"changes": [{"value": {"metadata": {"phone_number_id": "123"}, "contacts": [{"profile": {"name": "Tahir"}}], "messages": [{"id": "m1", "from": "923001234567", "type": "interactive", "interactive": {"button_reply": {"id": "btn_1", "title": "Book appointment"}}}]}}]}]
+    })
+    assert meta_in is not None and meta_in.text == "Book appointment"
+
 
 

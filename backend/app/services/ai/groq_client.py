@@ -116,14 +116,21 @@ class GroqClient:
             except Exception:
                 result_data = {}
 
-            # Find user question to determine language
+            # Find user question & runtime language to preserve session language across clicks
             user_msg = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+            sys_prompt = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
             from app.services.ai.prompt_engine import detect_language_and_script
             lang_info = detect_language_and_script(user_msg)
             lang = lang_info["language"]
+            m_sys_lang = re.search(r"Detected Language:\s*(ENGLISH|ROMAN_URDU|URDU)\b", sys_prompt)
+            if m_sys_lang and user_msg.strip().lower() in (
+                "book appointment", "my appointments", "queue status", "talk to reception",
+                "general physician", "cardiology", "dermatology", "pediatrics",
+                "confirm", "change", "reschedule", "cancel appointment", "tomorrow slots",
+            ):
+                lang = m_sys_lang.group(1)
 
             # Extract dynamic business branding from system prompt when available
-            sys_prompt = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
             biz_name = result_data.get("business_name")
             if not biz_name and 'for "' in sys_prompt:
                 try:
@@ -206,12 +213,12 @@ class GroqClient:
                     content = f"Currently, *Token {curr}* is being examined. There are *{ahead} patients* ahead of you with an estimated wait time of *{wait} minutes* (Estimate, not a guarantee)."
 
             elif "departments" in result_data:
-                depts = result_data.get("departments") or []
-                dept_names = ", ".join(d.get("name") for d in depts) if depts else "General Medicine, Cardiology, Pediatrics"
                 if lang == "ROMAN_URDU":
-                    content = f"Hamare clinic mein darj zail specialties dastiyab hain: {dept_names}. Please choose a specialty."
+                    content = "Jee bilkul! Aap kis specialty ya department mein appointment lena chahenge?"
+                elif lang == "URDU":
+                    content = "جی بالکل! آپ کس شعبے یا ماہر ڈاکٹر سے معائنہ کروانا چاہیں گے؟"
                 else:
-                    content = f"Please choose a specialty: {dept_names}."
+                    content = "Of course! Which specialty or department would you like to visit today?"
 
             elif "appointments" in result_data:
                 apts = result_data.get("appointments") or []
@@ -585,6 +592,33 @@ class GroqClient:
                 },
                 "finish_reason": "tool_calls",
                 "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+            }
+
+        # General menu / general self-booking intent without third-party/doctor/slot -> warm humanized menu prompt
+        # matching the 4 primary interactive options (Book appointment, My appointments, Queue status, Talk to reception)
+        is_general_menu_intent = bool(
+            user_text.strip() in ("menu", "main menu", "options", "help", "services", "start")
+            or (
+                is_booking_intent
+                and not is_third_party
+                and not has_specific_doctor_or_slot
+                and not re.search(r"\b(general|cardio|derma|pediatric|skin|heart|fever|bukhar|pain|dard)\b", user_text)
+            )
+        )
+        if is_general_menu_intent:
+            from app.services.ai.prompt_engine import detect_language_and_script
+            lang = detect_language_and_script(user_text)["language"]
+            if lang == "ROMAN_URDU":
+                menu_msg = "Jee zaroor! Main aap ki madad k liye hazir hoon. Shuru karne k liye neeche diye gaye options mein se ek select karein ya number likhein:"
+            elif lang == "URDU":
+                menu_msg = "جی بالکل! میں آپ کی مدد کے لیے حاضر ہوں۔ براہِ کرم نیچے دیے گئے آپشنز میں سے انتخاب کریں:"
+            else:
+                menu_msg = "I'd be happy to help you with that! Feel free to tap an option or reply with a number below to get started:"
+            return {
+                "status": "SUCCESS",
+                "message": {"role": "assistant", "content": menu_msg},
+                "finish_reason": "stop",
+                "usage": {"prompt_tokens": 60, "completion_tokens": 25, "total_tokens": 85},
             }
 
         if is_booking_intent and (is_third_party or not has_specific_doctor_or_slot) and "book_appointment" in tool_names:

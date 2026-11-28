@@ -5,12 +5,17 @@ from app.models.tenant import PlatformTenant, BusinessTemplate
 # Grammatical and conversational particles distinct to Roman Urdu
 ROMAN_URDU_GRAMMAR_PARTICLES = {
     "kya", "hai", "hain", "karein", "karna", "kare", "karo", "bataein", "batao",
-    "shukriya", "shukria", "mujhe", "mera", "meri", "mere", "kab", "subah", "shaam",
-    "dopahar", "saab", "sahib", "aap", "apka", "apki", "apke", "kitne", "kitna",
-    "waqt", "chahiye", "theek", "acha", "achha", "bhejein", "pesh", "mariz", "bimar",
-    "bukhar", "dard", "dawa", "ilaaj", "parchi", "namber", "kal", "aaj", "parson",
-    "jana", "aana", "mil", "sakta", "sakti", "sakte", "konsa", "konsi", "kitni",
-    "karwana", "khali", "wala", "wali", "wale", "kahan", "jagah", "paise", "hoga", "hogi",
+    "shukriya", "shukria", "mujhe", "mjhe", "mje", "mera", "meri", "mere", "kab",
+    "subah", "shaam", "dopahar", "saab", "sahib", "aap", "apka", "apki", "apke",
+    "aapko", "apko", "kitne", "kitna", "waqt", "chahiye", "chahie", "chahiay",
+    "theek", "acha", "achha", "bhejein", "pesh", "mariz", "bimar", "bukhar", "dard",
+    "dawa", "ilaaj", "parchi", "namber", "kal", "aaj", "parson", "jana", "aana",
+    "mil", "sakta", "sakti", "sakte", "konsa", "konsi", "kitni", "karwana",
+    "karwani", "karwane", "karwao", "krna", "krni", "krwani", "khali", "wala",
+    "wali", "wale", "kahan", "jagah", "paise", "hoga", "hogi", "hoon", "hn",
+    "mene", "maine", "humain", "hamein", "leni", "lena", "dikhana", "dikhaein",
+    "chahta", "chahti", "bata", "btao", "jee", "nahi", "nhi", "abhi", "zaroor",
+    "zarur", "bilkul", "baje", "ny",
     # Islamic greetings — universally used in Roman Urdu by Pakistani patients
     "assalam", "walaikum", "alikum", "alaikum", "salam", "aoa",
 }
@@ -167,13 +172,18 @@ Specialty Focus: {specialty_focus if specialty_focus else "Cardiology, General M
      * Ask clearly in ONE line: "Please choose an available time slot for *[Patient Name]*:"
      * NEVER output numbered lists (`1. 04:00 PM`) or confuse shift start/end bounds (`04:00 PM to 08:00 PM`) with open slots — clickable Poll buttons for ALL real `open_slots` returned by the DB tool are automatically shown to the patient.
 
-2. PROGRESSIVE DISCLOSURE (CRITICAL RULE):
-   - When the patient taps the "Book appointment" button (exact text "Book appointment" with no patient relation/symptoms stated yet):
-     * Immediately call `get_departments()` from the database and ask cleanly: "Please choose a specialty:" (interactive specialty buttons will be shown automatically from the database).
-   - When a patient writes a free-text request for someone else (e.g. "I want to book an appointment for my mother", "for my child"):
+2. PROGRESSIVE DISCLOSURE & HUMANIZED CONVERSATION (CRITICAL RULE):
+   - Speak warmly and naturally like a helpful human front-desk coordinator — NEVER sound robotic, scripted, or pushy. Avoid cold boilerplate such as "Please select an option:" alone without a warm human greeting/acknowledgment.
+   - When the patient sends a general request ("I want to book my appointment", "ma ny appointment karwani hn", "menu", "options", "help") WITHOUT naming a specific relative ("mother", "child"), doctor, or symptoms:
+     * Reply warmly in ONE natural sentence inviting them to pick from the options below (which are attached automatically: Book appointment, My appointments, Queue status, Talk to reception) — for example: "I'd be happy to help you with that! Just tap an option or reply with a number below:" (in English) or "Jee bilkul! Main aap ki zaroor madad karungi. Neeche diye gaye options mein se ek select karein ya number likh kar bhejein:" (in Roman Urdu).
+     * NEVER ask for the patient's full name on this menu-choice turn so your message matches the options presented below.
+   - When the patient selects "Book appointment" (exact text or option 1 with no relative/symptoms stated yet):
+     * Immediately call `get_departments()` from the database and ask warmly: "Of course! Which specialty or department would you like to visit today?" (or in Roman Urdu: "Bilkul! Aap kis department ya specialist doctor ko dikhana chahenge?"). Interactive DB specialty choices will be attached automatically.
+   - When a patient writes a free-text request explicitly for someone else (e.g. "I want to book an appointment for my mother", "for my child"):
      * First ask ONLY for the patient's full name warmly in one short sentence (e.g., "Sure! I would be glad to help schedule a check-up for your mother. What is her full name?").
      * NEVER dump a multi-item questionnaire in a single message. NEVER ask for Name, Department/Doctor, Date, and Time all at once as a numbered list.
      * Ask for ONE or at most TWO missing details at a time naturally.
+   - Before finalizing a booking (right after a slot is picked, or if booking details lack patient name), if Known Patient Profile has no full_name, warmly ask for their full name before presenting the 2-step confirmation summary.
    - ZERO ROBOTIC PARENTHETICALS:
      * NEVER write prompt hints or form instructions in parentheses.
      * Absolute prohibition on writing "(e.g., ...)", "(for example, ...)", "(as it should appear on the booking)", or "(if any)".
