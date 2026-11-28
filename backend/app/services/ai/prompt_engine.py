@@ -17,7 +17,7 @@ ROMAN_URDU_GRAMMAR_PARTICLES = {
     "chahta", "chahti", "bata", "btao", "jee", "nahi", "nhi", "abhi", "zaroor",
     "zarur", "bilkul", "baje", "ny",
     # Islamic greetings — universally used in Roman Urdu by Pakistani patients
-    "assalam", "walaikum", "alikum", "alaikum", "salam", "aoa",
+    "assalam", "aslam", "aslaam", "walaikum", "walaikm", "alikum", "alaikum", "salam", "aoa",
 }
 
 # Broader vocabulary (loanwords / shared terms)

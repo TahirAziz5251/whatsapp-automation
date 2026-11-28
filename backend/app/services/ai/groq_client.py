@@ -53,7 +53,7 @@ class GroqClient:
             payload["tool_choice"] = tool_choice
 
         candidate_models = [self.model]
-        for fallback_model in ("openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"):
+        for fallback_model in ("llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"):
             if fallback_model not in candidate_models:
                 candidate_models.append(fallback_model)
 
@@ -69,12 +69,18 @@ class GroqClient:
 
                     if response.status_code == 200:
                         data = response.json()
-                        choice = data["choices"][0]
+                        choice = (data.get("choices") or [{}])[0]
+                        msg = choice.get("message") or {}
+                        raw_content = str(msg.get("content") or "")
+                        clean_content = re.sub(r"<think>[\s\S]*?</think>", "", raw_content, flags=re.IGNORECASE).strip()
+                        if not msg.get("tool_calls") and not clean_content:
+                            logger.warning(f"Groq model '{active_model}' returned empty content; trying next fallback model.")
+                            continue
                         if active_model != self.model:
                             logger.info(f"Groq fallback model succeeded: {active_model} (configured: {self.model})")
                         return {
                             "status": "SUCCESS",
-                            "message": choice["message"],
+                            "message": msg,
                             "finish_reason": choice.get("finish_reason"),
                             "usage": data.get("usage", {}),
                             "model_used": active_model,
@@ -572,27 +578,59 @@ class GroqClient:
         history_user_text = " ".join(m.get("content", "").lower() for m in messages if m.get("role") == "user")
         is_answering_name = any(w in prev_assistant_msg.lower() for w in ["full name", "naam kya hai", "patient's name", "child's full name", "mother's full name"])
 
-        if is_answering_name and "get_doctor_schedule" in tool_names:
-            target_spec = "Pediatrics" if any(w in history_user_text for w in ["child", "bacha", "baby", "kid", "son", "daughter"]) else ("Cardiology" if any(w in history_user_text for w in ["heart", "dil", "cardio", "chest"]) else "General Medicine")
-            return {
-                "status": "SUCCESS",
-                "message": {
-                    "role": "assistant",
-                    "content": None,
-                    "tool_calls": [
-                        {
-                            "id": "call_sched_from_name_001",
-                            "type": "function",
-                            "function": {
-                                "name": "get_doctor_schedule",
-                                "arguments": json.dumps({"doctor_name_or_specialty": target_spec, "date": today_str})
+        if is_answering_name and ("book_appointment" in tool_names or "get_doctor_schedule" in tool_names):
+            slot_m = re.search(r"\b(\d{1,2}:\d{2}\s*(?:AM|PM))\b", history_user_text, re.IGNORECASE)
+            if slot_m and "book_appointment" in tool_names:
+                history_all = " ".join(m.get("content", "") for m in messages[:-1])
+                doc_name = "Dr. Tariq Mahmood" if "tariq" in history_all.lower() else ("Dr. Bilal Asghar" if "bilal" in history_all.lower() else "Dr. Ayesha Malik")
+                date_m = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", history_all)
+                target_date = date_m.group(1) if date_m else today_str
+                return {
+                    "status": "SUCCESS",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_book_after_name_001",
+                                "type": "function",
+                                "function": {
+                                    "name": "book_appointment",
+                                    "arguments": json.dumps({
+                                        "patient_name": last_msg.get("content", "").strip() or "Valued Patient",
+                                        "doctor_name": doc_name,
+                                        "date": target_date,
+                                        "slot_time": slot_m.group(1).upper(),
+                                        "confirmed": False,
+                                    }),
+                                },
                             }
-                        }
-                    ]
-                },
-                "finish_reason": "tool_calls",
-                "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
-            }
+                        ],
+                    },
+                    "finish_reason": "tool_calls",
+                    "usage": {"prompt_tokens": 90, "completion_tokens": 30, "total_tokens": 120},
+                }
+            if "get_doctor_schedule" in tool_names:
+                target_spec = "Pediatrics" if any(w in history_user_text for w in ["child", "bacha", "baby", "kid", "son", "daughter"]) else ("Cardiology" if any(w in history_user_text for w in ["heart", "dil", "cardio", "chest"]) else "General Medicine")
+                return {
+                    "status": "SUCCESS",
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_sched_from_name_001",
+                                "type": "function",
+                                "function": {
+                                    "name": "get_doctor_schedule",
+                                    "arguments": json.dumps({"doctor_name_or_specialty": target_spec, "date": today_str})
+                                }
+                            }
+                        ]
+                    },
+                    "finish_reason": "tool_calls",
+                    "usage": {"prompt_tokens": 85, "completion_tokens": 25, "total_tokens": 110}
+                }
 
         # General menu / general self-booking intent without third-party/doctor/slot -> warm humanized menu prompt
         # matching the 4 primary interactive options (Book appointment, My appointments, Queue status, Talk to reception)

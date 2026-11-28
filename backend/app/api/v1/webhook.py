@@ -1,3 +1,4 @@
+import asyncio
 import re
 import logging
 from datetime import datetime, timedelta, timezone
@@ -39,13 +40,18 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
     logger.info(f"Received Evolution webhook: event={payload.get('event')}, instance={payload.get('instance') or payload.get('instanceName')}")
 
     try:
-        result = ChannelService.process_inbound_webhook(
+        result = await asyncio.to_thread(
+            ChannelService.process_inbound_webhook,
             provider="EVOLUTION_GO",
             payload=payload,
-            db=db
+            db=db,
         )
     except Exception as e:
         logger.error(f"Error in ChannelService.process_inbound_webhook: {e}", exc_info=True)
+        try:
+            db.rollback()
+        except Exception:
+            pass
         return {"status": "ERROR", "error": str(e)}
 
     if result.get("status") != "PROCESSED":
@@ -73,7 +79,11 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
             )
             try:
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
-                send_res = adapter.send_text_message(recipient_phone=customer_phone, text=emergency_reply)
+                send_res = await asyncio.to_thread(
+                    adapter.send_text_message,
+                    recipient_phone=customer_phone,
+                    text=emergency_reply,
+                )
                 logger.info(f"Emergency advisory dispatched to {customer_phone}: {send_res}")
             except Exception as e:
                 logger.error(f"Failed to dispatch emergency WhatsApp message: {e}")
@@ -132,7 +142,11 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                     "Hamara staff jald hi aap se is number par rabta karega. Shukriya!"
                 )
                 adapter = EvolutionGoAdapter(instance_name=instance_name)
-                send_res = adapter.send_text_message(recipient_phone=customer_phone, text=handoff_reply)
+                send_res = await asyncio.to_thread(
+                    adapter.send_text_message,
+                    recipient_phone=customer_phone,
+                    text=handoff_reply,
+                )
                 logger.info(f"Human handoff message dispatched to {customer_phone}: {send_res}")
 
                 from app.services.clinic_event_broadcaster import broadcaster
@@ -178,7 +192,8 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                     title = interactive_data.get("title")
                     footer = interactive_data.get("footer")
                     if itype == "buttons" and interactive_data.get("buttons"):
-                        send_res = adapter.send_button_message(
+                        send_res = await asyncio.to_thread(
+                            adapter.send_button_message,
                             recipient_phone=customer_phone,
                             text=reply_text,
                             buttons=interactive_data.get("buttons"),
@@ -186,7 +201,8 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                             footer=footer,
                         )
                     elif itype == "button_groups" and interactive_data.get("groups"):
-                        send_res = adapter.send_button_groups(
+                        send_res = await asyncio.to_thread(
+                            adapter.send_button_groups,
                             recipient_phone=customer_phone,
                             text=reply_text,
                             groups=interactive_data.get("groups"),
@@ -194,7 +210,8 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                             footer=footer,
                         )
                     elif itype == "list" and interactive_data.get("sections"):
-                        send_res = adapter.send_list_message(
+                        send_res = await asyncio.to_thread(
+                            adapter.send_list_message,
                             recipient_phone=customer_phone,
                             text=reply_text,
                             sections=interactive_data.get("sections"),
@@ -203,9 +220,17 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                             footer=footer,
                         )
                     else:
-                        send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
+                        send_res = await asyncio.to_thread(
+                            adapter.send_text_message,
+                            recipient_phone=customer_phone,
+                            text=reply_text,
+                        )
                 else:
-                    send_res = adapter.send_text_message(recipient_phone=customer_phone, text=reply_text)
+                    send_res = await asyncio.to_thread(
+                        adapter.send_text_message,
+                        recipient_phone=customer_phone,
+                        text=reply_text,
+                    )
                 logger.info(f"AI response dispatched to {customer_phone}: {send_res.get('status_code')} | Success: {send_res.get('success')}")
                 # Sync outbox state atomically under tenant RLS so background dispatcher never double-sends
                 db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
@@ -300,7 +325,8 @@ async def evolution_whatsapp_webhook(request: Request, db: Session = Depends(get
                         coords = parse_lat_lng_from_map_url(t_res.get("map_url"))
                         if coords:
                             try:
-                                EvolutionGoAdapter(instance_name=instance_name).send_location(
+                                await asyncio.to_thread(
+                                    EvolutionGoAdapter(instance_name=instance_name).send_location,
                                     recipient_phone=customer_phone,
                                     latitude=coords[0],
                                     longitude=coords[1],
@@ -350,9 +376,10 @@ async def meta_whatsapp_webhook(request: Request, db: Session = Depends(get_db))
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
-    result = ChannelService.process_inbound_webhook(
+    result = await asyncio.to_thread(
+        ChannelService.process_inbound_webhook,
         provider="META_CLOUD",
         payload=payload,
-        db=db
+        db=db,
     )
     return result

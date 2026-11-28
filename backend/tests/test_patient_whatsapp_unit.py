@@ -1911,5 +1911,88 @@ def test_master_prompt_zero_duplication_and_doctor_grounding():
     assert val_bot_ok["valid"] is True
 
 
+def test_duplicate_webhook_releases_advisory_lock_and_empty_groq_fallback():
+    """
+    Verifies:
+    1. ChannelService.process_inbound_webhook explicitly calls db.rollback() on DUPLICATE_DROPPED
+       so pg_advisory_xact_lock is never leaked across async teardown.
+    2. GroqClient.chat_completion retries next fallback model when HTTP 200 returns empty content.
+    3. 'Aslaam alaikum!' is detected cleanly as ROMAN_URDU.
+    """
+    import asyncio
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from app.models.communication import TenantMessage
+    from app.models.tenant import ChannelConnection
+    from app.services.channel_service import ChannelService
+    from app.services.ai.groq_client import GroqClient
+    from app.services.ai.prompt_engine import detect_language_and_script
+
+    assert detect_language_and_script("Aslaam alaikum!")["language"] == "ROMAN_URDU"
+
+    # 1. Duplicate webhook triggers db.rollback() immediately
+    mock_db = MagicMock()
+    conn_row = SimpleNamespace(tenant_id=uuid.UUID("11111111-1111-1111-1111-111111111111"), phone_number_id="alpha-clinic")
+    existing_msg_row = SimpleNamespace(id=uuid.uuid4())
+
+    def _q(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        if model is ChannelConnection:
+            q.first.return_value = conn_row
+        elif model is TenantMessage:
+            q.first.return_value = existing_msg_row
+        return q
+
+    mock_db.query.side_effect = _q
+    dup_payload = {
+        "instanceName": "alpha-clinic",
+        "data": {
+            "ID": "MSG_DUP_1",
+            "Info": {"Chat": "923097313899@s.whatsapp.net", "Sender": "923097313899@s.whatsapp.net", "PushName": "Tahir"},
+            "Message": {"conversation": "Aslaam alaikum!"},
+        },
+    }
+    res = ChannelService.process_inbound_webhook("EVOLUTION_GO", dup_payload, mock_db)
+    assert res["status"] == "DUPLICATE_DROPPED"
+    assert mock_db.rollback.called is True
+
+    # 2. GroqClient skips empty HTTP 200 reasoning responses and uses fallback model
+    resp_empty = MagicMock()
+    resp_empty.status_code = 200
+    resp_empty.json.return_value = {"choices": [{"message": {"role": "assistant", "content": ""}, "finish_reason": "length"}], "usage": {}}
+    resp_ok = MagicMock()
+    resp_ok.status_code = 200
+    resp_ok.json.return_value = {"choices": [{"message": {"role": "assistant", "content": "Please confirm your booking."}, "finish_reason": "stop"}], "usage": {"total_tokens": 50}}
+
+    responses_iter = iter([resp_empty, resp_ok])
+
+    class _FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, *args, **kwargs):
+            return next(responses_iter)
+
+    gc = GroqClient(api_key="real_key_test", model="openai/gpt-oss-120b")
+    with patch("app.services.ai.groq_client.httpx.AsyncClient", _FakeAsyncClient):
+        coro = gc.chat_completion(messages=[{"role": "user", "content": "Tahir aziz"}])
+        try:
+            coro.send(None)
+            raise AssertionError("Expected sync completion with mock _FakeAsyncClient")
+        except StopIteration as exc:
+            out = exc.value
+    assert out["status"] == "SUCCESS"
+    assert out["message"]["content"] == "Please confirm your booking."
+    assert out["model_used"] == "llama-3.3-70b-versatile"
+
+
+
 
 

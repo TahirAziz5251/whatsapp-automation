@@ -240,7 +240,7 @@ class AiSupervisor:
         # Step 3.5: Fresh Greeting / Menu Reset Check & Numeric Option Resolution
         raw_user_text = user_text or ""
         greeting_re = re.compile(
-            r"^\s*(?:assalam[- ]?o[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey)\s*[!.,?]*\s*$",
+            r"^\s*(?:as+a?la+m[- ]?o?[- ]?al(?:a|i|ai|ei|ay)?kum|as[- ]?salamu[- ]?al(?:a|i|ai|ei|ay)?kum|salam|aoa|hi|hello|hey)\s*[!.,?]*\s*$",
             re.IGNORECASE,
         )
         is_fresh_greeting = bool(greeting_re.match(raw_user_text))
@@ -255,16 +255,24 @@ class AiSupervisor:
             except Exception:
                 pass
         else:
+            is_short_proper_name = bool(
+                prev_lang in ("ROMAN_URDU", "URDU")
+                and 1 <= len(raw_user_text.split()) <= 3
+                and lang_info["language"] == "ENGLISH"
+                and not re.search(r"\b(i|want|need|book|please|schedule|what|which|when|how|appointment|english|cancel|reschedule)\b", raw_user_text, re.IGNORECASE)
+            )
             is_numeric_or_choice = bool(
                 re.match(r"^\s*(?:option\s*)?#?\s*\d{1,2}[.)]?\s*$", raw_user_text, re.IGNORECASE)
+                or re.match(r"^\s*\d{1,2}:\d{2}\s*(?:AM|PM)\s*$", raw_user_text, re.IGNORECASE)
                 or raw_user_text.strip().lower() in (
                     "book appointment", "my appointments", "queue status", "talk to reception",
                     "general physician", "cardiology", "dermatology", "pediatrics",
                     "confirm", "change", "reschedule", "cancel appointment", "tomorrow slots", "refresh status",
+                    "ok", "yes", "haan", "jee",
                 )
             )
             user_text = resolve_numeric_option_shortcut(raw_user_text, state_json)
-            if is_numeric_or_choice and prev_lang in ("ROMAN_URDU", "URDU", "ENGLISH"):
+            if (is_numeric_or_choice or is_short_proper_name) and prev_lang in ("ROMAN_URDU", "URDU", "ENGLISH"):
                 lang_info = {"language": prev_lang, "script": "ARABIC" if prev_lang == "URDU" else "LATIN", "confidence": 0.95}
             if (user_text or "").strip().lower() in ("reschedule", "reschedule appointment"):
                 state_json["pending_action"] = "RESCHEDULE"

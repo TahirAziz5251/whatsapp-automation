@@ -76,6 +76,7 @@ class ChannelService:
                 db.add(connection)
                 db.flush()
             else:
+                db.rollback()
                 return {
                     "status": "UNMAPPED_CONNECTION",
                     "instance_name": normalized.instance_name,
@@ -88,7 +89,7 @@ class ChannelService:
         db.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
 
         # Acquire transaction-scoped advisory lock per (tenant, provider_message_id)
-        # so simultaneous webhook deliveries cannot both pass deduplication.
+        # with bounded lock_timeout and nested savepoint so timeouts never abort the session.
         if normalized.provider_message_id:
             try:
                 if db.bind and db.bind.dialect.name == "postgresql":
@@ -96,7 +97,9 @@ class ChannelService:
                         hashlib.sha256(f"wa_msg:{tenant_id}:{normalized.provider_message_id}".encode("utf-8")).hexdigest()[:15],
                         16,
                     )
-                    db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": lock_key})
+                    with db.begin_nested():
+                        db.execute(text("SET LOCAL lock_timeout = '3000'"))
+                        db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": lock_key})
             except Exception:
                 pass
 
@@ -107,6 +110,8 @@ class ChannelService:
         ).first()
 
         if existing_msg:
+            # Release advisory lock & transaction immediately before returning
+            db.rollback()
             return {
                 "status": "DUPLICATE_DROPPED",
                 "message_id": normalized.provider_message_id,
@@ -188,7 +193,7 @@ class ChannelService:
                     candidate_options=candidates,
                 )
             if not resolved_option:
-                db.commit()
+                db.rollback()
                 return {
                     "status": "IGNORED",
                     "reason": "Empty or unresolvable poll vote",

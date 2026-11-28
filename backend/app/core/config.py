@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     GROQ_MODEL: str = "openai/gpt-oss-120b"
     GROQ_TEMPERATURE: float = 0.2
-    GROQ_MAX_TOKENS: int = 1024
+    GROQ_MAX_TOKENS: int = 2048
     GROQ_TIMEOUT_SECONDS: int = 30
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     
