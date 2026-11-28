@@ -379,6 +379,25 @@ def validate_ai_response(
             cleaned,
         ).strip()
 
+    # 1.5 Strip duplicate manual numbered menu / specialty / confirmation lists when interactive formatter supplies them
+    cleaned = re.sub(
+        r"(?im)^\s*\d{1,2}[.)]\s*\*{0,2}(?:Book\s+(?:an\s+)?appointment|My\s+appointments?|Doctor\s+Info(?:\s*&\s*Fees)?|Queue\s+status|Check-In\s*/\s*Queue\s+Status|Talk\s+to\s+reception|Clinic\s+Timings(?:\s*&\s*Location)?|Cancel\s+Booking)\*{0,2}(?:\s*[-–—:].*)?$\n?",
+        "",
+        cleaned,
+    ).strip()
+    if any(item.get("tool") == "get_departments" for item in (tools_executed or [])):
+        cleaned = re.sub(
+            r"(?im)^\s*\d{1,2}[.)]\s*\*{0,2}(?:General\s+(?:Physician|Medicine)|Cardiology|Dermatology|Pediatrics|Orthopedics|Gynecology|ENT)\*{0,2}(?:\s*[-–—:(].*)?$\n?",
+            "",
+            cleaned,
+        ).strip()
+    if any((item.get("result") or {}).get("status") == "CONFIRMATION_REQUIRED" for item in (tools_executed or [])):
+        cleaned = re.sub(
+            r"(?im)^\s*[12][.)]\s*\*{0,2}(?:Confirm|Change)\*{0,2}.*$\n?",
+            "",
+            cleaned,
+        ).strip()
+
     grounded = _collect_grounded_values(tools_executed, state_json)
     ops = grounded["succeeded_ops"]
     lower = cleaned.lower()
@@ -430,6 +449,15 @@ def validate_ai_response(
         if ref not in grounded["grounded_refs"] and ref.lower() not in grounded["blob_lower"]:
             violations.append(f"UNGROUNDED_REF:{ref}")
 
+    # 3.1 Ungrounded Doctor Name Check (block fabricated "Dr. <Name>" not returned by DB tools or state)
+    entity_hints = _extract_entity_hints(tools_executed, state_json, extra_entities)
+    bot_name_str = str((extra_entities or {}).get("bot_name") or "").strip().lower()
+    allowed_doc_blob = " ".join(entity_hints["doctor_names"]).lower() + " " + grounded["blob_lower"] + " " + bot_name_str
+    for m_doc in re.finditer(r"\bDr\.?\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)", cleaned):
+        cited_doc = f"Dr. {m_doc.group(1).strip()}"
+        if cited_doc.lower() not in allowed_doc_blob and m_doc.group(1).strip().lower() not in allowed_doc_blob:
+            violations.append(f"UNGROUNDED_DOCTOR:{cited_doc}")
+
     if violations:
         return {
             "valid": False,
@@ -473,7 +501,6 @@ def validate_ai_response(
             return m.group(0)
         cleaned = re.sub(r"\b((?:PKR|Rs\.?)\s*)([\d,]+(?:\.\d+)?)", _replace_wrong_fee, cleaned, flags=re.IGNORECASE)
 
-    entity_hints = _extract_entity_hints(tools_executed, state_json, extra_entities)
     cleaned = format_whatsapp_uniform_text(cleaned, entity_hints=entity_hints)
 
     return {

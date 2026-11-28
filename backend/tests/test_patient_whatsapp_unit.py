@@ -1837,4 +1837,79 @@ def test_humanized_turn2_menu_no_name_clash_and_meta_interactive_buttons():
     assert meta_in is not None and meta_in.text == "Book appointment"
 
 
+def test_master_prompt_zero_duplication_and_doctor_grounding():
+    """
+    Verifies:
+    1. Master prompt has no conflicting 8-item Home Menu and no stale 'Poll buttons' wording.
+    2. Output validator strips duplicate numbered menu/specialty/confirmation lists.
+    3. Output validator blocks fabricated 'Dr. ...' names not grounded in DB tools, state, or bot_name.
+    """
+    from app.services.ai.output_validator import validate_ai_response
+
+    tenant = PlatformTenant(
+        id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+        slug="alpha-clinic",
+        name="Alpha Heart & Medical Centre",
+        business_template_id="CLINIC_OPD",
+        timezone="Asia/Karachi",
+        currency="PKR",
+        settings={"bot_name": "Dr. Shifa", "phone": "042-35780000"},
+    )
+    tpl = BusinessTemplate(
+        id="CLINIC_OPD",
+        name="Clinic & Hospital OPD Queue",
+        industry_category="HEALTHCARE",
+        allowed_tools=["get_departments", "get_doctor_schedule", "book_appointment"],
+    )
+    prompt = build_system_prompt(tenant, tpl)
+    assert "3. Doctor Info & Fees" not in prompt
+    assert "Poll buttons" not in prompt
+    assert "NO DUPLICATE LISTS" in prompt
+
+    # Duplicate numbered menu lines are stripped cleanly
+    dup_menu_reply = (
+        "I'd be happy to help! Please choose an option below:\n\n"
+        "1. Book Appointment\n"
+        "2. My Appointments\n"
+        "3. Doctor Info & Fees\n"
+        "4. Talk to Reception"
+    )
+    val_menu = validate_ai_response(dup_menu_reply, tools_executed=[], state_json={"step": "IDLE"})
+    assert val_menu["valid"] is True
+    assert "1. Book Appointment" not in val_menu["sanitized_text"]
+    assert "3. Doctor Info" not in val_menu["sanitized_text"]
+
+    # Duplicate specialty numbered lines stripped when get_departments executed
+    dup_spec_reply = (
+        "Of course! Which specialty would you like to visit?\n\n"
+        "1. General Physician\n"
+        "2. Cardiology\n"
+        "3. Pediatrics"
+    )
+    val_spec = validate_ai_response(
+        dup_spec_reply,
+        tools_executed=[{"tool": "get_departments", "result": {"status": "SUCCESS", "departments": [{"name": "Cardiology"}]}}],
+    )
+    assert val_spec["valid"] is True
+    assert "1. General Physician" not in val_spec["sanitized_text"]
+    assert "2. Cardiology" not in val_spec["sanitized_text"]
+
+    # Ungrounded fabricated doctor is blocked; grounded DB doctor and bot_name pass
+    val_fake_doc = validate_ai_response(
+        "Dr. Imran Qureshi is available today at 5:00 PM.",
+        tools_executed=[],
+        extra_entities={"bot_name": "Dr. Shifa"},
+    )
+    assert val_fake_doc["valid"] is False
+    assert any(v.startswith("UNGROUNDED_DOCTOR:") for v in val_fake_doc["violations"])
+
+    val_bot_ok = validate_ai_response(
+        "Walaikum Assalam! Main Dr. Shifa hoon. Bataiye aaj main aap ki kya madad kar sakti hoon?",
+        tools_executed=[],
+        extra_entities={"bot_name": "Dr. Shifa"},
+    )
+    assert val_bot_ok["valid"] is True
+
+
+
 

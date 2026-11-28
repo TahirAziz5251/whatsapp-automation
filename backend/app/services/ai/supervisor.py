@@ -447,6 +447,7 @@ class AiSupervisor:
             extra_entities={
                 "business_name": tenant.name,
                 "business_address": t_settings.get("address", ""),
+                "bot_name": t_settings.get("bot_name", ""),
                 "patient_name": None if is_fresh_greeting else (patient_profile or {}).get("full_name"),
             },
         )
