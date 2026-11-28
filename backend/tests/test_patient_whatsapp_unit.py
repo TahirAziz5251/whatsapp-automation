@@ -1550,3 +1550,180 @@ def test_menu_and_booking_intent_attaches_primary_buttons_and_progresses_to_db_s
             "Pediatrics",
         ]
 
+
+def test_reminders_24h_pre_date_and_30m_exact_window_and_channel_re():
+    """
+    Verifies:
+    1. 24H reminder fires ONLY when booked before appointment_date AND 30m < delta <= 24h (never same-day or >24h early).
+    2. 30M reminder fires ONLY when 0 < delta <= 30m and booking lead >= 35m (skips >30m future, past slots, last-minute bookings).
+    3. Legacy 2H alias delegates to 30M, dispatch API supports ALL/24H/30M/2H, and reminder copy mentions 30 min (not 2h).
+    4. ChannelService imports `re` cleanly without NameError on numeric shortcuts.
+    """
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+    from zoneinfo import ZoneInfo
+    from app.api.v1.clinic import dispatch_automated_reminders
+    from app.workers import reminder_worker
+    from app.services import channel_service
+
+    # Verify channel_service has `re` imported cleanly
+    assert hasattr(channel_service, "re")
+
+    pkt = timezone(timedelta(hours=5))
+    now_local = datetime(2026, 11, 28, 16, 30, tzinfo=pkt)
+    t_id = uuid.UUID("11111111-1111-1111-1111-111111111111")
+    tenant_obj = SimpleNamespace(id=t_id, name="Alpha Heart & Medical Centre", timezone="Asia/Karachi")
+    doc = SimpleNamespace(name="Dr. Ayesha Malik", specialty="General Medicine", room_number="Room 102")
+
+    # 24H cases:
+    # A) Booked yesterday (Nov 27) for tomorrow Nov 29 10:00 AM (17.5h away <= 24h) -> DUE
+    apt_24_due = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-24-OK",
+        appointment_date=date(2026, 11, 29), slot_time=time(10, 0),
+        queue_token="T-M01", status="BOOKED", created_at=datetime(2026, 11, 27, 14, 0, tzinfo=pkt),
+    )
+    # B) Same-day booking (booked Nov 28 morning for Nov 28 evening) -> EXCLUDED from 24H
+    apt_24_sameday = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-24-SAMEDAY",
+        appointment_date=date(2026, 11, 28), slot_time=time(20, 0),
+        queue_token="T-M02", status="BOOKED", created_at=datetime(2026, 11, 28, 9, 0, tzinfo=pkt),
+    )
+    # C) Booked yesterday for Nov 29 20:00 (27.5h away > 24h) -> NOT YET DUE
+    apt_24_too_early = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-24-EARLY",
+        appointment_date=date(2026, 11, 29), slot_time=time(20, 0),
+        queue_token="T-M03", status="BOOKED", created_at=datetime(2026, 11, 27, 14, 0, tzinfo=pkt),
+    )
+
+    c_en = SimpleNamespace(customer_phone="923001111111", full_name="Tahir Aziz", push_name=None, metadata_={"language": "ENGLISH"})
+    c_ru = SimpleNamespace(customer_phone="923002222222", full_name="Naseem Mai", push_name=None, metadata_={"language": "ROMAN_URDU"})
+    c_ur = SimpleNamespace(customer_phone="923003333333", full_name="علی", push_name=None, metadata_={"language": "URDU"})
+
+    dispatched_24 = []
+    mock_db = MagicMock()
+    mock_db.query.return_value.filter.return_value.first.return_value = tenant_obj
+
+    with patch.object(
+        reminder_worker,
+        "_collect_due_appointments",
+        return_value=[(apt_24_due, doc, c_en), (apt_24_sameday, doc, c_ru), (apt_24_too_early, doc, c_ru)],
+    ), patch.object(
+        reminder_worker,
+        "_dispatch_appointment_reminder",
+        side_effect=lambda db, apt, d, c, reminder_kind: dispatched_24.append((apt.appointment_number, reminder_kind)) or True,
+    ):
+        res_24 = reminder_worker.process_24h_reminders_db(mock_db, tenant_id=str(t_id), current_dt_override=now_local)
+        assert res_24["reminders_dispatched"] == 1
+        assert dispatched_24 == [("APT-24-OK", "24H")]
+
+    # 30M cases relative to 2026-11-28 16:30 PKT:
+    # 1) 16:55 slot (25m away), booked at 13:00 (lead 235m) -> DUE
+    apt_30_due = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-30-OK",
+        appointment_date=date(2026, 11, 28), slot_time=time(16, 55),
+        queue_token="T-M04", status="BOOKED", created_at=datetime(2026, 11, 28, 13, 0, tzinfo=pkt),
+    )
+    # 2) 18:30 slot (2h away) -> EXCLUDED (not 30m yet)
+    apt_30_2h_far = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-30-2HFAR",
+        appointment_date=date(2026, 11, 28), slot_time=time(18, 30),
+        queue_token="T-M05", status="BOOKED", created_at=datetime(2026, 11, 28, 10, 0, tzinfo=pkt),
+    )
+    # 3) 16:15 slot (15m ago) -> EXCLUDED (past)
+    apt_30_past = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-30-PAST",
+        appointment_date=date(2026, 11, 28), slot_time=time(16, 15),
+        queue_token="T-M06", status="BOOKED", created_at=datetime(2026, 11, 28, 10, 0, tzinfo=pkt),
+    )
+    # 4) 16:45 slot (15m away), booked at 16:25 (lead 20m < 35m) -> EXCLUDED (last-minute booking)
+    apt_30_last_min = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=t_id, appointment_number="APT-30-LASTMIN",
+        appointment_date=date(2026, 11, 28), slot_time=time(16, 45),
+        queue_token="T-M07", status="BOOKED", created_at=datetime(2026, 11, 28, 16, 25, tzinfo=pkt),
+    )
+
+    dispatched_30 = []
+    with patch.object(
+        reminder_worker,
+        "_collect_due_appointments",
+        return_value=[
+            (apt_30_due, doc, c_ru),
+            (apt_30_2h_far, doc, c_en),
+            (apt_30_past, doc, c_en),
+            (apt_30_last_min, doc, c_en),
+        ],
+    ), patch.object(
+        reminder_worker,
+        "_dispatch_appointment_reminder",
+        side_effect=lambda db, apt, d, c, reminder_kind: dispatched_30.append((apt.appointment_number, reminder_kind)) or True,
+    ):
+        res_30 = reminder_worker.process_30m_reminders_db(mock_db, tenant_id=str(t_id), current_dt_override=now_local)
+        assert res_30["type"] == "30M_REMINDERS"
+        assert res_30["reminders_dispatched"] == 1
+        assert dispatched_30 == [("APT-30-OK", "30M")]
+
+        # Legacy 2H alias invokes exact same 30M engine
+        dispatched_30.clear()
+        res_legacy = reminder_worker.process_2h_reminders_db(mock_db, tenant_id=str(t_id), current_dt_override=now_local)
+        assert res_legacy["type"] == "30M_REMINDERS"
+        assert dispatched_30 == [("APT-30-OK", "30M")]
+
+    # Trilingual 30M formatting checks (zero "2 ghante" anywhere)
+    msg_en = reminder_worker._format_reminder_message("30M", "ENGLISH", "Tahir Aziz", "Alpha Clinic", doc, apt_30_due)
+    msg_ru = reminder_worker._format_reminder_message("30M", "ROMAN_URDU", "Naseem Mai", "Alpha Clinic", doc, apt_30_due)
+    msg_ur = reminder_worker._format_reminder_message("30M", "URDU", "علی", "Alpha Clinic", doc, apt_30_due)
+    assert "*30 minutes*" in msg_en and "*Tahir Aziz*" in msg_en
+    assert "*30 minute*" in msg_ru and "2 ghante" not in msg_ru
+    assert "*30 منٹ*" in msg_ur
+
+    # Router dispatch routing for 30M and legacy 2H
+    with patch("app.workers.reminder_worker.process_30m_reminders_db", return_value={"status": "SUCCESS", "type": "30M_REMINDERS", "reminders_dispatched": 1}) as p30:
+        out_30m = dispatch_automated_reminders(reminder_type="30M", x_tenant_id=str(t_id), db=mock_db)
+        out_2h = dispatch_automated_reminders(reminder_type="2H", x_tenant_id=str(t_id), db=mock_db)
+        assert out_30m["type"] == "30M_REMINDERS"
+        assert out_2h["type"] == "30M_REMINDERS"
+        assert p30.call_count == 2
+
+    # Verify reschedule_appointment_db resets all reminder flags for the new slot
+    from app.services.clinic_service import reschedule_appointment_db
+    apt_resched = SimpleNamespace(
+        id=uuid.uuid4(),
+        tenant_id=t_id,
+        appointment_number="APT-RSCH-01",
+        doctor_id=uuid.uuid4(),
+        appointment_date=date(2026, 11, 29),
+        slot_time=time(10, 0),
+        queue_token="T-M09",
+        status="BOOKED",
+        reminder_24h_sent=True,
+        reminder_24h_sent_at=now_local,
+        reminder_30m_sent=True,
+        reminder_30m_sent_at=now_local,
+        reminder_2h_sent=True,
+        reminder_2h_sent_at=now_local,
+        updated_at=now_local,
+    )
+    doc_resched = SimpleNamespace(id=apt_resched.doctor_id, name="Dr. Ayesha Malik", specialty="General Medicine", room_number="Room 102", fee_pkr=1500)
+    contact_resched = SimpleNamespace(customer_phone="923001111111", full_name="Tahir Aziz", push_name=None)
+    db_rsch = MagicMock()
+    with patch("app.services.clinic_service._find_appointment_join_row", return_value=(apt_resched, doc_resched, contact_resched)), patch(
+        "app.services.clinic_service._get_tenant_timezone_and_now", return_value=("Asia/Karachi", now_local)
+    ), patch("app.services.clinic_service._get_connected_channel", return_value=None):
+        rsch_out = reschedule_appointment_db(
+            db=db_rsch,
+            tenant_id=str(t_id),
+            appointment_identifier="APT-RSCH-01",
+            new_date_str="2026-11-30",
+            new_slot_str="05:00 PM",
+            enforce_checks=False,
+            confirmed=True,
+        )
+        assert rsch_out["status"] == "RESCHEDULED"
+        assert apt_resched.reminder_24h_sent is False
+        assert apt_resched.reminder_24h_sent_at is None
+        assert apt_resched.reminder_30m_sent is False
+        assert apt_resched.reminder_30m_sent_at is None
+        assert apt_resched.reminder_2h_sent is False
+        assert apt_resched.reminder_2h_sent_at is None
+
+

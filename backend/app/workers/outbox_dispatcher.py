@@ -59,7 +59,7 @@ def dispatch_pending_outbox_batch(db: Session, batch_size: int = 20) -> Dict[str
     return {"dispatched": dispatched, "failed": failed}
 
 
-async def run_outbox_and_reminder_loop(poll_seconds: int = 15, reminder_every_cycles: int = 20):
+async def run_outbox_and_reminder_loop(poll_seconds: int = 15, reminder_every_cycles: int = 4):
     """
     Background asyncio loop started during FastAPI lifespan so transactional outbox
     messages (reminders, call-next, delay alerts, ticket self-service updates) deliver reliably.

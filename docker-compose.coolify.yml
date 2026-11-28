@@ -305,6 +305,8 @@ services:
             reminder_24h_sent_at TIMESTAMPTZ,
             reminder_2h_sent BOOLEAN DEFAULT FALSE,
             reminder_2h_sent_at TIMESTAMPTZ,
+            reminder_30m_sent BOOLEAN DEFAULT FALSE,
+            reminder_30m_sent_at TIMESTAMPTZ,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW(),
             PRIMARY KEY (tenant_id, id),
@@ -317,6 +319,8 @@ services:
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent_at TIMESTAMPTZ;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent BOOLEAN DEFAULT FALSE;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent_at TIMESTAMPTZ;
+        ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_30m_sent BOOLEAN DEFAULT FALSE;
+        ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_30m_sent_at TIMESTAMPTZ;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_started_at TIMESTAMPTZ;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_ended_at TIMESTAMPTZ;
         ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_duration_seconds INT;
@@ -638,6 +642,7 @@ services:
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-63558bce778d55e61b438b9bd5a0f72326bbac65d52caf0c6ded8b6a8b081b65}
       FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-http://192.168.1.31:3000}
       ENABLE_OUTBOX_DISPATCHER: ${ENABLE_OUTBOX_DISPATCHER:-true}
+      TZ: Asia/Karachi
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/health"]
       interval: 15s

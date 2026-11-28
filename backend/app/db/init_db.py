@@ -291,6 +291,8 @@ CREATE TABLE IF NOT EXISTS clinic_appointments (
     reminder_24h_sent_at TIMESTAMPTZ,
     reminder_2h_sent BOOLEAN DEFAULT FALSE,
     reminder_2h_sent_at TIMESTAMPTZ,
+    reminder_30m_sent BOOLEAN DEFAULT FALSE,
+    reminder_30m_sent_at TIMESTAMPTZ,
     consultation_started_at TIMESTAMPTZ,
     consultation_ended_at TIMESTAMPTZ,
     consultation_duration_seconds INT,
@@ -311,6 +313,8 @@ ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent BOOLE
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_24h_sent_at TIMESTAMPTZ;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_2h_sent_at TIMESTAMPTZ;
+ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_30m_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS reminder_30m_sent_at TIMESTAMPTZ;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_started_at TIMESTAMPTZ;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_ended_at TIMESTAMPTZ;
 ALTER TABLE clinic_appointments ADD COLUMN IF NOT EXISTS consultation_duration_seconds INT;

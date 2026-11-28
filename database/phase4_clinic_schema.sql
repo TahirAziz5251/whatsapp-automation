@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS clinic_appointments (
     reminder_24h_sent_at TIMESTAMPTZ,
     reminder_2h_sent BOOLEAN DEFAULT FALSE,
     reminder_2h_sent_at TIMESTAMPTZ,
+    reminder_30m_sent BOOLEAN DEFAULT FALSE,
+    reminder_30m_sent_at TIMESTAMPTZ,
     consultation_started_at TIMESTAMPTZ,
     consultation_ended_at TIMESTAMPTZ,
     consultation_duration_seconds INT,

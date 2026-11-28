@@ -68,6 +68,8 @@ class ClinicAppointment(Base):
     reminder_24h_sent_at = Column(DateTime(timezone=True), nullable=True)
     reminder_2h_sent = Column(Boolean, default=False)
     reminder_2h_sent_at = Column(DateTime(timezone=True), nullable=True)
+    reminder_30m_sent = Column(Boolean, default=False)
+    reminder_30m_sent_at = Column(DateTime(timezone=True), nullable=True)
     consultation_started_at = Column(DateTime(timezone=True), nullable=True)
     consultation_ended_at = Column(DateTime(timezone=True), nullable=True)
     consultation_duration_seconds = Column(Integer, nullable=True)

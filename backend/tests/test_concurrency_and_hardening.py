@@ -27,6 +27,7 @@ from app.services.billing_service import (
 )
 from app.workers.reminder_worker import (
     process_24h_reminders_db,
+    process_30m_reminders_db,
     process_2h_reminders_db,
     run_full_reminder_cycle
 )
@@ -167,30 +168,35 @@ def test_automated_24h_and_2h_reminders_worker(client):
         )
         db.add(apt_24h)
 
-        # Appointment 2: Today (Eligible for 2h reminder)
-        phone_2h = f"92322{uuid.uuid4().hex[:7]}"
-        contact_2h = PlatformContact(
+        # Appointment 2: Due in ~25 minutes (booked >35m prior -> Eligible for 30m reminder)
+        phone_30m = f"92322{uuid.uuid4().hex[:7]}"
+        contact_30m = PlatformContact(
             id=uuid.uuid4(),
             tenant_id=uuid.UUID(CLINIC_TENANT_ID),
-            customer_phone=phone_2h,
-            full_name="Patient Two Hours"
+            customer_phone=phone_30m,
+            full_name="Patient Thirty Minutes"
         )
-        db.add(contact_2h)
+        db.add(contact_30m)
         db.flush()
 
-        apt_2h = ClinicAppointment(
+        now_utc = datetime.now(timezone.utc)
+        now_pkt = now_utc + timedelta(hours=5)
+        due_dt_pkt = now_pkt + timedelta(minutes=25)
+        apt_30m = ClinicAppointment(
             id=uuid.uuid4(),
             tenant_id=uuid.UUID(CLINIC_TENANT_ID),
-            appointment_number=f"APT-2H-{uuid.uuid4().hex[:5].upper()}",
-            contact_id=contact_2h.id,
+            appointment_number=f"APT-30M-{uuid.uuid4().hex[:5].upper()}",
+            contact_id=contact_30m.id,
             doctor_id=doc.id,
-            appointment_date=today,
-            slot_time=time(14, 0),
+            appointment_date=due_dt_pkt.date(),
+            slot_time=due_dt_pkt.time().replace(second=0, microsecond=0),
             status="BOOKED",
-            queue_token="R-02H",
-            reminder_2h_sent=False
+            queue_token="R-30M",
+            reminder_30m_sent=False,
+            reminder_2h_sent=False,
+            created_at=now_utc - timedelta(hours=3),
         )
-        db.add(apt_2h)
+        db.add(apt_30m)
         db.commit()
 
         # Run 24h Reminder Process
@@ -211,28 +217,29 @@ def test_automated_24h_and_2h_reminders_worker(client):
         ).first()
         assert outbox_24 is not None
         assert "ki taraf se reminder" in outbox_24.payload["text"]
-        assert str(apt_24h.id) in outbox_24.payload["text"]
+        assert apt_24h.appointment_number in outbox_24.payload["text"]
 
-        # Run 2h Reminder Process
-        res_2 = process_2h_reminders_db(db, tenant_id=CLINIC_TENANT_ID)
-        assert res_2["status"] == "SUCCESS"
-        assert res_2["reminders_dispatched"] >= 1
+        # Run 30m Reminder Process
+        res_30 = process_30m_reminders_db(db, tenant_id=CLINIC_TENANT_ID)
+        assert res_30["status"] == "SUCCESS"
+        assert res_30["reminders_dispatched"] >= 1
 
         db.expire_all()
-        check_2 = db.query(ClinicAppointment).filter(ClinicAppointment.id == apt_2h.id).first()
-        assert check_2.reminder_2h_sent is True
+        check_30 = db.query(ClinicAppointment).filter(ClinicAppointment.id == apt_30m.id).first()
+        assert check_30.reminder_30m_sent is True
+        assert check_30.reminder_2h_sent is True
 
         # Verify Outbox Message Queued
-        outbox_2 = db.query(TenantOutboxMessage).filter(
+        outbox_30 = db.query(TenantOutboxMessage).filter(
             TenantOutboxMessage.tenant_id == uuid.UUID(CLINIC_TENANT_ID),
-            TenantOutboxMessage.recipient_phone == phone_2h
+            TenantOutboxMessage.recipient_phone == phone_30m
         ).first()
-        assert outbox_2 is not None
-        assert "taqreeban 2 ghante mein" in outbox_2.payload["text"]
+        assert outbox_30 is not None
+        assert "30 minute" in outbox_30.payload["text"]
 
         # Run via API endpoint
         api_rem = client.post(
-            "/api/v1/clinic/reminders/dispatch?reminder_type=ALL",
+            "/api/v1/clinic/reminders/dispatch?reminder_type=30M",
             headers={"X-Tenant-ID": CLINIC_TENANT_ID}
         )
         assert api_rem.status_code == 200

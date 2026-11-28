@@ -1129,6 +1129,12 @@ def reschedule_appointment_db(
     old_slot = apt.slot_time.strftime("%I:%M %p")
     apt.appointment_date = new_date
     apt.slot_time = new_time
+    apt.reminder_24h_sent = False
+    apt.reminder_24h_sent_at = None
+    apt.reminder_30m_sent = False
+    apt.reminder_30m_sent_at = None
+    apt.reminder_2h_sent = False
+    apt.reminder_2h_sent_at = None
     apt.updated_at = datetime.now(timezone.utc)
 
     from app.models.communication import TenantAuditEvent, TenantOutboxMessage
@@ -2435,6 +2441,7 @@ def get_owner_analytics_db(
             "duration_seconds": apt.consultation_duration_seconds,
             "follow_up_task": apt.follow_up_task,
             "reminder_24h_sent": bool(apt.reminder_24h_sent),
+            "reminder_30m_sent": bool(getattr(apt, "reminder_30m_sent", False) or apt.reminder_2h_sent),
             "reminder_2h_sent": bool(apt.reminder_2h_sent)
         }
         for apt, doc, contact in rows

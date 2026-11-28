@@ -371,7 +371,7 @@ async def reschedule_patient_ticket(
 @router.get("/events/stream")
 async def stream_clinic_events(
     x_tenant_id: str = Query(..., description="Tenant UUID to subscribe to"),
-    db: Session = Depends(get_db)
+
 ):
     """Server-Sent Events (SSE) stream for real-time synchronization (<500ms latency)."""
     return StreamingResponse(
@@ -386,17 +386,22 @@ async def stream_clinic_events(
 
 @router.post("/reminders/dispatch")
 def dispatch_automated_reminders(
-    reminder_type: str = Query("ALL", description="Reminder type: ALL, 24H, 2H"),
+    reminder_type: str = Query("ALL", description="Reminder type: ALL, 24H, 30M (legacy alias: 2H)"),
     x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
     db: Session = Depends(get_db)
 ):
-    """Automated Appointment Reminders: Dispatches 24-hour and 2-hour WhatsApp alerts with ticket tracking link."""
-    from app.workers.reminder_worker import run_full_reminder_cycle, process_24h_reminders_db, process_2h_reminders_db
-    
-    if reminder_type == "24H":
+    """Automated Appointment Reminders: Dispatches 24-hour and 30-minute WhatsApp alerts with ticket tracking link."""
+    from app.workers.reminder_worker import (
+        run_full_reminder_cycle,
+        process_24h_reminders_db,
+        process_30m_reminders_db,
+    )
+
+    rtype = (reminder_type or "ALL").strip().upper()
+    if rtype == "24H":
         return process_24h_reminders_db(db, tenant_id=x_tenant_id)
-    elif reminder_type == "2H":
-        return process_2h_reminders_db(db, tenant_id=x_tenant_id)
+    elif rtype in ("30M", "2H"):
+        return process_30m_reminders_db(db, tenant_id=x_tenant_id)
     else:
         return run_full_reminder_cycle(db, tenant_id=x_tenant_id)
 

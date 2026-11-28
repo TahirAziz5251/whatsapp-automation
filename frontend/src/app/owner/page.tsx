@@ -146,7 +146,7 @@ export default function OwnerDashboard() {
       "Duration (Seconds)",
       "Follow-up Task",
       "24H Reminder Sent",
-      "2H Reminder Sent"
+      "30M Reminder Sent"
     ];
 
     const escapeCsv = (val: any) => {
@@ -170,7 +170,7 @@ export default function OwnerDashboard() {
       escapeCsv(b.duration_seconds || 0),
       escapeCsv(b.follow_up_task || "None"),
       escapeCsv(b.reminder_24h_sent ? "Yes" : "No"),
-      escapeCsv(b.reminder_2h_sent ? "Yes" : "No")
+      escapeCsv((b.reminder_30m_sent ?? b.reminder_2h_sent) ? "Yes" : "No")
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r: any) => r.join(","))].join("\n");
@@ -687,7 +687,7 @@ export default function OwnerDashboard() {
                         <td className="py-3 px-4 text-slate-500">{b.duration_seconds ? `${Math.round(b.duration_seconds / 60)}m` : "-"}</td>
                         <td className="py-3 px-4">
                           <span className="text-[10px] text-slate-500 font-mono">
-                            24h: {b.reminder_24h_sent ? "✓" : "-"} • 2h: {b.reminder_2h_sent ? "✓" : "-"}
+                            24h: {b.reminder_24h_sent ? "✓" : "-"} • 30m: {(b.reminder_30m_sent ?? b.reminder_2h_sent) ? "✓" : "-"}
                           </span>
                         </td>
                         <td className="py-3 px-4">
